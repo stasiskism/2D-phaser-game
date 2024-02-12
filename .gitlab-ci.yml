@@ -1,0 +1,6 @@
+stages:
+    - deploy
+task:
+    stage: deploy
+    script:
+        - echo "Hello, $GITLAB_USER_LOGIN!"
