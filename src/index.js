@@ -5,6 +5,8 @@ canvas.width = innerWidth
 canvas.height = innerHeight
 
 const scoreEl = document.querySelector('#scoreEl')
+const modelEl = document.querySelector('#modelEl')
+const modelScoreEl = document.querySelector('#modelScoreEl')
 
 class Player {
     constructor(x, y, radius, color) {
@@ -175,6 +177,8 @@ function animate() {
         //player dies end game
         if (distance - player.radius - enemy.radius < 1) {
             cancelAnimationFrame(animationID)
+            modelEl.style.display = 'block'
+            modelScoreEl.innerHTML = score
             }
         for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
             const projectile = projectiles[projectileIndex]
