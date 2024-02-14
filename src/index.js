@@ -4,6 +4,8 @@ const context = canvas.getContext('2d')
 canvas.width = innerWidth
 canvas.height = innerHeight
 
+const scoreEl = document.querySelector('#scoreEl')
+
 class Player {
     constructor(x, y, radius, color) {
         this.x = x
@@ -136,6 +138,7 @@ function spawnEnemies() {
 
 //AnimationID for stopping the game when player dies
 let animationID
+let score = 0
 function animate() {
     animationID = requestAnimationFrame(animate)
     context.fillStyle = 'white'
@@ -178,6 +181,11 @@ function animate() {
            const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y)
            //enemy and projectile collision
            if (distance - enemy.radius - projectile.radius < 1) {
+
+            // score calculation
+            score += 1
+            scoreEl.innerHTML = score
+
             for (let i = 0; i < 8; i++) {
                 particles.push(new Particle(projectile.x, projectile.y, Math.random() * 2, enemy.color,
                     {x: (Math.random() - 0.5) * (Math.random() * 5),
