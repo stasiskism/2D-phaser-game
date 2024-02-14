@@ -5,9 +5,11 @@ canvas.width = innerWidth
 canvas.height = innerHeight
 
 const scoreEl = document.querySelector('#scoreEl')
-const modelEl = document.querySelector('#modelEl')
+const modelRestartEl = document.querySelector('#modelRestartEl')
 const modelScoreEl = document.querySelector('#modelScoreEl')
-const buttonEl = document.querySelector('#buttonEl')
+const buttonRestartEl = document.querySelector('#buttonRestartEl')
+const buttonStartEl = document.querySelector('#buttonStartEl')
+const modelStartEl = document.querySelector('#modelStartEl')
 class Player {
     constructor(x, y, radius, color) {
         this.x = x
@@ -186,7 +188,7 @@ function animate() {
         if (distance - player.radius - enemy.radius < 1) {
             cancelAnimationFrame(animationID)
             clearInterval(intervalID)
-            modelEl.style.display = 'block'
+            modelRestartEl.style.display = 'block'
             modelScoreEl.innerHTML = score
             }
         for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
@@ -227,12 +229,15 @@ addEventListener('click', (event) => {
     
 })
 
-buttonEl.addEventListener('click', () => {
+buttonRestartEl.addEventListener('click', () => {
     restart()
     animate()
     spawnEnemies()
-    modelEl.style.display = 'none'
+    modelRestartEl.style.display = 'none'
 })
 
-animate()
-spawnEnemies()
+buttonStartEl.addEventListener('click', () => {
+    animate()
+    spawnEnemies()
+    modelStartEl.style.display = 'none'
+})
