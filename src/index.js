@@ -146,15 +146,17 @@ function animate() {
     player.drawPlayer()
 
     // particle dissapearence
-    particles.forEach((particle, particleIndex) => {
+    for (let particleIndex = particles.length - 1; particleIndex >= 0; particleIndex--) {
+        const particle = particles[particleIndex]
         if (particle.alpha <= 0) {
             particles.splice(particleIndex, 1)
         } else {
         particle.update()
         }
-    })
+    }
 
-    projectiles.forEach((projectile, projectileIndex) => {
+    for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
+        const projectile = projectiles[projectileIndex]
         projectile.update()
 
         // deletion of projectiles when goes out of page border
@@ -162,25 +164,23 @@ function animate() {
             projectile.x - projectile.radius > canvas.width ||
             projectile.y + projectile.radius < 0 ||
             projectile.y - projectile.radius > canvas.height) {
-            setTimeout(() => {
             projectiles.splice(projectileIndex, 1) 
-            }, 0)
         }
-        
-    })
-    enemies.forEach((enemy, enemyIndex) => {
-        enemy.update()
+    }
 
+    for (let enemyIndex = enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
+        const enemy = enemies[enemyIndex]
+        enemy.update()
         const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y)
         //player dies end game
         if (distance - player.radius - enemy.radius < 1) {
             cancelAnimationFrame(animationID)
             }
-
-        projectiles.forEach((projectile, projectileIndex) => {
-           const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y)
-           //enemy and projectile collision
-           if (distance - enemy.radius - projectile.radius < 1) {
+        for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
+            const projectile = projectiles[projectileIndex]
+            const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y)
+            //enemy and projectile collision
+            if (distance - enemy.radius - projectile.radius < 1) {
 
             // score calculation
             score += 1
@@ -191,15 +191,12 @@ function animate() {
                     {x: (Math.random() - 0.5) * (Math.random() * 5),
                     y: (Math.random() - 0.5) * (Math.random() * 5)}))
             }
-            setTimeout(() => {
-                enemies.splice(enemyIndex, 1)
-                projectiles.splice(projectileIndex, 1)
-            }, 0)
             
+            enemies.splice(enemyIndex, 1)
+            projectiles.splice(projectileIndex, 1)
            }
-        });
-    })
-    
+        }
+    }
 }
 
 addEventListener('click', (event) => {
