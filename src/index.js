@@ -7,7 +7,7 @@ canvas.height = innerHeight
 const scoreEl = document.querySelector('#scoreEl')
 const modelEl = document.querySelector('#modelEl')
 const modelScoreEl = document.querySelector('#modelScoreEl')
-
+const buttonEl = document.querySelector('#buttonEl')
 class Player {
     constructor(x, y, radius, color) {
         this.x = x
@@ -101,16 +101,25 @@ class Particle {
 const x = canvas.width / 2
 const y = canvas.height /2
 
-const player = new Player(x, y, 30, 'pink')
+let player = new Player(x, y, 30, 'pink')
+let projectiles = []
+let enemies = []
+let particles = []
+let animationID
+let intervalID
+let score = 0
 
-const projectiles = []
-
-const enemies = []
-
-const particles = []
+function restart() {
+    player = new Player(x, y, 30, 'pink')
+    projectiles = []
+    enemies = []
+    particles = []
+    animationID
+    score = 0
+}
 
 function spawnEnemies() {
-    setInterval(() => {
+    intervalID = setInterval(() => {
         const radius = Math.random() * (30 - 6) + 6
 
         let x
@@ -139,8 +148,7 @@ function spawnEnemies() {
 }
 
 //AnimationID for stopping the game when player dies
-let animationID
-let score = 0
+
 function animate() {
     animationID = requestAnimationFrame(animate)
     context.fillStyle = 'white'
@@ -177,6 +185,7 @@ function animate() {
         //player dies end game
         if (distance - player.radius - enemy.radius < 1) {
             cancelAnimationFrame(animationID)
+            clearInterval(intervalID)
             modelEl.style.display = 'block'
             modelScoreEl.innerHTML = score
             }
@@ -216,6 +225,13 @@ addEventListener('click', (event) => {
 
     projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'red', velocity))
     
+})
+
+buttonEl.addEventListener('click', () => {
+    restart()
+    animate()
+    spawnEnemies()
+    modelEl.style.display = 'none'
 })
 
 animate()
