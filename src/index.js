@@ -118,6 +118,7 @@ function restart() {
     particles = []
     animationID
     score = 0
+    scoreEl.innerHTML = 0
 }
 
 function spawnEnemies() {
@@ -189,6 +190,7 @@ function animate() {
             cancelAnimationFrame(animationID)
             clearInterval(intervalID)
             modelRestartEl.style.display = 'block'
+            gsap.fromTo('#modelRestartEl', {scale: 0.8, opacity: 0}, {scale: 1, opacity: 1, ease: 'expo'})
             modelScoreEl.innerHTML = score
             }
         for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
@@ -228,16 +230,34 @@ addEventListener('click', (event) => {
     projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'red', velocity))
     
 })
-
+//RESTART GAME
 buttonRestartEl.addEventListener('click', () => {
     restart()
     animate()
     spawnEnemies()
-    modelRestartEl.style.display = 'none'
+    gsap.to('#modelRestartEl', {
+        opacity: 0,
+        scale: 0.6,
+        duration: 0.4,
+        ease: 'expo.in',
+        onComplete: () => {
+            modelRestartEl.style.display = 'none'
+        }
+    })
 })
 
 buttonStartEl.addEventListener('click', () => {
+    restart()
     animate()
     spawnEnemies()
-    modelStartEl.style.display = 'none'
+    //modelStartEl.style.display = 'none'
+    gsap.to('#modelStartEl', {
+        opacity: 0,
+        scale: 0.6,
+        duration: 0.4,
+        ease: 'expo.in',
+        onComplete: () => {
+            modelStartEl.style.display = 'none'
+        }
+    })
 })
