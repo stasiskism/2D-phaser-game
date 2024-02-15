@@ -26,105 +26,7 @@ const keys = {
     }
 }
 
-class Player {
-    constructor(x, y, radius, color) {
-        this.x = x
-        this.y = y
-        this.radius = radius
-        this.color = color
-        this.velocity = {
-            x: 0,
-            y: 0
-        }
-    }
-    drawPlayer() {
-        context.beginPath() 
-        context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-        context.fillStyle = this.color
-        context.fill()
-    }
-    update() {
-        this.y += this.velocity.y
-        this.x += this.velocity.x
-    }
-    }
-
-class Projectile {
-    constructor(x, y, radius, color, velocity) {
-        this.x = x
-        this.y = y
-        this.radius = radius
-        this.color = color
-        this.velocity = velocity
-    }
-    drawProjectile() {
-        context.beginPath() 
-        context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-        context.fillStyle = this.color
-        context.fill()
-    }
-
-    update() {
-        this.drawProjectile()
-        this.x = this.x + this.velocity.x
-        this.y = this.y + this.velocity.y
-    }
-    
-}
-
-class Enemy {
-    constructor(x, y, radius, color, velocity) {
-        this.x = x
-        this.y = y
-        this.radius = radius
-        this.color = color
-        this.velocity = velocity
-    }
-    drawEnemy() {
-        context.beginPath() 
-        context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-        context.fillStyle = this.color
-        context.fill()
-    }
-
-    update() {
-        this.drawEnemy()
-        this.x = this.x + this.velocity.x
-        this.y = this.y + this.velocity.y
-    }
-}
-
 const friction = 0.99
-class Particle {
-    constructor(x, y, radius, color, velocity) {
-        this.x = x
-        this.y = y
-        this.radius = radius
-        this.color = color
-        this.velocity = velocity
-        this.alpha = 1
-    }
-    drawParticle() {
-        context.save()
-        // fades away hit particles
-        context.globalAlpha = this.alpha
-        context.beginPath() 
-        context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
-        context.fillStyle = this.color
-        context.fill()
-        context.restore()
-    }
-
-    update() {
-        this.drawParticle()
-        this.velocity.x *= friction
-        this.velocity.y *= friction
-        this.x = this.x + this.velocity.x
-        this.y = this.y + this.velocity.y
-        this.alpha -= 0.01
-    }
-}
-
 const x = canvas.width / 2
 const y = canvas.height /2
 
@@ -258,8 +160,8 @@ function animate() {
 
 addEventListener('click', (event) => {
     const angle = Math.atan2(
-        event.clientY - canvas.height / 2,
-        event.clientX - canvas.width / 2
+        event.clientY - player.y,
+        event.clientX - player.x
     )
 
     const velocity = {
@@ -267,7 +169,7 @@ addEventListener('click', (event) => {
         y: Math.sin(angle) * 5
     }
 
-    projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'red', velocity))
+    projectiles.push(new Projectile(player.x, player.y, 5, 'red', velocity))
 })
 
 //RESTART GAME
