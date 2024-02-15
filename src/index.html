@@ -19,15 +19,21 @@
 <div>
     <div id="modelStartEl" style="position: absolute; color: white; background-color: black; top: 50%; transform: translate(-50%, -50%); left: 50%; padding: 16px; max-width: 500px; width: 100%; text-align: center; border-radius: 5px;">
         <h1>Game</h1>
-        <button id="buttonStartEl" style="font-size: 14px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Start Game</button>
+        <button id="buttonStartSingleplayerEl" style="font-size: 14px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Start SinglePlayer Game</button>
+        <button id="buttonStartMultiplayerEl" style="font-size: 14px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Start MultiPlayer Game</button>
     </div>
 </div>
 
 <canvas></canvas>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io()
+</script>
 <script src="./Enemy.js"></script>
 <script src="./Particle.js"></script>
 <script src="./Player.js"></script>
 <script src="./Projectile.js"></script>
-<script src="./index.js"></script>
+<script src="./Singleplayer.js"></script>
+<script src="./Multiplayer.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
