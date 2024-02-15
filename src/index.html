@@ -1,39 +1,47 @@
-<style>
-    body {
-        margin: 0;
-        font-family: sans-serif
-    }
-</style>
+<html>
+    <head>
+        <style>
+             body {
+                margin: 0;
+                font-family: sans-serif
+            }
+            canvas {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div style="position: absolute; padding: 8px; font-size: 14px; user-select: none;"><span>Score: </span><span id ="ScoreEl">0</span></div>
 
-<div style="position: absolute; padding: 8px; font-size: 14px; user-select: none;"><span>Score: </span><span id ="ScoreEl">0</span></div>
+        <div>
+            <div id="modelRestartEL" style="position: absolute; color: white; background-color: black; top: 50%; transform: translate(-50%, -50%); left: 50%; padding: 16px; max-width: 500px; width: 100%; text-align: center; border-radius: 5px; display: none">
+            <h1 style="font-size: 16px; color: grey">Game Over</h1>
+            <h1 id="modelScoreEl" style="font-size: 48px; margin-bottom: 0; margin-top: 8px">0</h1>
+            <p style="margin: 0; font-size: 14px; color: grey">Score</p>
+            <button id="buttonRestartEl" style="margin-top: 12px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Play Again</button>
+        </div>
+        </div>
 
-<div>
-    <div id="modelRestartEL" style="position: absolute; color: white; background-color: black; top: 50%; transform: translate(-50%, -50%); left: 50%; padding: 16px; max-width: 500px; width: 100%; text-align: center; border-radius: 5px; display: none">
-        <h1 style="font-size: 16px; color: grey">Game Over</h1>
-        <h1 id="modelScoreEl" style="font-size: 48px; margin-bottom: 0; margin-top: 8px">0</h1>
-        <p style="margin: 0; font-size: 14px; color: grey">Score</p>
-        <button id="buttonRestartEl" style="margin-top: 12px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Play Again</button>
-    </div>
-</div>
+        <div>
+            <div id="modelStartEl" style="position: absolute; color: white; background-color: black; top: 50%; transform: translate(-50%, -50%); left: 50%; padding: 16px; max-width: 500px; width: 100%; text-align: center; border-radius: 5px;">
+            <h1>Game</h1>
+            <button id="buttonStartSingleplayerEl" style="font-size: 14px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Start SinglePlayer Game</button>
+            <button id="buttonStartMultiplayerEl" style="font-size: 14px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Start MultiPlayer Game</button>
+            </div>
+        </div>
 
-<div>
-    <div id="modelStartEl" style="position: absolute; color: white; background-color: black; top: 50%; transform: translate(-50%, -50%); left: 50%; padding: 16px; max-width: 500px; width: 100%; text-align: center; border-radius: 5px;">
-        <h1>Game</h1>
-        <button id="buttonStartSingleplayerEl" style="font-size: 14px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Start SinglePlayer Game</button>
-        <button id="buttonStartMultiplayerEl" style="font-size: 14px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Start MultiPlayer Game</button>
-    </div>
-</div>
-
-<canvas></canvas>
-<script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io()
-</script>
-<script src="./Enemy.js"></script>
-<script src="./Particle.js"></script>
-<script src="./Player.js"></script>
-<script src="./Projectile.js"></script>
-<script src="./Singleplayer.js"></script>
-<script src="./Multiplayer.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-
+        <canvas></canvas>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+             const socket = io()
+        </script>
+        <script src="./Enemy.js"></script>
+        <script src="./Particle.js"></script>
+        <script src="./Player.js"></script>
+        <script src="./Projectile.js"></script>
+        <script src="./Singleplayer.js"></script>
+        <script src="./Multiplayer.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    </body>
+</html>

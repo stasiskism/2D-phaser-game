@@ -1,45 +1,37 @@
-
 const buttonStartMultiplayerEl = document.querySelector('#buttonStartMultiplayerEl')
 
-socket.on('updatePlayers', (BackendPlayers) => {
-    for (const id in BackendPlayers) {
-        const backendPlayer = BackendPlayers[id]
+
+//const devicePixelRatio = window.devicePixelRatio || 1
+
+socket.on('updatePlayers', (backEndPlayers) => {
+    for (const id in backEndPlayers) {
+        const backEndPlayer = backEndPlayers[id]
         
-        if (!players[id]) {
-            players[id] = new Player(backendPlayer.x, backendPlayer.y, 10, 'yellow')
+        if (!frontEndPlayers[id]) {
+            frontEndPlayers[id] = new Player({x: backEndPlayer.x, y: backEndPlayer.y, radius: 10, color: `hsl(${Math.random() * 360}, 100%, 50%)`})
+        } else {
+            // if a player already exists
+            frontEndPlayers[id].x = backEndPlayer.x
+            frontEndPlayers[id].y = backEndPlayer.y
         }
     }
 
-    for (const id in players) {
-        if (!BackendPlayers[id]) {
-            delete players[id]
+    for (const id in frontEndPlayers) {
+        if (!backEndPlayers[id]) {
+            delete frontEndPlayers[id]
         }
     }
-console.log(players)
 })
-const players = {}
+const frontEndPlayers = {}
 
 function animateMultiplayer() {
     animationID = requestAnimationFrame(animateMultiplayer)
     context.fillStyle = 'white'
     context.fillRect(0, 0, canvas.width, canvas.height)
-    for (const id in players) {
-        const player = players[id]
-        player.drawPlayer()
+    for (const id in frontEndPlayers) {
+        const frontEndPlayer = frontEndPlayers[id]
+        frontEndPlayer.drawPlayer()
     }
-    
-    //player movement
-    if (keys.right.pressed) {
-        player.velocity.x = 2
-    } else if (keys.left.pressed) {
-        player.velocity.x = -2
-    } else player.velocity.x = 0
-
-    if (keys.up.pressed) {
-        player.velocity.y = -2
-    } else if (keys.down.pressed) {
-        player.velocity.y = 2
-    } else player.velocity.y = 0
 }
 buttonStartMultiplayerEl.addEventListener('click', () => {
     animateMultiplayer()
@@ -53,3 +45,23 @@ buttonStartMultiplayerEl.addEventListener('click', () => {
         }
     })
 })
+
+const SPEED = 2
+setInterval(() => {
+    if (keys.left.pressed) {
+        frontEndPlayers[socket.id].x -= SPEED
+            socket.emit('keydown', 'a')
+    } 
+    if (keys.right.pressed) {
+        frontEndPlayers[socket.id].x += SPEED
+            socket.emit('keydown', 'd')
+    } 
+    if (keys.up.pressed) {
+        frontEndPlayers[socket.id].x -= SPEED
+            socket.emit('keydown', 'w')
+    } 
+    if (keys.down.pressed) {
+        frontEndPlayers[socket.id].x += SPEED
+            socket.emit('keydown', 's')
+    } 
+}, 15)

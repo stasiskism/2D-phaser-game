@@ -1,6 +1,10 @@
+
+
 const canvas = document.querySelector('canvas')
 const context = canvas.getContext('2d')
 
+// canvas.width = innerWidth * window.devicePixelRatio
+// canvas.height = innerHeight * window.devicePixelRatio
 canvas.width = innerWidth
 canvas.height = innerHeight
 
@@ -30,7 +34,7 @@ const friction = 0.99
 const x = canvas.width / 2
 const y = canvas.height /2
 
-const player = new Player(x, y, 30, 'pink')
+const player = new Player({x: x, y: y, radius: 30, color: 'pink'})
 const projectiles = []
 const enemies = []
 const particles = []
@@ -229,6 +233,7 @@ addEventListener('keydown', ({key}) => {
     }
 })
 addEventListener('keyup', ({key}) => {
+    if (!frontEndPlayers[socket.id]) return
     switch (key) {
         case ('a') :
             console.log('left')
