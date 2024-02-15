@@ -10,12 +10,32 @@ const modelScoreEl = document.querySelector('#modelScoreEl')
 const buttonRestartEl = document.querySelector('#buttonRestartEl')
 const buttonStartEl = document.querySelector('#buttonStartEl')
 const modelStartEl = document.querySelector('#modelStartEl')
+
+const keys = {
+    right: {
+        pressed: false
+    },
+    left: {
+        pressed: false
+    },
+    up: {
+        pressed: false
+    },
+    down: {
+        pressed: false
+    }
+}
+
 class Player {
     constructor(x, y, radius, color) {
         this.x = x
         this.y = y
         this.radius = radius
         this.color = color
+        this.velocity = {
+            x: 0,
+            y: 0
+        }
     }
     drawPlayer() {
         context.beginPath() 
@@ -23,7 +43,11 @@ class Player {
         context.fillStyle = this.color
         context.fill()
     }
-}
+    update() {
+        this.y += this.velocity.y
+        this.x += this.velocity.x
+    }
+    }
 
 class Projectile {
     constructor(x, y, radius, color, velocity) {
@@ -45,6 +69,7 @@ class Projectile {
         this.x = this.x + this.velocity.x
         this.y = this.y + this.velocity.y
     }
+    
 }
 
 class Enemy {
@@ -157,6 +182,21 @@ function animate() {
     context.fillStyle = 'white'
     context.fillRect(0, 0, canvas.width, canvas.height)
     player.drawPlayer()
+    player.update()
+
+    if (keys.right.pressed) {
+        player.velocity.x = 2
+    } else if (keys.left.pressed) {
+        player.velocity.x = -2
+    } else player.velocity.x = 0
+
+    if (keys.up.pressed) {
+        player.velocity.y = -2
+    } else if (keys.down.pressed) {
+        player.velocity.y = 2
+    } else player.velocity.y = 0
+  
+
 
     // particle dissapearence
     for (let particleIndex = particles.length - 1; particleIndex >= 0; particleIndex--) {
@@ -228,8 +268,8 @@ addEventListener('click', (event) => {
     }
 
     projectiles.push(new Projectile(canvas.width / 2, canvas.height / 2, 5, 'red', velocity))
-    
 })
+
 //RESTART GAME
 buttonRestartEl.addEventListener('click', () => {
     restart()
@@ -260,4 +300,45 @@ buttonStartEl.addEventListener('click', () => {
             modelStartEl.style.display = 'none'
         }
     })
+})
+
+addEventListener('keydown', ({key}) => {
+    switch (key) {
+        case ('a') :
+            console.log('left')
+            keys.left.pressed = true
+            break
+        case 'd':
+            console.log('right')
+            keys.right.pressed = true
+            break
+        case 'w':
+            console.log('up')
+            keys.up.pressed = true
+            break
+        case 's':
+            console.log('down')
+            keys.down.pressed = true
+            break
+    }
+})
+addEventListener('keyup', ({key}) => {
+    switch (key) {
+        case ('a') :
+            console.log('left')
+            keys.left.pressed = false
+            break
+        case 'd':
+            console.log('right')
+            keys.right.pressed = false
+            break
+        case 'w':
+            console.log('up')
+            keys.up.pressed = false
+            break
+        case 's':
+            console.log('down')
+            keys.down.pressed = false
+            break
+    }
 })
