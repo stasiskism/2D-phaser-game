@@ -2,10 +2,10 @@
 const canvas = document.querySelector('canvas')
 const context = canvas.getContext('2d')
 
-// canvas.width = innerWidth * window.devicePixelRatio
-// canvas.height = innerHeight * window.devicePixelRatio
-canvas.width = innerWidth
-canvas.height = innerHeight
+canvas.width = innerWidth * window.devicePixelRatio
+canvas.height = innerHeight * window.devicePixelRatio
+// canvas.width = innerWidth
+// canvas.height = innerHeight
 
 const scoreEl = document.querySelector('#scoreEl')
 const modelRestartEl = document.querySelector('#modelRestartEl')
@@ -172,13 +172,13 @@ addEventListener('click', (event) => {
     }
 
     const SingleplayerAngle = Math.atan2(
-        event.clientY - player.y,
-        event.clientX - player.x
+        event.clientY * window.devicePixelRatio - player.y,
+        event.clientX * window.devicePixelRatio - player.x
     )
 
     const MultiplayerAngle = Math.atan2(
-        event.clientY - playerPosition.y,
-        event.clientX - playerPosition.x
+        event.clientY * window.devicePixelRatio - playerPosition.y,
+        event.clientX * window.devicePixelRatio - playerPosition.x
     )
 
     const SingleplayerVelocity = {

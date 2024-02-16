@@ -1,21 +1,38 @@
 const buttonStartMultiplayerEl = document.querySelector('#buttonStartMultiplayerEl')
 
 
-//const devicePixelRatio = window.devicePixelRatio || 1
+const devicePixelRatio = window.devicePixelRatio || 1
 const frontEndPlayers = {}
 const frontEndProjectiles = {}
+
+socket.on('connect', () => {
+    socket.emit('initCanvas', {width: canvas.width, height: canvas.height, devicePixelRatio})
+})
 
 socket.on('updateProjectiles', (backEndProjectiles) => {
     for (const id in backEndProjectiles) {
         const backEndProjectile = backEndProjectiles[id]
 
         if (!frontEndProjectiles[id]) {
-            frontEndProjectiles[id] = new Projectile({x: backEndProjectile.x, y: backEndProjectile.y, radius: 5, color: 'red', velocity: backEndProjectile.velocity})
+            frontEndProjectiles[id] = new Projectile({
+                x: backEndProjectile.x,
+                y: backEndProjectile.y,
+                radius: 5,
+                color: frontEndPlayers[backEndProjectiles.playerID]?.color,
+                velocity: backEndProjectile.velocity
+            })
         } else {
             frontEndProjectiles[id].x += backEndProjectiles[id].velocity.x
             frontEndProjectiles[id].y += backEndProjectiles[id].velocity.y
         }
     }
+
+    for (const id in frontEndProjectiles) {
+        if (!backEndProjectiles[id]) {
+            delete frontEndProjectiles[id]
+        }
+    }
+
 })
 
 socket.on('updatePlayers', (backEndPlayers) => {

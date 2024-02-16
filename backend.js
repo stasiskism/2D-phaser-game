@@ -9,6 +9,9 @@ const io = new Server(server, {pingInterval: 2000, pingTimeout: 5000})
 
 const port = 3000
 
+const SPEED = 2
+const RADIUS = 10
+
 app.use(express.static('src'))
 
 app.get('/', (req, res) => {
@@ -33,6 +36,19 @@ io.on('connection', (socket) => {
 
   io.emit('updatePlayers', backEndPlayers)
 
+  socket.on('initCanvas', ({width, height, devicePixelRatio}) => {
+    backEndPlayers[socket.id].canvas = {
+      width,
+      height
+    }
+
+    backEndPlayers[socket.id].radius = RADIUS
+
+    if (devicePixelRatio > 1) {
+      backEndPlayers[socket.id].radius = 2 * RADIUS
+    }
+  })
+
   socket.on('disconnect', (reason) => {
     console.log(reason)
     delete backEndPlayers[socket.id]
@@ -56,7 +72,6 @@ io.on('connection', (socket) => {
     console.log(backEndProjectiles)
   })
 
-  const SPEED = 2
   socket.on('keydown', (keyCode) => {
     switch (keyCode) {
       case ('a') :
@@ -85,8 +100,33 @@ io.on('connection', (socket) => {
 setInterval(() => {
   //updating projectiles
   for (const id in backEndProjectiles) {
-    backEndProjectiles[id].x += backEndProjectiles[id].velocity.x
-    backEndProjectiles[id].y += backEndProjectiles[id].velocity.y
+    const backEndProjectile = backEndProjectiles[id]
+    backEndProjectile.x += backEndProjectile.velocity.x
+    backEndProjectile.y += backEndProjectile.velocity.y
+
+    const projectileRadius = 5
+    if (backEndProjectile.x - projectileRadius >= backEndPlayers[backEndProjectile.playerID]?.canvas?.width
+       ||backEndProjectile.x + projectileRadius <= 0
+        || backEndProjectile.y - projectileRadius >= backEndPlayers[backEndProjectile.playerID]?.canvas?.height
+         || backEndProjectile.y + projectileRadius <= 0) 
+         {
+          delete backEndProjectile
+          continue
+         }
+
+    for (const playerID in backEndPlayers) {
+      const backEndPlayer = backEndPlayers[playerID]
+      const distance = Math.hypot (backEndProjectile.x - backEndPlayer.x,
+        backEndProjectile.y - backEndPlayer.y)
+
+        if (distance < projectileRadius + backEndPlayer.radius && 
+          backEndProjectile.playerID !== playerID) {
+          delete backEndProjectiles[id]
+          delete backEndPlayers[playerID]
+          break
+        }
+    }
+
   }
 
   io.emit('updateProjectiles', backEndProjectiles)
