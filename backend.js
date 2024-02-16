@@ -26,7 +26,8 @@ io.on('connection', (socket) => {
     x: 500 * Math.random(),
     y: 500 * Math.random(),
     color: `hsl(${Math.random() * 360}, 100%, 50%)`,
-    radius: 10
+    radius: 10,
+    sequenceNumber: 0
     }
   
 
@@ -38,22 +39,19 @@ io.on('connection', (socket) => {
     io.emit('updatePlayers', backEndPlayers)
   })
   const SPEED = 2
-  socket.on('keydown', (keyCode) => {
-    switch (keyCode) {
+  socket.on('keydown', ({keycode, sequenceNumber}) => {
+    backEndPlayers[socket.id].sequenceNumber = sequenceNumber
+    switch (keycode) {
       case ('a') :
-          console.log('left')
           backEndPlayers[socket.id].x -= SPEED
           break
       case 'd':
-          console.log('right')
           backEndPlayers[socket.id].x += SPEED
           break
       case 'w':
-          console.log('up')
           backEndPlayers[socket.id].y -= SPEED
           break
       case 's':
-          console.log('down')
           backEndPlayers[socket.id].y += SPEED
           break
   }
