@@ -1,5 +1,4 @@
 
-
 const canvas = document.querySelector('canvas')
 const context = canvas.getContext('2d')
 
@@ -167,17 +166,33 @@ function animateSingleplayer() {
 }
 
 addEventListener('click', (event) => {
-    const angle = Math.atan2(
+    const playerPosition = {
+        x: frontEndPlayers[socket.id].x,
+        y: frontEndPlayers[socket.id].y
+    }
+
+    const SingleplayerAngle = Math.atan2(
         event.clientY - player.y,
         event.clientX - player.x
     )
 
-    const velocity = {
-        x: Math.cos(angle) * 5,
-        y: Math.sin(angle) * 5
+    const MultiplayerAngle = Math.atan2(
+        event.clientY - playerPosition.y,
+        event.clientX - playerPosition.x
+    )
+
+    const SingleplayerVelocity = {
+        x: Math.cos(SingleplayerAngle) * 5,
+        y: Math.sin(SingleplayerAngle) * 5
     }
 
-    projectiles.push(new Projectile(player.x, player.y, 5, 'red', velocity))
+    projectiles.push(new Projectile({x: player.x, y: player.y, radius: 5, color: 'red', velocity: SingleplayerVelocity}))
+    socket.emit('shoot', {
+        x: playerPosition.x,
+        y: playerPosition.y,
+        angle: MultiplayerAngle
+    })
+    //frontEndProjectiles.push(new Projectile({x: playerPosition.x, y: playerPosition.y, radius: 5, color: 'red', velocity: MultiplayerVelocity}))
 })
 
 //RESTART GAME

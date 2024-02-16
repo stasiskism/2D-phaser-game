@@ -2,36 +2,30 @@ const buttonStartMultiplayerEl = document.querySelector('#buttonStartMultiplayer
 
 
 //const devicePixelRatio = window.devicePixelRatio || 1
+const frontEndPlayers = {}
+const frontEndProjectiles = {}
+
+socket.on('updateProjectiles', (backEndProjectiles) => {
+    for (const id in backEndProjectiles) {
+        const backEndProjectile = backEndProjectiles[id]
+
+        if (!frontEndProjectiles[id]) {
+            frontEndProjectiles[id] = new Projectile({x: backEndProjectile.x, y: backEndProjectile.y, radius: 5, color: 'red', velocity: backEndProjectile.velocity})
+        } else {
+            frontEndProjectiles[id].x += backEndProjectiles[id].velocity.x
+            frontEndProjectiles[id].y += backEndProjectiles[id].velocity.y
+        }
+    }
+})
 
 socket.on('updatePlayers', (backEndPlayers) => {
     for (const id in backEndPlayers) {
         const backEndPlayer = backEndPlayers[id]
         
         if (!frontEndPlayers[id]) {
-            frontEndPlayers[id] = new Player({x: backEndPlayer.x, y: backEndPlayer.y, radius: 10, color: `hsl(${Math.random() * 360}, 100%, 50%)`})
+            frontEndPlayers[id] = new Player({x: backEndPlayer.x, y: backEndPlayer.y, radius: backEndPlayer.radius, color: backEndPlayer.color})
         } else {
-            if (id === socket.id) {
             // if a player already exists
-            frontEndPlayers[id].x = backEndPlayer.x
-            frontEndPlayers[id].y = backEndPlayer.y
-
-            const lastBackEndInputIndex = playerInputs.findIndex((input) => {
-
-                return backEndPlayer.sequenceNumber === input.sequenceNumber
-            })
-
-            if (lastBackEndInputIndex > -1) {
-                playerInputs.splice(0, lastBackEndInputIndex + 1)
-            
-
-                playerInputs.forEach(input => {
-                    frontEndPlayers[id].x += input.dx
-                    frontEndPlayers[id].y += input.dy
-            })
-            }
-
-        } else {
-            //for all other players
             frontEndPlayers[id].x = backEndPlayer.x
             frontEndPlayers[id].y = backEndPlayer.y
         }
@@ -42,17 +36,22 @@ socket.on('updatePlayers', (backEndPlayers) => {
             delete frontEndPlayers[id]
         }
     }
-}
 })
-const frontEndPlayers = {}
 
 function animateMultiplayer() {
     animationID = requestAnimationFrame(animateMultiplayer)
     context.fillStyle = 'white'
     context.fillRect(0, 0, canvas.width, canvas.height)
+
     for (const id in frontEndPlayers) {
         const frontEndPlayer = frontEndPlayers[id]
         frontEndPlayer.drawPlayer()
+        frontEndPlayer.update()
+    }
+
+    for (const id in frontEndProjectiles) {
+        const frontEndProjectile = frontEndProjectiles[id]
+        frontEndProjectile.drawProjectile()
     }
 }
 buttonStartMultiplayerEl.addEventListener('click', () => {
@@ -69,31 +68,21 @@ buttonStartMultiplayerEl.addEventListener('click', () => {
 })
 
 const SPEED = 2
-const playerInputs = []
-let sequenceNumber = 0
 setInterval(() => {
     if (keys.left.pressed) {
-        sequenceNumber++
-        playerInputs.push({sequenceNumber, dx: -SPEED, dy: 0})
         frontEndPlayers[socket.id].x -= SPEED
-            socket.emit('keydown', {keycode: 'a', sequenceNumber})
+            socket.emit('keydown', 'a')
     } 
     if (keys.right.pressed) {
-        sequenceNumber++
-        playerInputs.push({sequenceNumber, dx: SPEED, dy: 0})
         frontEndPlayers[socket.id].x += SPEED
-            socket.emit('keydown', {keycode: 'd', sequenceNumber})
+            socket.emit('keydown', 'd')
     } 
     if (keys.up.pressed) {
-        sequenceNumber++
-        playerInputs.push({sequenceNumber, dx: 0, dy: -SPEED})
         frontEndPlayers[socket.id].x -= SPEED
-            socket.emit('keydown', {keycode: 'w', sequenceNumber})
+            socket.emit('keydown', 'w')
     } 
     if (keys.down.pressed) {
-        sequenceNumber++
-        playerInputs.push({sequenceNumber, dx: 0, dy: SPEED})
         frontEndPlayers[socket.id].x += SPEED
-            socket.emit('keydown', {keycode: 's', sequenceNumber})
+            socket.emit('keydown', 's')
     } 
 }, 15)
