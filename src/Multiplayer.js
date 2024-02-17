@@ -5,10 +5,14 @@ const devicePixelRatio = window.devicePixelRatio || 1
 const frontEndPlayers = {}
 const frontEndProjectiles = {}
 
-socket.on('connect', () => {
+
+function connectServer() {
+    socket.on('connect', () => {
     socket.emit('initCanvas', {width: canvas.width, height: canvas.height, devicePixelRatio})
 })
+}
 
+function updateProjectiles() {
 socket.on('updateProjectiles', (backEndProjectiles) => {
     for (const id in backEndProjectiles) {
         const backEndProjectile = backEndProjectiles[id]
@@ -34,7 +38,9 @@ socket.on('updateProjectiles', (backEndProjectiles) => {
     }
 
 })
+}
 
+function updatePlayers() {
 socket.on('updatePlayers', (backEndPlayers) => {
     for (const id in backEndPlayers) {
         const backEndPlayer = backEndPlayers[id]
@@ -54,6 +60,7 @@ socket.on('updatePlayers', (backEndPlayers) => {
         }
     }
 })
+}
 
 function animateMultiplayer() {
     animationID = requestAnimationFrame(animateMultiplayer)
@@ -72,6 +79,9 @@ function animateMultiplayer() {
     }
 }
 buttonStartMultiplayerEl.addEventListener('click', () => {
+    connectServer()
+    updatePlayers()
+    updateProjectiles()
     animateMultiplayer()
     gsap.to('#modelStartEl', {
         opacity: 0,
@@ -86,6 +96,7 @@ buttonStartMultiplayerEl.addEventListener('click', () => {
 
 const SPEED = 2
 setInterval(() => {
+    if (!frontEndPlayers[socket.id]) return
     if (keys.left.pressed) {
         frontEndPlayers[socket.id].x -= SPEED
             socket.emit('keydown', 'a')

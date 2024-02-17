@@ -23,7 +23,8 @@ const backEndPlayers = {}
 const backEndProjectiles = {}
 let projectileID = 0
 
-io.on('connection', (socket) => {
+
+io.on('connect', (socket) => {
   console.log('a user connected')
   //create a player with random player id
   backEndPlayers[socket.id] = {
@@ -100,27 +101,26 @@ io.on('connection', (socket) => {
 setInterval(() => {
   //updating projectiles
   for (const id in backEndProjectiles) {
-    const backEndProjectile = backEndProjectiles[id]
-    backEndProjectile.x += backEndProjectile.velocity.x
-    backEndProjectile.y += backEndProjectile.velocity.y
+    backEndProjectiles[id].x += backEndProjectiles[id].velocity.x
+    backEndProjectiles[id].y += backEndProjectiles[id].velocity.y
 
     const projectileRadius = 5
-    if (backEndProjectile.x - projectileRadius >= backEndPlayers[backEndProjectile.playerID]?.canvas?.width
-       ||backEndProjectile.x + projectileRadius <= 0
-        || backEndProjectile.y - projectileRadius >= backEndPlayers[backEndProjectile.playerID]?.canvas?.height
-         || backEndProjectile.y + projectileRadius <= 0) 
+    if (backEndProjectiles[id].x - projectileRadius >= backEndPlayers[backEndProjectiles[id].playerID]?.canvas?.width
+       ||backEndProjectiles[id].x + projectileRadius <= 0
+        || backEndProjectiles[id].y - projectileRadius >= backEndPlayers[backEndProjectiles[id].playerID]?.canvas?.height
+         || backEndProjectiles[id].y + projectileRadius <= 0) 
          {
-          delete backEndProjectile
+          delete backEndProjectiles[id]
           continue
          }
 
     for (const playerID in backEndPlayers) {
       const backEndPlayer = backEndPlayers[playerID]
-      const distance = Math.hypot (backEndProjectile.x - backEndPlayer.x,
-        backEndProjectile.y - backEndPlayer.y)
+      const distance = Math.hypot (backEndProjectiles[id].x - backEndPlayer.x,
+        backEndProjectiles[id].y - backEndPlayer.y)
 
         if (distance < projectileRadius + backEndPlayer.radius && 
-          backEndProjectile.playerID !== playerID) {
+          backEndProjectiles[id].playerID !== playerID) {
           delete backEndProjectiles[id]
           delete backEndPlayers[playerID]
           break

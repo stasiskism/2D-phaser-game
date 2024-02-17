@@ -166,32 +166,32 @@ function animateSingleplayer() {
 }
 
 addEventListener('click', (event) => {
+    if (frontEndPlayers[socket.id]) {
     const playerPosition = {
         x: frontEndPlayers[socket.id].x,
         y: frontEndPlayers[socket.id].y
     }
-
-    const SingleplayerAngle = Math.atan2(
-        event.clientY * window.devicePixelRatio - player.y,
-        event.clientX * window.devicePixelRatio - player.x
-    )
-
     const MultiplayerAngle = Math.atan2(
         event.clientY * window.devicePixelRatio - playerPosition.y,
         event.clientX * window.devicePixelRatio - playerPosition.x
     )
-
+    socket.emit('shoot', {
+            x: playerPosition.x,
+            y: playerPosition.y,
+            angle: MultiplayerAngle
+        })
+    } else {
+    const SingleplayerAngle = Math.atan2(
+        event.clientY * window.devicePixelRatio - player.y,
+        event.clientX * window.devicePixelRatio - player.x
+    )
     const SingleplayerVelocity = {
         x: Math.cos(SingleplayerAngle) * 5,
         y: Math.sin(SingleplayerAngle) * 5
     }
-
     projectiles.push(new Projectile({x: player.x, y: player.y, radius: 5, color: 'red', velocity: SingleplayerVelocity}))
-    socket.emit('shoot', {
-        x: playerPosition.x,
-        y: playerPosition.y,
-        angle: MultiplayerAngle
-    })
+    }
+    
     //frontEndProjectiles.push(new Projectile({x: playerPosition.x, y: playerPosition.y, radius: 5, color: 'red', velocity: MultiplayerVelocity}))
 })
 
@@ -228,6 +228,7 @@ buttonStartSingleplayerEl.addEventListener('click', () => {
 })
 
 addEventListener('keydown', ({key}) => {
+    //if (!frontEndPlayers[socket.id]) return UZKOMENTUOTA KAD VEIKTU SINGLEPLAYERIS
     switch (key) {
         case ('a') :
             console.log('left')
@@ -248,7 +249,7 @@ addEventListener('keydown', ({key}) => {
     }
 })
 addEventListener('keyup', ({key}) => {
-    if (!frontEndPlayers[socket.id]) return
+    //if (!frontEndPlayers[socket.id]) return
     switch (key) {
         case ('a') :
             console.log('left')
@@ -268,3 +269,4 @@ addEventListener('keyup', ({key}) => {
             break
     }
 })
+
