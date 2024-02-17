@@ -40,7 +40,7 @@ const particles = []
 let animationID
 let intervalID
 let score = 0
-
+console.log(animationID)
 function restart() {
     player
     projectiles
@@ -83,6 +83,7 @@ function spawnEnemies() {
 //AnimationID for stopping the game when player dies
 
 function animateSingleplayer() {
+    console.log(animationID)
     animationID = requestAnimationFrame(animateSingleplayer)
     context.fillStyle = 'white'
     context.fillRect(0, 0, canvas.width, canvas.height)
@@ -165,6 +166,7 @@ function animateSingleplayer() {
     }
 }
 
+
 addEventListener('click', (event) => {
     if (frontEndPlayers[socket.id]) {
     const playerPosition = {
@@ -212,6 +214,7 @@ buttonRestartEl.addEventListener('click', () => {
 })
 //Start singleplayer
 buttonStartSingleplayerEl.addEventListener('click', () => {
+    document.querySelector("#displayScore").style.display = 'block'
     restart()
     animateSingleplayer()
     spawnEnemies()

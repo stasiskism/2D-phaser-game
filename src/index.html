@@ -12,7 +12,9 @@
         </style>
     </head>
     <body>
-        <div style="position: absolute; padding: 8px; font-size: 14px; user-select: none;"><span>Score: </span><span id ="ScoreEl">0</span></div>
+        <div id="displayScore" style="position: absolute; padding: 8px; font-size: 14px; user-select: none; display: none">
+             <span>Score: </span><span id ="ScoreEl">0</span> 
+        </div>
 
         <div>
             <div id="modelRestartEL" style="position: absolute; color: white; background-color: black; top: 50%; transform: translate(-50%, -50%); left: 50%; padding: 16px; max-width: 500px; width: 100%; text-align: center; border-radius: 5px; display: none">
@@ -31,7 +33,11 @@
             </div>
         </div>
 
-        <div style="position: absolute; padding: 8px; font-size: 14px; user-select: none;">Leaderboard</div>
+        <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 14px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white; display: none">
+            <div style="margin-bottom: 8px">Leaderboard</div>
+            <div id="playerLabels">
+            </div>
+        </div>
 
         <canvas></canvas>
         <script src="/socket.io/socket.io.js"></script>

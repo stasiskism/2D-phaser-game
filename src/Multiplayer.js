@@ -5,6 +5,7 @@ const devicePixelRatio = window.devicePixelRatio || 1
 const frontEndPlayers = {}
 const frontEndProjectiles = {}
 
+let multiplayerAnimationID
 
 function connectServer() {
     socket.on('connect', () => {
@@ -47,23 +48,47 @@ socket.on('updatePlayers', (backEndPlayers) => {
         
         if (!frontEndPlayers[id]) {
             frontEndPlayers[id] = new Player({x: backEndPlayer.x, y: backEndPlayer.y, radius: backEndPlayer.radius, color: backEndPlayer.color})
+            document.querySelector('#playerLabels').innerHTML += `<div data-id = "${id}" data-score="${backEndPlayer.score}">${id}: ${backEndPlayer.score}</div>`
         } else {
+            document.querySelector(`div[data-id="${id}"]`).innerHTML = `${id}: ${backEndPlayer.score}`
+
+            document.querySelector(`div[data-id="${id}"]`).setAttribute('data-score', backEndPlayer.score)
+            
+            //sorts the leaderboard based on the score
+            const parentDiv = document.querySelector('#playerLabels')
+            const childDivs = Array.from(parentDiv.querySelectorAll('div'))
+            childDivs.sort((first, second) => {
+               const scoreFirst = Number(first.getAttribute('data-score'))
+               const scoreSecond = Number(second.getAttribute('data-score'))
+                return scoreSecond - scoreFirst
+            })
+            //removes old elements
+            childDivs.forEach(div => {
+                parentDiv.removeChild(div)
+            })
+            //adds sorted elements
+            childDivs.forEach(div => {
+                parentDiv.appendChild(div)
+            })
+
             // if a player already exists
             frontEndPlayers[id].x = backEndPlayer.x
             frontEndPlayers[id].y = backEndPlayer.y
         }
     }
-
+    // deleting front end players
     for (const id in frontEndPlayers) {
         if (!backEndPlayers[id]) {
             delete frontEndPlayers[id]
+            const divToDelete = document.querySelector(`div[data-id="${id}"]`)
+            divToDelete.parentNode.removeChild(divToDelete)
         }
     }
 })
 }
 
 function animateMultiplayer() {
-    animationID = requestAnimationFrame(animateMultiplayer)
+    multiplayerAnimationID = requestAnimationFrame(animateMultiplayer)
     context.fillStyle = 'white'
     context.fillRect(0, 0, canvas.width, canvas.height)
 
@@ -79,6 +104,7 @@ function animateMultiplayer() {
     }
 }
 buttonStartMultiplayerEl.addEventListener('click', () => {
+    document.querySelector('#displayLeaderboard').style.display = 'block'
     connectServer()
     updatePlayers()
     updateProjectiles()
