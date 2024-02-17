@@ -1,5 +1,6 @@
 const buttonStartMultiplayerEl = document.querySelector('#buttonStartMultiplayerEl')
-
+const multiStart = document.querySelector('#multiStart')
+const buttonStartGame = document.querySelector('#startGame')
 
 const devicePixelRatio = window.devicePixelRatio || 1
 const frontEndPlayers = {}
@@ -7,11 +8,6 @@ const frontEndProjectiles = {}
 
 let multiplayerAnimationID
 
-function connectServer() {
-    socket.on('connect', () => {
-    socket.emit('initCanvas', {width: canvas.width, height: canvas.height, devicePixelRatio})
-})
-}
 
 function updateProjectiles() {
 socket.on('updateProjectiles', (backEndProjectiles) => {
@@ -48,9 +44,9 @@ socket.on('updatePlayers', (backEndPlayers) => {
         
         if (!frontEndPlayers[id]) {
             frontEndPlayers[id] = new Player({x: backEndPlayer.x, y: backEndPlayer.y, radius: backEndPlayer.radius, color: backEndPlayer.color})
-            document.querySelector('#playerLabels').innerHTML += `<div data-id = "${id}" data-score="${backEndPlayer.score}">${id}: ${backEndPlayer.score}</div>`
+            document.querySelector('#playerLabels').innerHTML += `<div data-id = "${id}" data-score="${backEndPlayer.score}">${backEndPlayer.username}: ${backEndPlayer.score}</div>`
         } else {
-            document.querySelector(`div[data-id="${id}"]`).innerHTML = `${id}: ${backEndPlayer.score}`
+            document.querySelector(`div[data-id="${id}"]`).innerHTML = `${backEndPlayer.username}: ${backEndPlayer.score}`
 
             document.querySelector(`div[data-id="${id}"]`).setAttribute('data-score', backEndPlayer.score)
             
@@ -82,6 +78,11 @@ socket.on('updatePlayers', (backEndPlayers) => {
             delete frontEndPlayers[id]
             const divToDelete = document.querySelector(`div[data-id="${id}"]`)
             divToDelete.parentNode.removeChild(divToDelete)
+            if (id === socket.id) {
+                console.log(id)
+                //multiStart.style.display = 'block';
+                document.querySelector('#usernameForm').style.display = 'block'
+            }
         }
     }
 })
@@ -104,11 +105,6 @@ function animateMultiplayer() {
     }
 }
 buttonStartMultiplayerEl.addEventListener('click', () => {
-    document.querySelector('#displayLeaderboard').style.display = 'block'
-    connectServer()
-    updatePlayers()
-    updateProjectiles()
-    animateMultiplayer()
     gsap.to('#modelStartEl', {
         opacity: 0,
         scale: 0.6,
@@ -118,6 +114,37 @@ buttonStartMultiplayerEl.addEventListener('click', () => {
             modelStartEl.style.display = 'none'
         }
     })
+    multiStart.style.display = 'block';
+    document.querySelector('#usernameForm').addEventListener('submit', (event) => {
+        
+        if (document.querySelector('#usernameInput').value) {
+        event.preventDefault()
+        socket.emit('initGame',
+        {username: document.querySelector('#usernameInput').value,
+        width: canvas.width, height: canvas.height, devicePixelRatio})
+        document.querySelector('#usernameForm').style.display = 'none'
+        document.querySelector('#displayLeaderboard').style.display = 'block'
+        updatePlayers()
+        updateProjectiles()
+        animateMultiplayer()
+        }
+
+    })
+
+
+    //document.querySelector('#startGame').style.display = 'block'
+    // buttonStartGame.addEventListener('click', () => {
+    //     gsap.to('#multiStart', {
+    //         opacity: 0,
+    //         scale: 0.6,
+    //         duration: 0.4,
+    //         ease: 'expo.in',
+    //         onComplete: () => {
+    //             multiStart.style.display = 'none'
+    //         }
+    //     })
+        
+  //  })
 })
 
 const SPEED = 2

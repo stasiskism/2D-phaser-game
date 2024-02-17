@@ -7,7 +7,7 @@ const server = http.createServer(app)
 const { Server } = require('socket.io')
 const io = new Server(server, {pingInterval: 2000, pingTimeout: 5000})
 
-const port = 3000
+const port = 443
 
 const SPEED = 2
 const RADIUS = 10
@@ -27,29 +27,9 @@ let projectileID = 0
 io.on('connect', (socket) => {
   console.log('a user connected')
   //create a player with random player id
-  backEndPlayers[socket.id] = {
-    x: 500 * Math.random(),
-    y: 500 * Math.random(),
-    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
-    radius: 10,
-    score: 0
-    }
   
 
   io.emit('updatePlayers', backEndPlayers)
-
-  socket.on('initCanvas', ({width, height, devicePixelRatio}) => {
-    backEndPlayers[socket.id].canvas = {
-      width,
-      height
-    }
-
-    backEndPlayers[socket.id].radius = RADIUS
-
-    if (devicePixelRatio > 1) {
-      backEndPlayers[socket.id].radius = 2 * RADIUS
-    }
-  })
 
   socket.on('disconnect', (reason) => {
     console.log(reason)
@@ -71,31 +51,48 @@ io.on('connect', (socket) => {
       //find out who shot what
       playerID: socket.id
     }
-    console.log(backEndProjectiles)
   })
 
   socket.on('keydown', (keyCode) => {
     switch (keyCode) {
       case ('a') :
-          console.log('left')
           backEndPlayers[socket.id].x -= SPEED
           break
       case 'd':
-          console.log('right')
           backEndPlayers[socket.id].x += SPEED
           break
       case 'w':
-          console.log('up')
           backEndPlayers[socket.id].y -= SPEED
           break
       case 's':
-          console.log('down')
           backEndPlayers[socket.id].y += SPEED
           break
   }
   })
 
   console.log(backEndPlayers)
+
+  socket.on('initGame', ({username, width, height, devicePixelRatio}) => {
+    backEndPlayers[socket.id] = {
+      x: 500 * Math.random(),
+      y: 500 * Math.random(),
+      color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+      radius: 10,
+      score: 0,
+      username
+      }
+      //Initializing canvas
+      backEndPlayers[socket.id].canvas = {
+        width,
+        height
+      }
+  
+      backEndPlayers[socket.id].radius = RADIUS
+  
+      if (devicePixelRatio > 1) {
+        backEndPlayers[socket.id].radius = 2 * RADIUS
+      }
+  })
 })
 
 //back end tick rate
