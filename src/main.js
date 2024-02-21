@@ -1,5 +1,9 @@
 /* global Phaser */
 
+import Scene1 from './scene1.js'
+import MainMenu from './MainMenu.js'
+import GameScene from './GameScene.js'
+
 const config = {
     type: Phaser.AUTO,
     width: 1920,
@@ -18,3 +22,9 @@ const config = {
 }
 
 const game = new Phaser.Game(config)
+
+game.scene.add('scene1', Scene1)
+game.scene.add('mainMenu', MainMenu)
+game.scene.add('gameScene', GameScene)
+
+game.scene.start('scene1')
