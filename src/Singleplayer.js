@@ -1,7 +1,6 @@
 /* global Phaser */
 
 class Singleplayer extends Phaser.Scene {
-
   constructor() {
       super({ key: 'Singleplayer'});
   }
@@ -19,6 +18,7 @@ class Singleplayer extends Phaser.Scene {
     }
 
   create () {
+    this.input.on('pointerdown', this.fireBullet, this);
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
@@ -29,9 +29,9 @@ class Singleplayer extends Phaser.Scene {
     this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-
     this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'player')
     this.player.setCollideWorldBounds(true);
+    this.interval
     this.intervalID
     this.bullets = []
     this.enemies = []
@@ -58,15 +58,6 @@ class Singleplayer extends Phaser.Scene {
       this.player.setVelocityY(keyInputs.up.isDown || this.w.isDown ? -300 : 300);
     else this.player.setVelocityY(0);
 
-    //player shooting
-    if (this.input.activePointer.isDown) {
-      const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x, this.input.activePointer.y)
-      const velocity = new Phaser.Math.Vector2(300 * Math.cos(angle), 300 * Math.sin(angle))
-      this.bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet')
-      this.bullet.setScale(0.1)
-      this.bullet.setVelocity(velocity.x, velocity.y)
-      this.bullets.push(this.bullet)
-  }
     //bullets should be deleted that go out of the screen
     for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
         const bullet = this.bullets[bulletIndex]
@@ -74,8 +65,11 @@ class Singleplayer extends Phaser.Scene {
         if (bullet.x < 0 ||
             bullet.x > this.cameras.main.width ||
             bullet.y  < 0 ||
-            bullet.y  > this.cameras.main.height) {
-            this.bullets.splice(bulletIndex, 1) }
+            bullet.y  > this.cameras.main.height) 
+            {
+            this.bullets.splice(bulletIndex, 1)
+            bullet.destroy()
+            }
 
     }
 
@@ -85,12 +79,45 @@ class Singleplayer extends Phaser.Scene {
       const enemy = this.enemies[enemyIndex]
       const distance = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y)
       console.log(distance)
-      //player dies end game
+      //player dies end game change distance for more accurate collision
       if (distance < 50) {
-          clearInterval(this.intervalID)
           this.scene.start('Restart')
           }
-    }
+    
+
+    //player bullet and enemy collision
+    for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
+      const bullet = this.bullets[bulletIndex]
+      const distance = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y)
+      
+      if (distance < 50) {
+
+
+
+      // for (let i = 0; i < 8; i++) {
+      //     particles.push(new Particle(projectile.x, projectile.y, Math.random() * 2, enemy.color,
+      //         {x: (Math.random() - 0.5) * (Math.random() * 5),
+      //         y: (Math.random() - 0.5) * (Math.random() * 5)}))
+      // }
+      
+      this.enemies.splice(enemyIndex, 1);
+      enemy.destroy()
+      this.bullets.splice(bulletIndex, 1);
+      bullet.destroy()
+     }
+  }
+}
+}
+
+fireBullet() {
+
+    const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x, this.input.activePointer.y)
+    const velocity = new Phaser.Math.Vector2(300 * Math.cos(angle), 300 * Math.sin(angle))
+    this.bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet')
+    this.bullet.setScale(0.1)
+    this.bullet.setVelocity(velocity.x, velocity.y)
+    this.bullets.push(this.bullet)
+
 }
 
   spawnEnemies() {
