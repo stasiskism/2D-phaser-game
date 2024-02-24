@@ -1,8 +1,11 @@
 /* global Phaser */
 
 class Singleplayer extends Phaser.Scene {
+
   constructor() {
       super({ key: 'Singleplayer'});
+      this.score = 0
+      this.scoreText
   }
 
   init (data) {
@@ -18,11 +21,11 @@ class Singleplayer extends Phaser.Scene {
     }
 
   create () {
-    this.input.on('pointerdown', this.fireBullet, this);
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
     this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
+    this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
 
     //player movement
     this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -31,11 +34,14 @@ class Singleplayer extends Phaser.Scene {
     this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'player')
     this.player.setCollideWorldBounds(true);
+
     this.interval
     this.intervalID
     this.bullets = []
     this.enemies = []
+    //for everything else to load we need to delay the spawning of enemies
     this.time.delayedCall(500, this.spawnEnemies, [], this);
+    this.input.on('pointerdown', this.fireBullet, this);
   }
 
   update () {
@@ -78,10 +84,10 @@ class Singleplayer extends Phaser.Scene {
     for (let enemyIndex = this.enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
       const enemy = this.enemies[enemyIndex]
       const distance = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y)
-      console.log(distance)
       //player dies end game change distance for more accurate collision
       if (distance < 50) {
-          this.scene.start('Restart')
+          clearInterval(this.intervalID)
+          this.scene.start('Restart', {score: this.score})
           }
     
 
@@ -90,16 +96,9 @@ class Singleplayer extends Phaser.Scene {
       const bullet = this.bullets[bulletIndex]
       const distance = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y)
       
-      if (distance < 50) {
-
-
-
-      // for (let i = 0; i < 8; i++) {
-      //     particles.push(new Particle(projectile.x, projectile.y, Math.random() * 2, enemy.color,
-      //         {x: (Math.random() - 0.5) * (Math.random() * 5),
-      //         y: (Math.random() - 0.5) * (Math.random() * 5)}))
-      // }
-      
+      if (distance < 50) {    
+      this.score += 1
+      this.scoreText.setText('Score: ' + this.score);
       this.enemies.splice(enemyIndex, 1);
       enemy.destroy()
       this.bullets.splice(bulletIndex, 1);
@@ -110,14 +109,12 @@ class Singleplayer extends Phaser.Scene {
 }
 
 fireBullet() {
-
     const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x, this.input.activePointer.y)
     const velocity = new Phaser.Math.Vector2(300 * Math.cos(angle), 300 * Math.sin(angle))
     this.bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet')
     this.bullet.setScale(0.1)
     this.bullet.setVelocity(velocity.x, velocity.y)
     this.bullets.push(this.bullet)
-
 }
 
   spawnEnemies() {

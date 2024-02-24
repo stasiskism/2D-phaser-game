@@ -7,6 +7,7 @@ class Restart extends Phaser.Scene {
 
     init (data) {
         this.cameras.main.setBackgroundColor('#ffffff')
+        this.score = data.score
     }
 
     preload () {
@@ -14,16 +15,18 @@ class Restart extends Phaser.Scene {
         this.load.image('restartButton', 'assets/pngegg.png')
     }
 
-    create (data) {
+    create () {
+      console.log(this.score)
       const centerX = this.cameras.main.width / 2;
       const centerY = this.cameras.main.height / 2;
       this.restart = this.add.sprite(centerX, centerY, 'dead');
       this.restartButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'restartButton')
+    //   this.scoreText = this.add.text(16, 16, 'Score: ' + this.score, { fontSize: '32px', fill: '#ffffff' });
       this.restartButton.setInteractive({ useHandCursor: true })
       this.restartButton.on('pointerdown', () => this.clickRestartButton())
     }
 
-    update (time, delta) {
+    update () {
 
     }
     clickRestartButton() {
