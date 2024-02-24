@@ -19,7 +19,6 @@ class Singleplayer extends Phaser.Scene {
     }
 
   create () {
-    
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
@@ -88,8 +87,8 @@ class Singleplayer extends Phaser.Scene {
       console.log(distance)
       //player dies end game
       if (distance < 50) {
-          this.scene.remove('Singleplayer');
           clearInterval(this.intervalID)
+          this.scene.start('Restart')
           }
     }
 }
@@ -111,6 +110,7 @@ class Singleplayer extends Phaser.Scene {
       this.enemies.push(enemy)
     }, 1000)
   }
+
 }
 
 export default Singleplayer
