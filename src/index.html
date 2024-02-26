@@ -1,105 +1,12 @@
-<html>
-    <head>
-        <style>
-            body {
-                -webkit-font-smoothing: antialiased;
-                -moz-osx-font-smoothing: grayscale;
-                text-rendering: optimizeLegibility;
-                margin: 0;
-                font-family: sans-serif
-            }
-            canvas {
-                width: 100%;
-                height: 100%;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="displayScore" style="position: absolute; padding: 8px; font-size: 14px; user-select: none; display: none">
-             <span>Score: </span><span id ="ScoreEl">0</span> 
-        </div>
-
-        <div>
-            <div id="modelRestartEL" style="position: absolute; color: white; background-color: black; top: 50%; transform: translate(-50%, -50%); left: 50%; padding: 16px; max-width: 500px; width: 100%; text-align: center; border-radius: 5px; display: none">
-            <h1 style="font-size: 16px; color: grey">Game Over</h1>
-            <h1 id="modelScoreEl" style="font-size: 48px; margin-bottom: 0; margin-top: 8px">0</h1>
-            <p style="margin: 0; font-size: 14px; color: grey">Score</p>
-            <button id="buttonRestartEl" style="margin-top: 12px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Play Again</button>
-            </div>
-        </div>
-
-        <div>
-            <div id="modelStartEl" style="position: absolute; color: white; background-color: black; top: 50%; transform: translate(-50%, -50%); left: 50%; padding: 16px; max-width: 500px; width: 100%; text-align: center; border-radius: 5px;">
-                <h1>Game</h1>
-                <button id="buttonStartSingleplayerEl" style="font-size: 14px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Singleplayer Mode</button>
-                <button id="buttonStartMultiplayerEl" style="font-size: 14px; background-color: white; border: none; color: black; padding: 8px 16px; border-radius: 5px; cursor: pointer">Multiplayer Mode</button>
-            </div>
-        </div>
-        <div
-        id="multiStart" style="
-          align-items: center;
-          justify-content: center;
-          position: absolute;
-          top: 50%; transform: translate(-50%, -50%); left: 50%;
-          display: none
-        "
-      >
-        <form id="usernameForm">
-          <div>
-            <input
-              id="usernameInput"
-              type="text"
-              placeholder="Username"
-              style="
-                padding: 12px;
-                border-radius: 20px;
-                border: none;
-                background: #475569;
-                color: #cbd5e1;
-              "
-            />
-          </div>
-          <div style="text-align: center; margin-top: 8px">
-            <button
-              style="
-                padding: 8px 20px;
-                border-radius: 100px;
-                border: none;
-                background-image: linear-gradient(
-                  to right,
-                  rgb(6, 182, 212),
-                  rgb(59, 130, 246)
-                );
-                color: white;
-                cursor: pointer;
-              "
-            >
-              Start!
-            </button>
-          </div>
-        </form>
-      </div>
-      <!-- username input end -->
-
-        <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 14px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white; display: none">
-            <div style="margin-bottom: 8px">Leaderboard</div>
-            <div id="playerLabels">
-            </div>
-        </div>
-
-        <canvas></canvas>
-
-        
-        <script src="/socket.io/socket.io.js"></script>
-        <script>
-             const socket = io()
-        </script>
-        <script src="./Enemy.js"></script>
-        <script src="./Particle.js"></script>
-        <script src="./Player.js"></script>
-        <script src="./Projectile.js"></script>
-        <script src="./Singleplayer.js"></script>
-        <script src="./Multiplayer.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multiplayer Phaser Game</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+</head>
+<body>
+    <script src="game.js"></script>
+</body>
 </html>
