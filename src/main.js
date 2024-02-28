@@ -2,7 +2,9 @@
 
 import Scene1 from './scene1.js'
 import MainMenu from './MainMenu.js'
-import GameScene from './GameScene.js'
+import Singleplayer from './Singleplayer.js'
+//import Multiplayer from './Multiplayer.js'
+import Restart from './Restart.js'
 
 const config = {
     type: Phaser.AUTO,
@@ -11,7 +13,7 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            debug: true
+            debug: false
         }
     },
     backgroundColor: 0x5F6e7a,
@@ -25,6 +27,7 @@ const game = new Phaser.Game(config)
 
 game.scene.add('scene1', Scene1)
 game.scene.add('mainMenu', MainMenu)
-game.scene.add('gameScene', GameScene)
-
+game.scene.add('Singleplayer', Singleplayer)
+//game.scene.add('Multiplayer', Multiplayer)
+game.scene.add('Restart', Restart)
 game.scene.start('scene1')
