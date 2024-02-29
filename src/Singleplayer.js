@@ -1,275 +1,140 @@
+/* global Phaser */
 
-const canvas = document.querySelector('canvas')
-const context = canvas.getContext('2d')
+class Singleplayer extends Phaser.Scene {
 
-canvas.width = innerWidth * window.devicePixelRatio
-canvas.height = innerHeight * window.devicePixelRatio
-// canvas.width = innerWidth
-// canvas.height = innerHeight
+  constructor() {
+      super({ key: 'Singleplayer'});
+      this.score = 0
+      this.scoreText
+  }
 
-const scoreEl = document.querySelector('#scoreEl')
-const modelRestartEl = document.querySelector('#modelRestartEl')
-const modelScoreEl = document.querySelector('#modelScoreEl')
-const buttonRestartEl = document.querySelector('#buttonRestartEl')
-const buttonStartSingleplayerEl = document.querySelector('#buttonStartSingleplayerEl')
-const modelStartEl = document.querySelector('#modelStartEl')
+  init (data) {
+      this.cameras.main.setBackgroundColor('#ffffff')
+  }
 
-const keys = {
-    right: {
-        pressed: false
-    },
-    left: {
-        pressed: false
-    },
-    up: {
-        pressed: false
-    },
-    down: {
-        pressed: false
+  preload () {
+      console.log('scene1 scene')
+      this.load.image('mapas', 'assets/mapas.png')
+      this.load.image('player', 'assets/player_23.png')
+      this.load.image('bullet', 'assets/bullet.jpg')
+      this.load.image('enemy', 'assets/enemy.png')
     }
-}
 
-const friction = 0.99
-const x = canvas.width / 2
-const y = canvas.height /2
+  create () {
+    const centerX = this.cameras.main.width / 2;
+    const centerY = this.cameras.main.height / 2;
 
-const player = new Player({x: x, y: y, radius: 30, color: 'pink'})
-const projectiles = []
-const enemies = []
-const particles = []
-let animationID
-let intervalID
-let score = 0
-console.log(animationID)
-function restart() {
-    player
-    projectiles
-    enemies 
-    particles
-    animationID
-    score = 0
-    scoreEl.innerHTML = 0
-}
-
-function spawnEnemies() {
-    intervalID = setInterval(() => {
-        const radius = Math.random() * (30 - 6) + 6
-
-        let x
-        let y
-        // for spawning from different directions and on the borders of the page
-        if (Math.random() < 0.5) {
-            x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius
-            y = Math.random() * canvas.height
-        } else {
-            x = Math.random() * canvas.width
-            y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius
-        }
-        const color = `hsl(${Math.random() * 360}, 50%, 50%)`
-        // an angle for the velocity
-        const angle = Math.atan2(
-            player.y - y,
-            player.x - x
-        )
-        // enemy direction
-        const velocity = {
-            x: Math.cos(angle),
-            y: Math.sin(angle)
-        }
-        enemies.push(new Enemy(x, y, radius, color, velocity));
-    }, 1000)
-}
-
-//AnimationID for stopping the game when player dies
-
-function animateSingleplayer() {
-    console.log(animationID)
-    animationID = requestAnimationFrame(animateSingleplayer)
-    context.fillStyle = 'white'
-    context.fillRect(0, 0, canvas.width, canvas.height)
-    player.drawPlayer()
-    player.update()
-    
+    this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
+    this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
 
     //player movement
-    if (keys.right.pressed) {
-        player.velocity.x = 2
-    } else if (keys.left.pressed) {
-        player.velocity.x = -2
-    } else player.velocity.x = 0
+    this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'player')
+    this.player.setCollideWorldBounds(true);
 
-    if (keys.up.pressed) {
-        player.velocity.y = -2
-    } else if (keys.down.pressed) {
-        player.velocity.y = 2
-    } else player.velocity.y = 0
-  
+    this.interval
+    this.intervalID
+    this.bullets = []
+    this.enemies = []
+    //for everything else to load we need to delay the spawning of enemies
+    this.time.delayedCall(500, this.spawnEnemies, [], this);
+    this.input.on('pointerdown', this.fireBullet, this);
+  }
 
+  update () {
+    //player movement
+    let keyInputs = this.input.keyboard.createCursorKeys();
+    if (
+      keyInputs.left.isDown ||
+      this.a.isDown ||
+      keyInputs.right.isDown ||
+      this.d.isDown
+    )
+      this.player.setVelocityX(keyInputs.left.isDown || this.a.isDown ? -300 : 300);
+    else this.player.setVelocityX(0);
+    if (
+      keyInputs.up.isDown ||
+      this.w.isDown ||
+      keyInputs.down.isDown ||
+      this.s.isDown
+    )
+      this.player.setVelocityY(keyInputs.up.isDown || this.w.isDown ? -300 : 300);
+    else this.player.setVelocityY(0);
 
-    // particle dissapearence
-    for (let particleIndex = particles.length - 1; particleIndex >= 0; particleIndex--) {
-        const particle = particles[particleIndex]
-        if (particle.alpha <= 0) {
-            particles.splice(particleIndex, 1)
-        } else {
-        particle.update()
-        }
-    }
+    //bullets should be deleted that go out of the screen
+    for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
+        const bullet = this.bullets[bulletIndex]
 
-    // deletion of projectiles when goes out of page border
-    for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
-        const projectile = projectiles[projectileIndex]
-        projectile.update()
-
-        
-        if (projectile.x + projectile.radius < 0 ||
-            projectile.x - projectile.radius > canvas.width ||
-            projectile.y + projectile.radius < 0 ||
-            projectile.y - projectile.radius > canvas.height) {
-            projectiles.splice(projectileIndex, 1) 
-        }
-    }
-
-    for (let enemyIndex = enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
-        const enemy = enemies[enemyIndex]
-        enemy.update()
-        const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y)
-        //player dies end game
-        if (distance - player.radius - enemy.radius < 1) {
-            cancelAnimationFrame(animationID)
-            clearInterval(intervalID)
-            modelRestartEl.style.display = 'block'
-            gsap.fromTo('#modelRestartEl', {scale: 0.8, opacity: 0}, {scale: 1, opacity: 1, ease: 'expo'})
-            modelScoreEl.innerHTML = score
+        if (bullet.x < 0 ||
+            bullet.x > this.cameras.main.width ||
+            bullet.y  < 0 ||
+            bullet.y  > this.cameras.main.height) 
+            {
+            this.bullets.splice(bulletIndex, 1)
+            bullet.destroy()
             }
-        //enemy and projectile collision    
-        for (let projectileIndex = projectiles.length - 1; projectileIndex >= 0; projectileIndex--) {
-            const projectile = projectiles[projectileIndex]
-            const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y)
-            
-            if (distance - enemy.radius - projectile.radius < 1) {
 
-            // score calculation
-            score += 1
-            scoreEl.innerHTML = score
-
-            for (let i = 0; i < 8; i++) {
-                particles.push(new Particle(projectile.x, projectile.y, Math.random() * 2, enemy.color,
-                    {x: (Math.random() - 0.5) * (Math.random() * 5),
-                    y: (Math.random() - 0.5) * (Math.random() * 5)}))
-            }
-            
-            enemies.splice(enemyIndex, 1)
-            projectiles.splice(projectileIndex, 1)
-           }
-        }
     }
+
+
+    //Player and enemy collision
+    for (let enemyIndex = this.enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
+      const enemy = this.enemies[enemyIndex]
+      const distance = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y)
+      //player dies end game change distance for more accurate collision
+      if (distance < 50) {
+          clearInterval(this.intervalID)
+          this.scene.start('Restart', {score: this.score})
+          }
+    
+
+    //player bullet and enemy collision
+    for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
+      const bullet = this.bullets[bulletIndex]
+      const distance = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y)
+      
+      if (distance < 50) {    
+      this.score += 1
+      this.scoreText.setText('Score: ' + this.score);
+      this.enemies.splice(enemyIndex, 1);
+      enemy.destroy()
+      this.bullets.splice(bulletIndex, 1);
+      bullet.destroy()
+     }
+  }
+}
 }
 
+fireBullet() {
+    const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x, this.input.activePointer.y)
+    const velocity = new Phaser.Math.Vector2(300 * Math.cos(angle), 300 * Math.sin(angle))
+    this.bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet')
+    this.bullet.setScale(0.1)
+    this.bullet.setVelocity(velocity.x, velocity.y)
+    this.bullets.push(this.bullet)
+}
 
-addEventListener('click', (event) => {
-    if (frontEndPlayers[socket.id]) {
-    const playerPosition = {
-        x: frontEndPlayers[socket.id].x,
-        y: frontEndPlayers[socket.id].y
-    }
-    const MultiplayerAngle = Math.atan2(
-        event.clientY * window.devicePixelRatio - playerPosition.y,
-        event.clientX * window.devicePixelRatio - playerPosition.x
-    )
-    socket.emit('shoot', {
-            x: playerPosition.x,
-            y: playerPosition.y,
-            angle: MultiplayerAngle
-        })
-    } else {
-    const SingleplayerAngle = Math.atan2(
-        event.clientY * window.devicePixelRatio - player.y,
-        event.clientX * window.devicePixelRatio - player.x
-    )
-    const SingleplayerVelocity = {
-        x: Math.cos(SingleplayerAngle) * 5,
-        y: Math.sin(SingleplayerAngle) * 5
-    }
-    projectiles.push(new Projectile({x: player.x, y: player.y, radius: 5, color: 'red', velocity: SingleplayerVelocity}))
-    }
-    
-    //frontEndProjectiles.push(new Projectile({x: playerPosition.x, y: playerPosition.y, radius: 5, color: 'red', velocity: MultiplayerVelocity}))
-})
+  spawnEnemies() {
+    this.intervalID = setInterval(() => {
+      const spawnPoints = [
+          { x: 0, y: Phaser.Math.Between(0, 1080) },  // Left border
+          { x: 1920, y: Phaser.Math.Between(0, 1080) }, // Right border
+          { x: Phaser.Math.Between(0, 1920), y: 0 },   // Top border
+          { x: Phaser.Math.Between(0, 1920), y: 1080 } // Bottom border
+      ];
+      const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
+      const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemy');
+      enemy.setScale(0.1)
+      enemy.setCollideWorldBounds(false)
+      const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x)
+      enemy.setVelocity(300 * Math.cos(angle), 300 * Math.sin(angle))
+      this.enemies.push(enemy)
+    }, 1000)
+  }
 
-//RESTART GAME
-buttonRestartEl.addEventListener('click', () => {
-    restart()
-    animateSingleplayer()
-    spawnEnemies()
-    gsap.to('#modelRestartEl', {
-        opacity: 0,
-        scale: 0.6,
-        duration: 0.4,
-        ease: 'expo.in',
-        onComplete: () => {
-            modelRestartEl.style.display = 'none'
-        }
-    })
-})
-//Start singleplayer
-buttonStartSingleplayerEl.addEventListener('click', () => {
-    document.querySelector("#displayScore").style.display = 'block'
-    restart()
-    animateSingleplayer()
-    spawnEnemies()
-    //modelStartEl.style.display = 'none'
-    gsap.to('#modelStartEl', {
-        opacity: 0,
-        scale: 0.6,
-        duration: 0.4,
-        ease: 'expo.in',
-        onComplete: () => {
-            modelStartEl.style.display = 'none'
-        }
-    })
-})
+}
 
-addEventListener('keydown', ({key}) => {
-    //if (!frontEndPlayers[socket.id]) return UZKOMENTUOTA KAD VEIKTU SINGLEPLAYERIS
-    switch (key) {
-        case ('a') :
-            console.log('left')
-            keys.left.pressed = true
-            break
-        case 'd':
-            console.log('right')
-            keys.right.pressed = true
-            break
-        case 'w':
-            console.log('up')
-            keys.up.pressed = true
-            break
-        case 's':
-            console.log('down')
-            keys.down.pressed = true
-            break
-    }
-})
-addEventListener('keyup', ({key}) => {
-    //if (!frontEndPlayers[socket.id]) return
-    switch (key) {
-        case ('a') :
-            console.log('left')
-            keys.left.pressed = false
-            break
-        case 'd':
-            console.log('right')
-            keys.right.pressed = false
-            break
-        case 'w':
-            console.log('up')
-            keys.up.pressed = false
-            break
-        case 's':
-            console.log('down')
-            keys.down.pressed = false
-            break
-    }
-})
-
+export default Singleplayer
