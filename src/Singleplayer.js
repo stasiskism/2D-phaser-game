@@ -13,7 +13,6 @@ class Singleplayer extends Phaser.Scene {
   }
 
   preload () {
-      console.log('scene1 scene')
       this.load.image('mapas', 'assets/mapas.png')
       this.load.image('player', 'assets/player_23.png')
       this.load.image('bullet', 'assets/bullet.jpg')

@@ -10,9 +10,7 @@ class Scene1 extends Phaser.Scene {
     }
 
     preload () {
-        console.log('scene1 scene')
         this.load.image('vaizdas', 'assets/INTRO.png')
-
     }
 
     create (data) {

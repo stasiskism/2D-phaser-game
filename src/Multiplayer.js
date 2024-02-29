@@ -1,169 +1,108 @@
-const buttonStartMultiplayerEl = document.querySelector('#buttonStartMultiplayerEl')
-const multiStart = document.querySelector('#multiStart')
-const buttonStartGame = document.querySelector('#startGame')
+/* global Phaser */
 
-const devicePixelRatio = window.devicePixelRatio || 1
-const frontEndPlayers = {}
-const frontEndProjectiles = {}
-
-let multiplayerAnimationID
-
-
-function updateProjectiles() {
-socket.on('updateProjectiles', (backEndProjectiles) => {
-    for (const id in backEndProjectiles) {
-        const backEndProjectile = backEndProjectiles[id]
-
-        if (!frontEndProjectiles[id]) {
-            frontEndProjectiles[id] = new Projectile({
-                x: backEndProjectile.x,
-                y: backEndProjectile.y,
-                radius: 5,
-                color: frontEndPlayers[backEndProjectiles.playerID]?.color,
-                velocity: backEndProjectile.velocity
-            })
-        } else {
-            frontEndProjectiles[id].x += backEndProjectiles[id].velocity.x
-            frontEndProjectiles[id].y += backEndProjectiles[id].velocity.y
-        }
+class Multiplayer extends Phaser.Scene {
+    constructor() {
+        super({ key: 'Multiplayer'});
+    }
+    init (data) {
+        this.cameras.main.setBackgroundColor('#ffffff')
     }
 
-    for (const id in frontEndProjectiles) {
-        if (!backEndProjectiles[id]) {
-            delete frontEndProjectiles[id]
-        }
+    preload() {
+        this.load.image('mapas', 'assets/mapas.png')
+        this.load.image('player', 'assets/player_23.png')
+        this.load.image('bullet', 'assets/bullet.jpg')
+
     }
 
-})
-}
+// var player;
+// var otherPlayers = {}; // Object to store other players
+// var cursors;
+// var socket = io(); // Connect to the server
 
-function updatePlayers() {
-socket.on('updatePlayers', (backEndPlayers) => {
-    for (const id in backEndPlayers) {
-        const backEndPlayer = backEndPlayers[id]
+    create() {
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.height / 2;
+        this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
+
+        this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'player')
+        this.player.setCollideWorldBounds(true);
+        const otherPlayers = {};
         
-        if (!frontEndPlayers[id]) {
-            frontEndPlayers[id] = new Player({x: backEndPlayer.x, y: backEndPlayer.y, radius: backEndPlayer.radius, color: backEndPlayer.color})
-            document.querySelector('#playerLabels').innerHTML += `<div data-id = "${id}" data-score="${backEndPlayer.score}">${backEndPlayer.username}: ${backEndPlayer.score}</div>`
-        } else {
-            document.querySelector(`div[data-id="${id}"]`).innerHTML = `${backEndPlayer.username}: ${backEndPlayer.score}`
+        
+        // this.cursors = this.input.keyboard.createCursorKeys();
+        //player movement
+        this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        
 
-            document.querySelector(`div[data-id="${id}"]`).setAttribute('data-score', backEndPlayer.score)
-            
-            //sorts the leaderboard based on the score
-            const parentDiv = document.querySelector('#playerLabels')
-            const childDivs = Array.from(parentDiv.querySelectorAll('div'))
-            childDivs.sort((first, second) => {
-               const scoreFirst = Number(first.getAttribute('data-score'))
-               const scoreSecond = Number(second.getAttribute('data-score'))
-                return scoreSecond - scoreFirst
-            })
-            //removes old elements
-            childDivs.forEach(div => {
-                parentDiv.removeChild(div)
-            })
-            //adds sorted elements
-            childDivs.forEach(div => {
-                parentDiv.appendChild(div)
-            })
+        // Listen for new player connections
+        socket.on('newPlayer', (playerInfo) => {
+            addOtherPlayer(this, playerInfo.id, playerInfo.x, playerInfo.y);
+            console.log(this.addOtherPlayer)
+        });
 
-            // if a player already exists
-            frontEndPlayers[id].x = backEndPlayer.x
-            frontEndPlayers[id].y = backEndPlayer.y
-        }
-    }
-    // deleting front end players
-    for (const id in frontEndPlayers) {
-        if (!backEndPlayers[id]) {
-            delete frontEndPlayers[id]
-            const divToDelete = document.querySelector(`div[data-id="${id}"]`)
-            divToDelete.parentNode.removeChild(divToDelete)
-            if (id === socket.id) {
-                console.log(id)
-                //multiStart.style.display = 'block';
-                document.querySelector('#usernameForm').style.display = 'block'
+        // Listen for player movements
+        socket.on('playerMove', (moveInfo) => {
+            if (otherPlayers[moveInfo.id]) {
+                otherPlayers[moveInfo.id].setPosition(moveInfo.x, moveInfo.y);
             }
-        }
-    }
-})
-}
+        });
 
-function animateMultiplayer() {
-    multiplayerAnimationID = requestAnimationFrame(animateMultiplayer)
-    context.fillStyle = 'white'
-    context.fillRect(0, 0, canvas.width, canvas.height)
-
-    for (const id in frontEndPlayers) {
-        const frontEndPlayer = frontEndPlayers[id]
-        frontEndPlayer.drawPlayer()
-        frontEndPlayer.update()
+        // Listen for player disconnections
+        socket.on('playerDisconnected', (info) => {
+            if (otherPlayers[info.id]) {
+                otherPlayers[info.id].destroy();
+                delete otherPlayers[info.id];
+            }
+        });
     }
 
-    for (const id in frontEndProjectiles) {
-        const frontEndProjectile = frontEndProjectiles[id]
-        frontEndProjectile.drawProjectile()
+    update() {
+        let keyInputs = this.input.keyboard.createCursorKeys();
+        if (
+            keyInputs.left.isDown ||
+            this.a.isDown ||
+            keyInputs.right.isDown ||
+            this.d.isDown
+          ) {
+            this.player.setVelocityX(keyInputs.left.isDown || this.a.isDown ? -300 : 300);
+            socket.emit('playerMove', {x: this.player.x, y: this.player.y})
+          }
+          else this.player.setVelocityX(0);
+          if (
+            keyInputs.up.isDown ||
+            this.w.isDown ||
+            keyInputs.down.isDown ||
+            this.s.isDown
+          ){
+            this.player.setVelocityY(keyInputs.up.isDown || this.w.isDown ? -300 : 300);
+            socket.emit('playerMove', {x: this.player.x, y: this.player.y})
+          }
+          else this.player.setVelocityY(0);
+        // Example movement logic for the player
+        // if (cursors.left.isDown) {
+        //     player.x -= 2;
+        //     this.socket.emit('playerMove', { x: player.x, y: player.y });
+        // } else if (cursors.right.isDown) {
+        //     player.x += 2;
+        //     socket.emit('playerMove', { x: player.x, y: player.y });
+        // }
+
+        // if (cursors.up.isDown) {
+        //     player.y -= 2;
+        //     socket.emit('playerMove', { x: player.x, y: player.y });
+        // } else if (cursors.down.isDown) {
+        //     player.y += 2;
+        //     socket.emit('playerMove', { x: player.x, y: player.y });
+        // }
     }
-}
-buttonStartMultiplayerEl.addEventListener('click', () => {
-    gsap.to('#modelStartEl', {
-        opacity: 0,
-        scale: 0.6,
-        duration: 0.4,
-        ease: 'expo.in',
-        onComplete: () => {
-            modelStartEl.style.display = 'none'
-        }
-    })
-    multiStart.style.display = 'block';
-    document.querySelector('#usernameForm').addEventListener('submit', (event) => {
-        
-        if (document.querySelector('#usernameInput').value) {
-        event.preventDefault()
-        socket.emit('initGame',
-        {username: document.querySelector('#usernameInput').value,
-        width: canvas.width, height: canvas.height, devicePixelRatio})
-        document.querySelector('#usernameForm').style.display = 'none'
-        document.querySelector('#displayLeaderboard').style.display = 'block'
-        updatePlayers()
-        updateProjectiles()
-        animateMultiplayer()
-        }
 
-    })
-
-
-    //document.querySelector('#startGame').style.display = 'block'
-    // buttonStartGame.addEventListener('click', () => {
-    //     gsap.to('#multiStart', {
-    //         opacity: 0,
-    //         scale: 0.6,
-    //         duration: 0.4,
-    //         ease: 'expo.in',
-    //         onComplete: () => {
-    //             multiStart.style.display = 'none'
-    //         }
-    //     })
-        
-  //  })
-})
-
-const SPEED = 2
-setInterval(() => {
-    if (!frontEndPlayers[socket.id]) return
-    if (keys.left.pressed) {
-        frontEndPlayers[socket.id].x -= SPEED
-            socket.emit('keydown', 'a')
-    } 
-    if (keys.right.pressed) {
-        frontEndPlayers[socket.id].x += SPEED
-            socket.emit('keydown', 'd')
-    } 
-    if (keys.up.pressed) {
-        frontEndPlayers[socket.id].x -= SPEED
-            socket.emit('keydown', 'w')
-    } 
-    if (keys.down.pressed) {
-        frontEndPlayers[socket.id].x += SPEED
-            socket.emit('keydown', 's')
-    } 
-}, 15)
+    addOtherPlayer(scene, id, x, y) {
+        const otherPlayer = scene.add.circle(x, y, 20, 0xff0000); // Different color for other players
+        otherPlayers[id] = otherPlayer;
+    }
+    }
+export default Multiplayer

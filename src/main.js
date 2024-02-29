@@ -3,8 +3,9 @@
 import Scene1 from './scene1.js'
 import MainMenu from './MainMenu.js'
 import Singleplayer from './Singleplayer.js'
-//import Multiplayer from './Multiplayer.js'
+import Multiplayer from './Multiplayer.js'
 import Restart from './Restart.js'
+
 
 const config = {
     type: Phaser.AUTO,
@@ -28,6 +29,6 @@ const game = new Phaser.Game(config)
 game.scene.add('scene1', Scene1)
 game.scene.add('mainMenu', MainMenu)
 game.scene.add('Singleplayer', Singleplayer)
-//game.scene.add('Multiplayer', Multiplayer)
+game.scene.add('Multiplayer', Multiplayer)
 game.scene.add('Restart', Restart)
 game.scene.start('scene1')
