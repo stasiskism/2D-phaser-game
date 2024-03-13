@@ -1,6 +1,8 @@
 /* global Phaser */
 
 class Multiplayer extends Phaser.Scene {
+    frontendPlayers = {}
+    
     constructor() {
         super({ key: 'Multiplayer'});
     }
@@ -12,6 +14,7 @@ class Multiplayer extends Phaser.Scene {
         this.load.image('mapas', 'assets/mapas.png')
         this.load.image('player', 'assets/player_23.png')
         this.load.image('bullet', 'assets/bullet.jpg')
+        
 
     }
 
@@ -25,8 +28,9 @@ class Multiplayer extends Phaser.Scene {
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
 
-        this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'player')
-        this.player.setCollideWorldBounds(true);
+        // this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'player')
+        // this.player.setCollideWorldBounds(true);
+
         const otherPlayers = {};
         
         
@@ -38,12 +42,8 @@ class Multiplayer extends Phaser.Scene {
         this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         
 
-        // Listen for new player connections
-        socket.on('newPlayer', (playerInfo) => {
-            addOtherPlayer(this, playerInfo.id, playerInfo.x, playerInfo.y);
-            console.log(this.addOtherPlayer)
-        });
-
+        // Listen for new player connectionsaa
+        
         // Listen for player movements
         socket.on('playerMove', (moveInfo) => {
             if (otherPlayers[moveInfo.id]) {
@@ -51,37 +51,57 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
-        // Listen for player disconnections
-        socket.on('playerDisconnected', (info) => {
-            if (otherPlayers[info.id]) {
-                otherPlayers[info.id].destroy();
-                delete otherPlayers[info.id];
-            }
-        });
+
     }
 
     update() {
-        let keyInputs = this.input.keyboard.createCursorKeys();
-        if (
-            keyInputs.left.isDown ||
-            this.a.isDown ||
-            keyInputs.right.isDown ||
-            this.d.isDown
-          ) {
-            this.player.setVelocityX(keyInputs.left.isDown || this.a.isDown ? -300 : 300);
-            socket.emit('playerMove', {x: this.player.x, y: this.player.y})
-          }
-          else this.player.setVelocityX(0);
-          if (
-            keyInputs.up.isDown ||
-            this.w.isDown ||
-            keyInputs.down.isDown ||
-            this.s.isDown
-          ){
-            this.player.setVelocityY(keyInputs.up.isDown || this.w.isDown ? -300 : 300);
-            socket.emit('playerMove', {x: this.player.x, y: this.player.y})
-          }
-          else this.player.setVelocityY(0);
+
+        socket.on('updatePlayers', (backendPlayers) => {
+            for (const id in backendPlayers) {
+                const backendPlayer = backendPlayers[id]
+                
+                if(!this.frontendPlayers[id]) {
+                    this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'player')
+                    this.frontendPlayers[id].setCollideWorldBounds(true);
+                }
+            }
+
+            for (const id in this.frontendPlayers) {
+                if (!backendPlayers[id]) {
+                    this.frontendPlayers[id].destroy()
+                    delete this.frontendPlayers[id]
+                }
+            }
+            console.log(this.frontendPlayers)
+        });
+
+
+        // for (const id in this.frontendPlayers) {
+        //     var frontendPlayer = this.frontendPlayers[id]
+        //     frontendPlayer = this.physics.add.sprite(frontendPlayer.x, frontendPlayer.y, 'player')
+        //     frontendPlayer.setCollideWorldBounds(true);
+        // }
+        // let keyInputs = this.input.keyboard.createCursorKeys();
+        // if (
+        //     keyInputs.left.isDown ||
+        //     this.a.isDown ||
+        //     keyInputs.right.isDown ||
+        //     this.d.isDown
+        //   ) {
+        //     this.player.setVelocityX(keyInputs.left.isDown || this.a.isDown ? -300 : 300);
+        //     socket.emit('playerMove', {x: this.player.x, y: this.player.y})
+        //   }
+        //   else this.player.setVelocityX(0);
+        //   if (
+        //     keyInputs.up.isDown ||
+        //     this.w.isDown ||
+        //     keyInputs.down.isDown ||
+        //     this.s.isDown
+        //   ){
+        //     this.player.setVelocityY(keyInputs.up.isDown || this.w.isDown ? -300 : 300);
+        //     socket.emit('playerMove', {x: this.player.x, y: this.player.y})
+        //   }
+        //   else this.player.setVelocityY(0);
         // Example movement logic for the player
         // if (cursors.left.isDown) {
         //     player.x -= 2;
@@ -104,5 +124,6 @@ class Multiplayer extends Phaser.Scene {
         const otherPlayer = scene.add.circle(x, y, 20, 0xff0000); // Different color for other players
         otherPlayers[id] = otherPlayer;
     }
+
     }
 export default Multiplayer

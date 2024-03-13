@@ -13,24 +13,33 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html')
   })
 
+const players = {}
+
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
+    players[socket.id] = {
+        id: socket.id,
+        x: 500 * Math.random(),
+        y: 500 * Math.random()
+    }
+
+    
 
     // Inform other clients about the new player
-    socket.emit('newPlayer', { id: socket.id, x: 400, y: 300 });
+    io.emit('updatePlayers', players);
 
     // Listen for player movement from this client
     socket.on('playerMove', (data) => {
-        console.log(`Broadcasting move from ${socket.id}:`, data);
         // Broadcast this player's movement to all other clients
         socket.emit('playerMove', { id: socket.id, x: data.x, y: data.y });
     });
 
     // Handle client disconnection
-    socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id, );
+    socket.on('disconnect', (reason) => {
+        console.log('Client disconnected:', socket.id, reason);
+        delete players[socket.id]
         // Inform other clients that this player has disconnected
-        socket.emit('playerDisconnected', { id: socket.id });
+        io.emit('updatePlayers', players);
     });
 });
 
