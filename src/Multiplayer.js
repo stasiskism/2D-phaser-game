@@ -1,8 +1,7 @@
 /* global Phaser */
 
 class Multiplayer extends Phaser.Scene {
-    frontendPlayers = {}
-    
+    frontendPlayers = {}    
     constructor() {
         super({ key: 'Multiplayer'});
     }
@@ -14,27 +13,28 @@ class Multiplayer extends Phaser.Scene {
         this.load.image('mapas', 'assets/mapas.png')
         this.load.image('player', 'assets/player_23.png')
         this.load.image('bullet', 'assets/bullet.jpg')
-        
-
+        this.load.image('crosshair', 'assets/crosshair008.png')
     }
-
-// var player;
-// var otherPlayers = {}; // Object to store other players
-// var cursors;
-// var socket = io(); // Connect to the server
+    
 
     create() {
+        this.cameras.main.zoom = 0.5;
+
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
 
-        // this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'player')
-        // this.player.setCollideWorldBounds(true);
 
-        const otherPlayers = {};
+        
+        this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair')
+        this.crosshair.setCollideWorldBounds(true)
+        this.input.on('pointerdown', () => {
+            this.input.mouse.requestPointerLock();
+        });
+
         
         
-        // this.cursors = this.input.keyboard.createCursorKeys();
+        this.cursors = this.input.keyboard.createCursorKeys();
         //player movement
         this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -42,7 +42,7 @@ class Multiplayer extends Phaser.Scene {
         this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         
 
-        // Listen for new player connectionsaa
+        // Listen for new player connections
         
         // Listen for player movements
         socket.on('playerMove', (moveInfo) => {
@@ -50,6 +50,33 @@ class Multiplayer extends Phaser.Scene {
                 otherPlayers[moveInfo.id].setPosition(moveInfo.x, moveInfo.y);
             }
         });
+
+        this.input.on(
+            'pointermove',
+            function (pointer)
+            {
+                if (this.input.mouse.locked)
+                {
+                    // Move reticle with mouse
+                    this.crosshair.x += pointer.movementX;
+                    this.crosshair.y += pointer.movementY;
+
+                    // Only works when camera follows player
+                    const distX = this.crosshair.x - this.frontendPlayers[socket.id].x;
+                    const distY = this.crosshair.y - this.frontendPlayers[socket.id].y;
+
+                    // Ensures reticle cannot be moved offscreen
+                    // if (distX > 1920) { this.crosshair.x = this.frontendPlayers[socket.id].x + 1920; }
+                    // else if (distX < -1920) { this.crosshair.x = this.frontendPlayers[socket.id].x - 1920; }
+
+                    // if (distY > 1080) { this.crosshair.y = this.frontendPlayers[socket.id].y + 1080; }
+                    // else if (distY < -1080) { this.crosshair.y = this.frontendPlayers[socket.id].y - 1080; }
+                    // this.crosshair.x = Phaser.Math.Clamp(this.crosshair.x, 0, 1920)
+                    // this.crosshair.x = Phaser.Math.Clamp(this.crosshair.x, 0, 1020)
+                }
+            },
+            this
+        );
 
 
     }
@@ -63,6 +90,10 @@ class Multiplayer extends Phaser.Scene {
                 if(!this.frontendPlayers[id]) {
                     this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'player')
                     this.frontendPlayers[id].setCollideWorldBounds(true);
+                } else {
+                    //update position if a player exists
+                    this.frontendPlayers[id].x = backendPlayer.x
+                    this.frontendPlayers[id].y = backendPlayer.y
                 }
             }
 
@@ -72,58 +103,107 @@ class Multiplayer extends Phaser.Scene {
                     delete this.frontendPlayers[id]
                 }
             }
-            console.log(this.frontendPlayers)
         });
 
-
-        // for (const id in this.frontendPlayers) {
-        //     var frontendPlayer = this.frontendPlayers[id]
-        //     frontendPlayer = this.physics.add.sprite(frontendPlayer.x, frontendPlayer.y, 'player')
-        //     frontendPlayer.setCollideWorldBounds(true);
-        // }
-        // let keyInputs = this.input.keyboard.createCursorKeys();
-        // if (
-        //     keyInputs.left.isDown ||
-        //     this.a.isDown ||
-        //     keyInputs.right.isDown ||
-        //     this.d.isDown
-        //   ) {
-        //     this.player.setVelocityX(keyInputs.left.isDown || this.a.isDown ? -300 : 300);
-        //     socket.emit('playerMove', {x: this.player.x, y: this.player.y})
-        //   }
-        //   else this.player.setVelocityX(0);
-        //   if (
-        //     keyInputs.up.isDown ||
-        //     this.w.isDown ||
-        //     keyInputs.down.isDown ||
-        //     this.s.isDown
-        //   ){
-        //     this.player.setVelocityY(keyInputs.up.isDown || this.w.isDown ? -300 : 300);
-        //     socket.emit('playerMove', {x: this.player.x, y: this.player.y})
-        //   }
-        //   else this.player.setVelocityY(0);
         // Example movement logic for the player
-        // if (cursors.left.isDown) {
-        //     player.x -= 2;
-        //     this.socket.emit('playerMove', { x: player.x, y: player.y });
-        // } else if (cursors.right.isDown) {
-        //     player.x += 2;
-        //     socket.emit('playerMove', { x: player.x, y: player.y });
-        // }
+        if(!this.frontendPlayers[socket.id]) return
+        else {
+            if (this.a.isDown) {
+                this.frontendPlayers[socket.id].x -= 2
+                socket.emit('playerMove', 'a');
+            } else if (this.d.isDown) {
+                this.frontendPlayers[socket.id].x += 2
+                socket.emit('playerMove', 'd');
+            }
+            if (this.w.isDown) {
+                this.frontendPlayers[socket.id].y -= 2
+                socket.emit('playerMove', 'w');
+            } else if (this.s.isDown) {
+                this.frontendPlayers[socket.id].y += 2
+                socket.emit('playerMove', 's');
+            }
+        }
 
-        // if (cursors.up.isDown) {
-        //     player.y -= 2;
-        //     socket.emit('playerMove', { x: player.x, y: player.y });
-        // } else if (cursors.down.isDown) {
-        //     player.y += 2;
-        //     socket.emit('playerMove', { x: player.x, y: player.y });
-        // }
+        // Rotates player to face towards reticle
+        this.frontendPlayers[socket.id].rotation = Phaser.Math.Angle.Between(
+            this.frontendPlayers[socket.id].x,
+            this.frontendPlayers[socket.id].y,
+            this.crosshair.x,
+            this.crosshair.y
+        );
+
+        // Camera position is average between reticle and player positions
+        const avgX = (this.frontendPlayers[socket.id].x + this.crosshair.x) / 2 - 1920/2;
+        const avgY = (this.frontendPlayers[socket.id].y + this.crosshair.y) / 2 - 1080/2;
+        this.cameras.main.scrollX = avgX;
+        this.cameras.main.scrollY = avgY;
+
+        // Make reticle move with player
+        this.crosshair.body.velocity.x = this.frontendPlayers[socket.id].body.velocity.x;
+        this.crosshair.body.velocity.y = this.frontendPlayers[socket.id].body.velocity.y;
+
+        // Constrain velocity of player
+        this.constrainVelocity(this.frontendPlayers[socket.id], 500);
+
+        // Constrain position of reticle
+        this.constrainReticle(this.crosshair, 550);
+
     }
+
+    constrainVelocity (sprite, maxVelocity)
+    {
+        if (!sprite || !sprite.body) { return; }
+
+        let angle, currVelocitySqr, vx, vy;
+        vx = sprite.body.velocity.x;
+        vy = sprite.body.velocity.y;
+        currVelocitySqr = vx * vx + vy * vy;
+
+        if (currVelocitySqr > maxVelocity * maxVelocity)
+        {
+            angle = Math.atan2(vy, vx);
+            vx = Math.cos(angle) * maxVelocity;
+            vy = Math.sin(angle) * maxVelocity;
+            sprite.body.velocity.x = vx;
+            sprite.body.velocity.y = vy;
+        }
+    }
+
+    constrainReticle (reticle, radius)
+    {
+        const distX = reticle.x - this.frontendPlayers[socket.id].x; // X distance between player & reticle
+        const distY = reticle.y - this.frontendPlayers[socket.id].y; // Y distance between player & reticle
+
+        // Ensures reticle cannot be moved offscreen
+        // if (distX > 1920) { reticle.x = this.frontendPlayers[socket.id].x + 1920; }
+        // else if (distX < -1920) { reticle.x = this.frontendPlayers[socket.id].x - 1920; }
+
+        // if (distY > 1080) { reticle.y = this.frontendPlayers[socket.id].y + 1080; }
+        // else if (distY < -1080) { reticle.y = this.frontendPlayers[socket.id].y - 1080; }
+
+        // Ensures reticle cannot be moved further than dist(radius) from player
+        const distBetween = Phaser.Math.Distance.Between(
+            this.frontendPlayers[socket.id].x,
+            this.frontendPlayers[socket.id].y,
+            reticle.x,
+            reticle.y
+        );
+        if (distBetween > radius)
+        {
+            // Place reticle on perimeter of circle on line intersecting player & reticle
+            const scale = distBetween / radius;
+
+            reticle.x = this.frontendPlayers[socket.id].x + (reticle.x - this.frontendPlayers[socket.id].x) / scale;
+            reticle.y = this.frontendPlayers[socket.id].y + (reticle.y - this.frontendPlayers[socket.id].y) / scale;
+        }
+    }
+
 
     addOtherPlayer(scene, id, x, y) {
         const otherPlayer = scene.add.circle(x, y, 20, 0xff0000); // Different color for other players
         otherPlayers[id] = otherPlayer;
     }
-
+    
     }
+
 export default Multiplayer
