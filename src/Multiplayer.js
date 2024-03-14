@@ -1,10 +1,8 @@
 /* global Phaser */
 
 class Multiplayer extends Phaser.Scene {
-    time = 0
     frontendPlayers = {} 
     frontendProjectiles = {}
-    playerBullets
 
     constructor() {
         super({ key: 'Multiplayer'});
@@ -70,6 +68,7 @@ class Multiplayer extends Phaser.Scene {
     }
 
     update(delta) {
+
         //PLAYER MOVEMENT, CONNECTION, DISCONNECTION
         socket.on('updatePlayers', (backendPlayers) => {
             for (const id in backendPlayers) {
@@ -100,10 +99,20 @@ class Multiplayer extends Phaser.Scene {
                 if (!this.frontendProjectiles[id]) {
                     this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
                     this.frontendProjectiles[id].setScale(0.1)
+                    this.frontendProjectiles[id].rotation = this.frontendPlayers[socket.id].rotation
+                    //this.constrainVelocity(this.frontendProjectiles[id], 1)
                 } else {
-                    //KAZKA PATVARKYT REIKIA server.js NES LABAI GREIT SAUDO, GALIMAI SPRITE JUDA GREICIAU NEI PROJECTILE POSITIONAS?
-                    this.frontendProjectiles[id].x += backendProjectiles[id].velocity.x
-                    this.frontendProjectiles[id].y += backendProjectiles[id].velocity.y
+                    //KAZKA PATVARKYT REIKIA, NES assetas JUDA GREICIAU NEI PROJECTILE POSITIONAS
+                    this.frontendProjectiles[id].x += backendProjectiles[id].velocity.x * 0.0003
+                    this.frontendProjectiles[id].y += backendProjectiles[id].velocity.y * 0.0003
+                    //this.constrainVelocity(this.frontendProjectiles[id], 1)
+                }
+            }
+
+            for (const id in this.frontendProjectiles) {
+                if (!backendProjectiles[id]) {
+                    this.frontendProjectiles[id].destroy()
+                    delete this.frontendProjectiles[id]
                 }
             }
         });
@@ -145,32 +154,29 @@ class Multiplayer extends Phaser.Scene {
         this.crosshair.body.velocity.x = this.frontendPlayers[socket.id].body.velocity.x;
         this.crosshair.body.velocity.y = this.frontendPlayers[socket.id].body.velocity.y;
 
-        // Constrain velocity of player
-        this.constrainVelocity(this.frontendPlayers[socket.id], 500);
-
         // Constrain position of reticle
         this.constrainReticle(this.crosshair, 550);
 
     }
 
-    constrainVelocity (sprite, maxVelocity)
-    {
-        if (!sprite || !sprite.body) { return; }
+    // constrainVelocity (sprite, maxVelocity)
+    // {
+    //     if (!sprite || !sprite.body) { return; }
 
-        let angle, currVelocitySqr, vx, vy;
-        vx = sprite.body.velocity.x;
-        vy = sprite.body.velocity.y;
-        currVelocitySqr = vx * vx + vy * vy;
+    //     let angle, currVelocitySqr, vx, vy;
+    //     vx = sprite.body.velocity.x;
+    //     vy = sprite.body.velocity.y;
+    //     currVelocitySqr = vx * vx + vy * vy;
 
-        if (currVelocitySqr > maxVelocity * maxVelocity)
-        {
-            angle = Math.atan2(vy, vx);
-            vx = Math.cos(angle) * maxVelocity;
-            vy = Math.sin(angle) * maxVelocity;
-            sprite.body.velocity.x = vx;
-            sprite.body.velocity.y = vy;
-        }
-    }
+    //     if (currVelocitySqr > maxVelocity * maxVelocity)
+    //     {
+    //         angle = Math.atan2(vy, vx);
+    //         vx = Math.cos(angle) * maxVelocity;
+    //         vy = Math.sin(angle) * maxVelocity;
+    //         sprite.body.velocity.x = vx;
+    //         sprite.body.velocity.y = vy;
+    //     }
+    // }
 
     constrainReticle (reticle, radius)
     {

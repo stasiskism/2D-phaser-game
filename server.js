@@ -31,18 +31,17 @@ io.on('connection', (socket) => {
 
     socket.on('shoot', (frontendPlayer, crosshair, direction) => {
         projectileId++
-        console.log(frontendPlayer.x, frontendPlayer.y)
 
         //Calculate X and y velocity of bullet to move it from shooter to target
         if (crosshair.y >= frontendPlayer.y)
         {
-            x = 0.02 * Math.sin(direction);
-            y = 0.02 * Math.cos(direction);
+            x = 30 * Math.sin(direction);
+            y = 30 * Math.cos(direction);
         }
         else
         {
-            x = -0.02 * Math.sin(direction);
-            y = -0.02 * Math.cos(direction);
+            x = -30 * Math.sin(direction);
+            y = -30 * Math.cos(direction);
         }
 
         const velocity = {
@@ -56,7 +55,7 @@ io.on('connection', (socket) => {
             velocity,
             playerId: socket.id
         }
-        console.log(backendProjectiles)
+        //console.log(backendProjectiles)
     })
 
     // Listen for player movement from this client
@@ -83,7 +82,6 @@ io.on('connection', (socket) => {
         io.emit('updatePlayers', backendPlayers);
     });
 });
-console.log(backendProjectiles)
 
 setInterval(() => {
     for (const id in backendProjectiles) {
@@ -93,13 +91,25 @@ setInterval(() => {
         //REMOVES PROJECTILE, BUT WITH VELOCITY 0.02 TAKES A LONG TIME
         if (backendProjectiles[id].x >= 1920 || backendProjectiles[id].x <= 0 || backendProjectiles[id].y >= 1080 || backendProjectiles[id].y <= 0) {
             delete backendProjectiles[id]
+            continue
         }
-        console.log(backendProjectiles)
+        //console.log(backendProjectiles)
+
+        for (const playerId in backendPlayers) {
+            const backendPlayer = backendPlayers[playerId]
+            const distance = Math.hypot(backendProjectiles[id].x - backendPlayer.x, backendProjectiles[id].y - backendPlayer.y)
+            if (distance < 30 && backendProjectiles[id].playerId !== playerId) {
+                console.log(distance)
+                delete backendProjectiles[id]
+                delete backendPlayers[playerId]
+                break
+            }
+        }
     }
     
     io.emit('updateProjectiles', backendProjectiles)
     io.emit('updatePlayers', backendPlayers)
-}, 15)
+})
 
 const PORT = 3000;
 server.listen(PORT, () => {
