@@ -28,6 +28,7 @@ io.on('connection', (socket) => {
     // Inform other clients about the new player
     io.emit('updatePlayers', backendPlayers);
 
+
     socket.on('shoot', (frontendPlayer, crosshair, direction) => {
         projectileId++
         console.log(frontendPlayer.x, frontendPlayer.y)
@@ -82,12 +83,20 @@ io.on('connection', (socket) => {
         io.emit('updatePlayers', backendPlayers);
     });
 });
+console.log(backendProjectiles)
 
 setInterval(() => {
     for (const id in backendProjectiles) {
         backendProjectiles[id].x += backendProjectiles[id].velocity.x
         backendProjectiles[id].y += backendProjectiles[id].velocity.y
+
+        //REMOVES PROJECTILE, BUT WITH VELOCITY 0.02 TAKES A LONG TIME
+        if (backendProjectiles[id].x >= 1920 || backendProjectiles[id].x <= 0 || backendProjectiles[id].y >= 1080 || backendProjectiles[id].y <= 0) {
+            delete backendProjectiles[id]
+        }
+        console.log(backendProjectiles)
     }
+    
     io.emit('updateProjectiles', backendProjectiles)
     io.emit('updatePlayers', backendPlayers)
 }, 15)

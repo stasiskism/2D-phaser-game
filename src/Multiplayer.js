@@ -22,16 +22,15 @@ class Multiplayer extends Phaser.Scene {
     
 
     create() {
-        this.cameras.main.zoom = 0.5;
 
-        //this.playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
+        this.cameras.main.zoom = 1;
 
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
 
 
-        
+        //CROSSHAIR LOCK ON MOUSE
         this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair')
         this.crosshair.setCollideWorldBounds(true)
         this.input.on('pointerdown', () => {
@@ -47,7 +46,7 @@ class Multiplayer extends Phaser.Scene {
         this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         
-
+        //CROSSHAIR FOLLOWS MOUSE
         this.input.on('pointermove', (pointer) => {
                 if (this.input.mouse.locked)
                 {
@@ -56,7 +55,7 @@ class Multiplayer extends Phaser.Scene {
                     this.crosshair.y += pointer.movementY;
                 }
             });
-
+            //SHOOTING
         this.input.on('pointerdown', (pointer) =>
             {
                 const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
@@ -71,7 +70,7 @@ class Multiplayer extends Phaser.Scene {
     }
 
     update(delta) {
-
+        //PLAYER MOVEMENT, CONNECTION, DISCONNECTION
         socket.on('updatePlayers', (backendPlayers) => {
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id]
@@ -94,6 +93,7 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
+        //SHOOTING PROJECTILES
         socket.on('updateProjectiles', (backendProjectiles) => {
             for (const id in backendProjectiles) {
                 const backendProjectile = backendProjectiles[id]
@@ -101,6 +101,7 @@ class Multiplayer extends Phaser.Scene {
                     this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
                     this.frontendProjectiles[id].setScale(0.1)
                 } else {
+                    //KAZKA PATVARKYT REIKIA server.js NES LABAI GREIT SAUDO, GALIMAI SPRITE JUDA GREICIAU NEI PROJECTILE POSITIONAS?
                     this.frontendProjectiles[id].x += backendProjectiles[id].velocity.x
                     this.frontendProjectiles[id].y += backendProjectiles[id].velocity.y
                 }
