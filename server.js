@@ -14,6 +14,8 @@ app.get('/', (req, res) => {
   })
 
 const backendPlayers = {}
+const backendProjectiles = {}
+let projectileId = 0
 
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
@@ -23,10 +25,38 @@ io.on('connection', (socket) => {
         y: 500 * Math.random()
     }
 
-    
-
     // Inform other clients about the new player
     io.emit('updatePlayers', backendPlayers);
+
+    socket.on('shoot', (frontendPlayer, crosshair, direction) => {
+        projectileId++
+        console.log(frontendPlayer.x, frontendPlayer.y)
+
+        //Calculate X and y velocity of bullet to move it from shooter to target
+        if (crosshair.y >= frontendPlayer.y)
+        {
+            x = 0.02 * Math.sin(direction);
+            y = 0.02 * Math.cos(direction);
+        }
+        else
+        {
+            x = -0.02 * Math.sin(direction);
+            y = -0.02 * Math.cos(direction);
+        }
+
+        const velocity = {
+            x,
+            y
+        }
+
+        backendProjectiles[projectileId] = {
+            x: frontendPlayer.x,
+            y: frontendPlayer.y,
+            velocity,
+            playerId: socket.id
+        }
+        console.log(backendProjectiles)
+    })
 
     // Listen for player movement from this client
     socket.on('playerMove', (data) => {
@@ -54,6 +84,11 @@ io.on('connection', (socket) => {
 });
 
 setInterval(() => {
+    for (const id in backendProjectiles) {
+        backendProjectiles[id].x += backendProjectiles[id].velocity.x
+        backendProjectiles[id].y += backendProjectiles[id].velocity.y
+    }
+    io.emit('updateProjectiles', backendProjectiles)
     io.emit('updatePlayers', backendPlayers)
 }, 15)
 

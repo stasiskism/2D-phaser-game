@@ -1,7 +1,11 @@
 /* global Phaser */
 
 class Multiplayer extends Phaser.Scene {
-    frontendPlayers = {}    
+    time = 0
+    frontendPlayers = {} 
+    frontendProjectiles = {}
+    playerBullets
+
     constructor() {
         super({ key: 'Multiplayer'});
     }
@@ -19,6 +23,8 @@ class Multiplayer extends Phaser.Scene {
 
     create() {
         this.cameras.main.zoom = 0.5;
+
+        //this.playerBullets = this.physics.add.group({ classType: Bullet, runChildUpdate: true });
 
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
@@ -42,46 +48,29 @@ class Multiplayer extends Phaser.Scene {
         this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         
 
-        // Listen for new player connections
-        
-        // Listen for player movements
-        socket.on('playerMove', (moveInfo) => {
-            if (otherPlayers[moveInfo.id]) {
-                otherPlayers[moveInfo.id].setPosition(moveInfo.x, moveInfo.y);
-            }
-        });
-
-        this.input.on(
-            'pointermove',
-            function (pointer)
-            {
+        this.input.on('pointermove', (pointer) => {
                 if (this.input.mouse.locked)
                 {
-                    // Move reticle with mouse
+                    // Move reticle with mousea
                     this.crosshair.x += pointer.movementX;
                     this.crosshair.y += pointer.movementY;
-
-                    // Only works when camera follows player
-                    const distX = this.crosshair.x - this.frontendPlayers[socket.id].x;
-                    const distY = this.crosshair.y - this.frontendPlayers[socket.id].y;
-
-                    // Ensures reticle cannot be moved offscreen
-                    // if (distX > 1920) { this.crosshair.x = this.frontendPlayers[socket.id].x + 1920; }
-                    // else if (distX < -1920) { this.crosshair.x = this.frontendPlayers[socket.id].x - 1920; }
-
-                    // if (distY > 1080) { this.crosshair.y = this.frontendPlayers[socket.id].y + 1080; }
-                    // else if (distY < -1080) { this.crosshair.y = this.frontendPlayers[socket.id].y - 1080; }
-                    // this.crosshair.x = Phaser.Math.Clamp(this.crosshair.x, 0, 1920)
-                    // this.crosshair.x = Phaser.Math.Clamp(this.crosshair.x, 0, 1020)
                 }
-            },
-            this
-        );
+            });
+
+        this.input.on('pointerdown', (pointer) =>
+            {
+                const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
+ 
+                if (!this.frontendPlayers[socket.id]) { return; }
+                if (pointer.leftButtonDown()) {
+                    socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction)
+                }
+            });
 
 
     }
 
-    update() {
+    update(delta) {
 
         socket.on('updatePlayers', (backendPlayers) => {
             for (const id in backendPlayers) {
@@ -105,7 +94,20 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
-        // Example movement logic for the player
+        socket.on('updateProjectiles', (backendProjectiles) => {
+            for (const id in backendProjectiles) {
+                const backendProjectile = backendProjectiles[id]
+                if (!this.frontendProjectiles[id]) {
+                    this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
+                    this.frontendProjectiles[id].setScale(0.1)
+                } else {
+                    this.frontendProjectiles[id].x += backendProjectiles[id].velocity.x
+                    this.frontendProjectiles[id].y += backendProjectiles[id].velocity.y
+                }
+            }
+        });
+
+        // Example movement logic for the playera
         if(!this.frontendPlayers[socket.id]) return
         else {
             if (this.a.isDown) {
@@ -175,11 +177,11 @@ class Multiplayer extends Phaser.Scene {
         const distY = reticle.y - this.frontendPlayers[socket.id].y; // Y distance between player & reticle
 
         // Ensures reticle cannot be moved offscreen
-        // if (distX > 1920) { reticle.x = this.frontendPlayers[socket.id].x + 1920; }
-        // else if (distX < -1920) { reticle.x = this.frontendPlayers[socket.id].x - 1920; }
+        if (distX > 1920) { reticle.x = this.frontendPlayers[socket.id].x + 1920; }
+        else if (distX < -1920) { reticle.x = this.frontendPlayers[socket.id].x - 1920; }
 
-        // if (distY > 1080) { reticle.y = this.frontendPlayers[socket.id].y + 1080; }
-        // else if (distY < -1080) { reticle.y = this.frontendPlayers[socket.id].y - 1080; }
+        if (distY > 1080) { reticle.y = this.frontendPlayers[socket.id].y + 1080; }
+        else if (distY < -1080) { reticle.y = this.frontendPlayers[socket.id].y - 1080; }
 
         // Ensures reticle cannot be moved further than dist(radius) from player
         const distBetween = Phaser.Math.Distance.Between(
@@ -196,12 +198,6 @@ class Multiplayer extends Phaser.Scene {
             reticle.x = this.frontendPlayers[socket.id].x + (reticle.x - this.frontendPlayers[socket.id].x) / scale;
             reticle.y = this.frontendPlayers[socket.id].y + (reticle.y - this.frontendPlayers[socket.id].y) / scale;
         }
-    }
-
-
-    addOtherPlayer(scene, id, x, y) {
-        const otherPlayer = scene.add.circle(x, y, 20, 0xff0000); // Different color for other players
-        otherPlayers[id] = otherPlayer;
     }
     
     }
