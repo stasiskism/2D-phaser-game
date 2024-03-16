@@ -5,6 +5,9 @@ import MainMenu from './MainMenu.js'
 import Singleplayer from './Singleplayer.js'
 import Multiplayer from './Multiplayer.js'
 import Restart from './Restart.js'
+import Register from './register.js'
+import Login from './login.js'
+import Authenticate from './authenticate.js'
 
 
 const config = {
@@ -31,4 +34,8 @@ game.scene.add('mainMenu', MainMenu)
 game.scene.add('Singleplayer', Singleplayer)
 game.scene.add('Multiplayer', Multiplayer)
 game.scene.add('Restart', Restart)
+game.scene.add('register', Register)
+game.scene.add('login', Login)
+game.scene.add('authenticate', Authenticate)
 game.scene.start('scene1')
+//game.scene.start('Multiplayer')

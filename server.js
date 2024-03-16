@@ -6,6 +6,44 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {pingInterval: 2000, pingTimeout: 5000});
 
+const bodyParser = require('body-parser')
+const { Pool } = require('pg');
+
+const sql = new Pool({
+    user: 'postgres',
+    host: '193.219.42.55',
+    database: 'postgres',
+    password: '2dcs',
+    port: 14066
+})
+
+sql.on('connect', () => {
+    console.log('Connected to PostgreSQL database')
+});
+
+sql.on('error', (err) => {
+    console.error('Error connecting to PostgreSQL database:', err);
+});
+
+// const createTableQuery = `
+//   CREATE TABLE IF NOT EXISTS test (
+//     pirmas integer,
+//     antras integer
+//   );
+// `;
+
+// sql.query(createTableQuery).then((result) => {
+//     console.log('Table created successfully');
+//     // You can perform additional operations here if needed
+//   })
+//   .catch((error) => {
+//     console.error('Error creating table', error);
+//   })
+//   .finally(() => {
+//     // Close the database connection
+//     sql.end();
+//   });
+
 // Serve static files from the 'public' directory
 app.use(express.static('src'));
 

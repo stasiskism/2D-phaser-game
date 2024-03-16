@@ -42,7 +42,8 @@ class MainMenu extends Phaser.Scene {
   }
 
   clickMultiButton() {
-    this.scene.start('Multiplayer')
+    //this.scene.start('Multiplayer')
+    this.scene.start('authenticate')
   }
 }
 
