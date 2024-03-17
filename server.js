@@ -149,7 +149,7 @@ setInterval(() => {
     io.emit('updatePlayers', backendPlayers)
 })
 
-const PORT = 3000;
+const PORT = 433;
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

@@ -14,13 +14,17 @@ const config = {
     type: Phaser.AUTO,
     width: 1920,
     height: 1080,
+    dom: {
+        createContainer: true
+    },
     physics: {
         default: 'arcade',
         arcade: {
-            debug: false
+            debug: true
         }
     },
     backgroundColor: 0x5F6e7a,
+    parent: 'phaser-example',
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
@@ -37,5 +41,6 @@ game.scene.add('Restart', Restart)
 game.scene.add('register', Register)
 game.scene.add('login', Login)
 game.scene.add('authenticate', Authenticate)
-game.scene.start('scene1')
+//game.scene.start('scene1')
 //game.scene.start('Multiplayer')
+game.scene.start('authenticate')
