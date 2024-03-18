@@ -34,13 +34,36 @@ class Register extends Phaser.Scene {
             <p style="color:white">Already have an account? <a href="#" id="login">Sign in</a></p>
         `);
 
-        const password = register.getChildByID("pswd");
-        const confirmPassword = register.getChildByID("repeatpswd");
-        const login = register.getChildByID("login")
+        const password = register.getChildByID('pswd');
+        const confirmPassword = register.getChildByID('repeatpswd');
+        const login = register.getChildByID('login')
 
-        password.addEventListener("change", () => this.checkPassword(password, confirmPassword));
-        confirmPassword.addEventListener("keyup", () => this.checkPassword(password, confirmPassword));
+        password.addEventListener('change', () => this.checkPassword(password, confirmPassword));
+        confirmPassword.addEventListener('keyup', () => this.checkPassword(password, confirmPassword));
         login.addEventListener('click', this.loadLogin.bind(this));
+
+        const registerForm = register.getChildByID('register')
+        registerForm.addEventListener('submit', (event) => {
+            event.preventDefault()
+
+            const username = document.getElementById('uname').value
+            const password = document.getElementById('pswd').value
+            const repeatPassword = document.getElementById('repeatpswd').value
+
+            if (username.trim() === '' || password.trim() === '') {
+                alert('Please enter username and password')
+                return;
+            }
+
+            //REIKIA PACHEKINT AR NERA TOKIO USERNAME JAU DATABASE
+            if (password !== repeatPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            this.sendData(username, password)
+
+        })
     }
 
     update() {
@@ -57,6 +80,28 @@ class Register extends Phaser.Scene {
 
     loadLogin() {
         this.scene.start('login')
+    }
+
+    sendData(username, password) {
+        fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({username, password})
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Registration successful')
+                this.scene.start('login')
+            } else {
+                alert ('Registration failed')
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error)
+            alert('An error has occured')
+        })
     }
 
 }

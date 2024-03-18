@@ -9,6 +9,14 @@ const io = new Server(server, {pingInterval: 2000, pingTimeout: 5000});
 const bodyParser = require('body-parser')
 const { Pool } = require('pg');
 
+app.use(express.static('src'));
+
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html')
+})
+
+app.use(bodyParser.json())
+
 const sql = new Pool({
     user: 'postgres',
     host: '193.219.42.55',
@@ -25,31 +33,45 @@ sql.on('error', (err) => {
     console.error('Error connecting to PostgreSQL database:', err);
 });
 
-// const createTableQuery = `
-//   CREATE TABLE IF NOT EXISTS test (
-//     pirmas integer,
-//     antras integer
-//   );
-// `;
+app.post('/register', async(req, res) => {
+    const { username, password } = req.body
 
-// sql.query(createTableQuery).then((result) => {
-//     console.log('Table created successfully');
-//     // You can perform additional operations here if needed
-//   })
-//   .catch((error) => {
-//     console.error('Error creating table', error);
-//   })
-//   .finally(() => {
-//     // Close the database connection
-//     sql.end();
-//   });
+    try {
+        const client = await sql.connect()
+        const encryptedPassword = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [password]);
+        const hashedPassword = encryptedPassword.rows[0].encrypted_password;
+        console.log(hashedPassword)
+        const values = [username, hashedPassword]
+        await client.query('INSERT INTO user_authentication (user_name, user_password) VALUES ($1, $2)', values)
+        client.release()
+        res.sendStatus(200)
+    } catch (error) {
+        res.status(500).send('Error inserting data into database')
+    }
+})
 
-// Serve static files from the 'public' directory
-app.use(express.static('src'));
+app.post('/login', async (req, res) => {
+    const {username, password} = req.body
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html')
-  })
+    try {
+        const client = await sql.connect()
+        const result = await client.query(`SELECT user_id from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
+        if (result.rows.length === 0) {
+            res.status(401).send('Invalid username or password')
+            return;
+        }
+
+        res.sendStatus(200);
+        
+        client.release()
+    } catch (error) {
+        console.error('Error authenticating user:', error)
+        res.status(500).send('Error authenticating user')
+    }
+})
+
+
+
 
 const backendPlayers = {}
 const backendProjectiles = {}

@@ -30,6 +30,23 @@ class Login extends Phaser.Scene {
         const register = login.getChildByID('register');
         register.addEventListener('click', this.loadRegister.bind(this));
 
+        const loginForm = login.getChildByID('login')
+        //REIKIA PACHEKINT AR YRA TOKS USERNAME SU PASSWORDU DATABASE. JEI TAIP - PALEIDZIA I MULTIPLAYERI.
+        loginForm.addEventListener('submit', (event) => {
+            event.preventDefault()
+
+            const username = document.getElementById('uname').value
+            const password = document.getElementById('pswd').value
+
+            if (username.trim() === '' || password.trim() === '') {
+                alert('Please enter username and password')
+                return;
+            }
+
+            this.sendData(username, password)
+
+        })
+
     }
         
 
@@ -41,6 +58,29 @@ class Login extends Phaser.Scene {
     loadRegister() {
         this.scene.start('register')
     }
+
+    sendData(username, password) {
+        fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({username, password})
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Login successful')
+                this.scene.start('Multiplayer')
+            } else {
+                alert('Login failed')
+            }
+        })
+        .catch(error => {
+            console.log('Error:', error)
+            alert('An error occured')
+        })
+    }
+
 }
 
 export default Login
