@@ -42,7 +42,9 @@ app.post('/register', async(req, res) => {
         const hashedPassword = encryptedPassword.rows[0].encrypted_password;
         console.log(hashedPassword)
         const values = [username, hashedPassword]
-        await client.query('INSERT INTO user_authentication (user_name, user_password) VALUES ($1, $2)', values)
+        result = await client.query('INSERT INTO user_authentication (user_name, user_password) VALUES ($1, $2) RETURNING user_id', values)
+        const id = result.rows[0].user_id
+        await client.query('INSERT INTO user_profile (user_id, user_name) VALUES ($1, $2)', [id, username])
         client.release()
         res.sendStatus(200)
     } catch (error) {
@@ -70,7 +72,7 @@ app.post('/login', async (req, res) => {
     }
 })
 
-
+//SUKURTI USERIO PROFILIUS
 
 
 const backendPlayers = {}
