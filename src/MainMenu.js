@@ -98,10 +98,6 @@ class MainMenu extends Phaser.Scene {
       }
 
 
-<<<<<<< HEAD
-  clickMultiButton() {
-    this.scene.start('authenticate')
-=======
       this.popupText.setPosition(object.x - 100, object.y - 50);
       this.popupText.setText(message);
       this.popupText.setVisible(true);
@@ -119,7 +115,6 @@ class MainMenu extends Phaser.Scene {
         this.scene.start('Multiplayer');
       }
     }
->>>>>>> 1bfa2a308914b80a5295371481049bae4b5392ff
   }
 }
 
