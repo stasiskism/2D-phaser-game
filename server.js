@@ -81,11 +81,6 @@ let projectileId = 0
 
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
-    backendPlayers[socket.id] = {
-        id: socket.id,
-        x: 500 * Math.random(),
-        y: 500 * Math.random()
-    }
 
     // Inform other clients about the new player
     io.emit('updatePlayers', backendPlayers);
@@ -94,6 +89,7 @@ io.on('connection', (socket) => {
     socket.on('shoot', (frontendPlayer, crosshair, direction) => {
         projectileId++
 
+        let x, y
         //Calculate X and y velocity of bullet to move it from shooter to target
         if (crosshair.y >= frontendPlayer.y)
         {
@@ -143,6 +139,14 @@ io.on('connection', (socket) => {
         // Inform other clients that this player has disconnected
         io.emit('updatePlayers', backendPlayers);
     });
+
+    socket.on('startGame', () => {
+        backendPlayers[socket.id] = { 
+            id: socket.id,
+            x: 500 * Math.random(),
+            y: 500 * Math.random()
+        }
+    })
 });
 
 setInterval(() => {
@@ -173,7 +177,7 @@ setInterval(() => {
     io.emit('updatePlayers', backendPlayers)
 })
 
-const PORT = 433;
+const PORT = 443;
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

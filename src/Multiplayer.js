@@ -64,6 +64,9 @@ class Multiplayer extends Phaser.Scene {
                 }
             });
 
+            socket.emit('startGame')
+            this.frontendPlayers = {}
+            console.log(this.frontendPlayers)
 
     }
 
@@ -73,6 +76,7 @@ class Multiplayer extends Phaser.Scene {
         socket.on('updatePlayers', (backendPlayers) => {
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id]
+
                 
                 if(!this.frontendPlayers[id]) {
                     this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'player')
@@ -88,9 +92,13 @@ class Multiplayer extends Phaser.Scene {
                 if (!backendPlayers[id]) {
                     this.frontendPlayers[id].destroy()
                     delete this.frontendPlayers[id]
+                    if (id === socket.id) {
+                        this.scene.start('respawn')
+                    }
                 }
             }
         });
+
 
         //SHOOTING PROJECTILES
         socket.on('updateProjectiles', (backendProjectiles) => {
