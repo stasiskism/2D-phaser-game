@@ -39,11 +39,16 @@ class Singleplayer extends Phaser.Scene {
       this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
       this.load.image('mapas', 'assets/mapas.png')
       this.load.image('player', 'assets/player_23.png')
-      this.load.image('bullet', 'assets/bullet.jpg')
+      this.load.image('bullet', 'assets/Bullets/bullet.png')
       this.load.image('enemy', 'assets/enemy.png')
+      this.load.image('shotgun', 'assets/Weapons/tile001.png')
     }
 
   create () {
+
+    let orbitRadius = 50; // Radius of the orbit (adjust as needed)
+    let weapon;
+
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
@@ -156,9 +161,22 @@ this.anims.create({
     //for everything else to load we need to delay the spawning of enemies
     this.time.delayedCall(500, this.spawnEnemies, [], this);
     this.input.on('pointerdown', this.fireBullet, this);
+
+    // Create the weapon sprite and position it relative to the player
+    this.weapon = this.physics.add.sprite(this.player.x + orbitRadius, this.player.y, 'shotgun');
+    this.weapon.setScale(2);
+
+    // Update the weapon's position based on the mouse cursor
+    this.input.on('pointermove', function(pointer) {
+        let angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
+        let weaponX = this.player.x + orbitRadius * Math.cos(angle);
+        let weaponY = this.player.y + orbitRadius * Math.sin(angle);
+        weapon.setPosition(weaponX, weaponY);
+    }, this);
   }
 
   update () {
+
     //player movement
     let keyInputs = this.input.keyboard.createCursorKeys();
      // Get the horizontal and vertical velocity components
@@ -180,6 +198,13 @@ this.anims.create({
      // Set the player's velocity
      this.player.setVelocityX(velocityX);
      this.player.setVelocityY(velocityY);
+
+     const orbitRadius = 50; // Adjust as needed
+     const angle = Phaser.Math.Angle.BetweenPoints(this.player, this.input.activePointer);
+     const weaponX = this.player.x + orbitRadius * Math.cos(angle);
+     const weaponY = this.player.y + orbitRadius * Math.sin(angle);
+     this.weapon.setPosition(weaponX, weaponY);
+     this.weapon.setRotation(angle);
  
      // Determine the animation based on the combined velocity components
      if (velocityX < 0 && velocityY < 0) {
@@ -247,12 +272,18 @@ this.anims.create({
 }
 
 fireBullet() {
-    const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x, this.input.activePointer.y)
-    const velocity = new Phaser.Math.Vector2(300 * Math.cos(angle), 300 * Math.sin(angle))
-    this.bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet')
-    this.bullet.setScale(0.1)
-    this.bullet.setVelocity(velocity.x, velocity.y)
-    this.bullets.push(this.bullet)
+  const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x, this.input.activePointer.y);
+  const velocity = new Phaser.Math.Vector2(600 * Math.cos(angle), 600 * Math.sin(angle));
+  
+  // Calculate the position for the bullet to spawn from the end of the weapon
+  const bulletSpawnX = this.weapon.x + this.weapon.displayWidth / 2 * Math.cos(angle);
+  const bulletSpawnY = this.weapon.y + this.weapon.displayHeight / 2 * Math.sin(angle);
+  
+  this.bullet = this.physics.add.sprite(bulletSpawnX, bulletSpawnY, 'bullet');
+  this.bullet.setScale(1);
+  this.bullet.setVelocity(velocity.x, velocity.y);
+  this.bullet.setRotation(angle);
+  this.bullets.push(this.bullet);
 }
 
   spawnEnemies() {
