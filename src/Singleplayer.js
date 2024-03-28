@@ -46,7 +46,7 @@ class Singleplayer extends Phaser.Scene {
 
   create () {
 
-    let orbitRadius = 50; // Radius of the orbit (adjust as needed)
+    let orbitRadius = 85; // Radius of the orbit (adjust as needed)
     let weapon;
 
     const centerX = this.cameras.main.width / 2;
@@ -151,7 +151,7 @@ this.anims.create({
     this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'WwalkDown2')
-    this.player.setScale(2);
+    this.player.setScale(4);
     this.player.setCollideWorldBounds(true);
 
     this.interval
@@ -164,7 +164,7 @@ this.anims.create({
 
     // Create the weapon sprite and position it relative to the player
     this.weapon = this.physics.add.sprite(this.player.x + orbitRadius, this.player.y, 'shotgun');
-    this.weapon.setScale(2);
+    this.weapon.setScale(4);
 
     // Update the weapon's position based on the mouse cursor
     this.input.on('pointermove', function(pointer) {
@@ -199,7 +199,7 @@ this.anims.create({
      this.player.setVelocityX(velocityX);
      this.player.setVelocityY(velocityY);
 
-     const orbitRadius = 50; // Adjust as needed
+     const orbitRadius = 85; // Adjust as needed
      const angle = Phaser.Math.Angle.BetweenPoints(this.player, this.input.activePointer);
      const weaponX = this.player.x + orbitRadius * Math.cos(angle);
      const weaponY = this.player.y + orbitRadius * Math.sin(angle);
@@ -280,7 +280,7 @@ fireBullet() {
   const bulletSpawnY = this.weapon.y + this.weapon.displayHeight / 2 * Math.sin(angle);
   
   this.bullet = this.physics.add.sprite(bulletSpawnX, bulletSpawnY, 'bullet');
-  this.bullet.setScale(1);
+  this.bullet.setScale(2);
   this.bullet.setVelocity(velocity.x, velocity.y);
   this.bullet.setRotation(angle);
   this.bullets.push(this.bullet);
