@@ -8,6 +8,7 @@ import Restart from './Restart.js'
 import Register from './register.js'
 import Login from './login.js'
 import Authenticate from './authenticate.js'
+import Respawn from './respawn.js'
 
 
 const config = {
@@ -41,6 +42,7 @@ game.scene.add('Restart', Restart)
 game.scene.add('register', Register)
 game.scene.add('login', Login)
 game.scene.add('authenticate', Authenticate)
+game.scene.add('respawn', Respawn)
 //game.scene.start('scene1')
 //game.scene.start('Multiplayer')
 game.scene.start('authenticate')
