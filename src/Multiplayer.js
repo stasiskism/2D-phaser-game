@@ -67,9 +67,7 @@ class Multiplayer extends Phaser.Scene {
         this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'WwalkDown2')
-        this.player.setScale(2);
-        this.player.setCollideWorldBounds(true);
+        
         
         //CROSSHAIR FOLLOWS MOUSE
         this.input.on('pointermove', (pointer) => {
