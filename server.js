@@ -62,7 +62,7 @@ app.post('/login', async (req, res) => {
             res.status(401).send('Invalid username or password')
             return;
         }
-
+        playerUsername = username
         res.sendStatus(200);
         
         client.release()
@@ -78,6 +78,7 @@ app.post('/login', async (req, res) => {
 const backendPlayers = {}
 const backendProjectiles = {}
 let projectileId = 0
+let playerUsername
 
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
@@ -118,17 +119,31 @@ io.on('connection', (socket) => {
 
     // Listen for player movement from this client
     socket.on('playerMove', (data) => {
-        // Broadcast this player's movement to all other clients
-        if (data === 'a') {
-            backendPlayers[socket.id].x -= 2
-        } else if (data === 'd') {
-            backendPlayers[socket.id].x += 2
-        }
+        if (backendPlayers[socket.id]) {
+            // Broadcast this player's movement to all other clients
+            if (data === 'a') {
+                backendPlayers[socket.id].x -= 2
+                if (backendPlayers[socket.id].x < 0) {
+                    delete backendPlayers[socket.id]
+                }
+            } else if (data === 'd') {
+                backendPlayers[socket.id].x += 2
+                if (backendPlayers[socket.id].x > 1920) {
+                    delete backendPlayers[socket.id]
+                }
+            }
 
-        if (data === 'w') {
-            backendPlayers[socket.id].y -= 2
-        } else if (data === 's') {
-            backendPlayers[socket.id].y += 2
+            if (data === 'w') {
+                backendPlayers[socket.id].y -= 2
+                if (backendPlayers[socket.id].y < 0) {
+                    delete backendPlayers[socket.id]
+                }
+            } else if (data === 's') {
+                backendPlayers[socket.id].y += 2
+                if (backendPlayers[socket.id].y > 1080) {
+                    delete backendPlayers[socket.id]
+                }
+            }
         }
     });
 
@@ -143,8 +158,10 @@ io.on('connection', (socket) => {
     socket.on('startGame', () => {
         backendPlayers[socket.id] = { 
             id: socket.id,
-            x: 500 * Math.random(),
-            y: 500 * Math.random()
+            x: 1920 * Math.random(),
+            y: 1080 * Math.random(),
+            score: 0,
+            playerUsername
         }
     })
 });
