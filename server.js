@@ -182,6 +182,9 @@ setInterval(() => {
             const backendPlayer = backendPlayers[playerId]
             const distance = Math.hypot(backendProjectiles[id].x - backendPlayer.x, backendProjectiles[id].y - backendPlayer.y)
             if (distance < 30 && backendProjectiles[id].playerId !== playerId) {
+                if (backendPlayers[backendProjectiles[id].playerId]) {
+                    backendPlayers[backendProjectiles[id].playerId].score++
+                }
                 console.log(distance)
                 delete backendProjectiles[id]
                 delete backendPlayers[playerId]
@@ -190,7 +193,7 @@ setInterval(() => {
         }
     }
     
-    io.emit('updateProjectiles', backendProjectiles)
+    io.emit('updateProjectiles', backendProjectiles, backendPlayers)
     io.emit('updatePlayers', backendPlayers)
 })
 

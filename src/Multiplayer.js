@@ -83,7 +83,6 @@ class Multiplayer extends Phaser.Scene {
         socket.on('updatePlayers', (backendPlayers) => {
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id]
-
                 
                 if(!this.frontendPlayers[id]) {
                     this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'player')
@@ -123,37 +122,38 @@ class Multiplayer extends Phaser.Scene {
                     const divToDelete = this.document.querySelector(`div[data-id="${id}"]`)
                     divToDelete.parentNode.removeChild(divToDelete)
                     if (id === socket.id) {
-                        this.scene.stop()
+                        this.scene.resume()
                         this.scene.switch('respawn')
                     }
                 }
             }
         });
 
-
         //SHOOTING PROJECTILES
-        socket.on('updateProjectiles', (backendProjectiles) => {
-            for (const id in backendProjectiles) {
-                const backendProjectile = backendProjectiles[id]
-                if (!this.frontendProjectiles[id]) {
-                    this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
-                    this.frontendProjectiles[id].setScale(0.1)
-                    this.frontendProjectiles[id].rotation = this.frontendPlayers[socket.id].rotation
-                    //this.constrainVelocity(this.frontendProjectiles[id], 1)
-                } else {
-                    //KAZKA PATVARKYT REIKIA, NES assetas JUDA GREICIAU NEI PROJECTILE POSITIONAS
-                    this.frontendProjectiles[id].x += backendProjectiles[id].velocity.x * 0.0003
-                    this.frontendProjectiles[id].y += backendProjectiles[id].velocity.y * 0.0003
-                    //this.constrainVelocity(this.frontendProjectiles[id], 1)
+        socket.on('updateProjectiles', (backendProjectiles, backendPlayers) => {
+            if (this.frontendPlayers[socket.id]) {
+                for (const id in backendProjectiles) {
+                    const backendProjectile = backendProjectiles[id]
+                    if (!this.frontendProjectiles[id]) {
+                        this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
+                        this.frontendProjectiles[id].setScale(0.1)
+                        this.frontendProjectiles[id].rotation = this.frontendPlayers[socket.id].rotation
+                        //this.constrainVelocity(this.frontendProjectiles[id], 1)
+                    } else {
+                        //KAZKA PATVARKYT REIKIA, NES assetas JUDA GREICIAU NEI PROJECTILE POSITIONAS
+                        this.frontendProjectiles[id].x += backendProjectiles[id].velocity.x * 0.0003
+                        this.frontendProjectiles[id].y += backendProjectiles[id].velocity.y * 0.0003
+                        //this.constrainVelocity(this.frontendProjectiles[id], 1)
+                    }
                 }
-            }
 
-            for (const id in this.frontendProjectiles) {
-                if (!backendProjectiles[id]) {
-                    this.frontendProjectiles[id].destroy()
-                    delete this.frontendProjectiles[id]
+                for (const id in this.frontendProjectiles) {
+                    if (!backendProjectiles[id]) {
+                        this.frontendProjectiles[id].destroy()
+                        delete this.frontendProjectiles[id]
+                    }
                 }
-            }
+        }
         });
 
         // Example movement logic for the playera
