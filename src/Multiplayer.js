@@ -37,16 +37,15 @@ class Multiplayer extends Phaser.Scene {
         this.load.image('WwalkUpLeft2', 'assets/8-dir-chars/WwalkUpLeft2.png')
         this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
         this.load.image('mapas', 'assets/mapas.png')
-        this.load.image('player', 'assets/8-dir-chars/WwalkDown2.png')
-        this.load.image('bullet', 'assets/Bullets/bullet.png')
-        this.load.image('shotgun', 'assets/Weapons/tile001.png')
+        this.load.image('player', 'assets/player_23.png')
+        this.load.image('bullet', 'assets/bullet.jpg')
         this.load.image('crosshair', 'assets/crosshair008.png')
     }
     
 
     create() {
 
-        this.cameras.main.zoom = 0.5;
+        this.cameras.main.zoom = 1;
 
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
@@ -59,93 +58,8 @@ class Multiplayer extends Phaser.Scene {
         this.input.on('pointerdown', () => {
             this.input.mouse.requestPointerLock();
         });
-        this.anims.create({
-            key: 'WwalkUp',
-            frames: [
-                { key: 'WwalkUp1' },
-                { key: 'WwalkUp2' },
-                { key: 'WwalkUp3' }
-            ],
-            frameRate: 10,
-            repeat: -1
-        });
+
         
-        this.anims.create({
-            key: 'WwalkUpRight',
-            frames: [
-                { key: 'WwalkUpRight1' },
-                { key: 'WwalkUpRight2' },
-                { key: 'WwalkUpRight3' }
-            ],
-            frameRate: 10,
-            repeat: -1
-        });
-        
-        this.anims.create({
-            key: 'WwalkRight',
-            frames: [
-                { key: 'WwalkRight1' },
-                { key: 'WwalkRight2' },
-                { key: 'WwalkRight3' }
-            ],
-            frameRate: 10,
-            repeat: -1
-        });
-        
-        this.anims.create({
-            key: 'WwalkDownRight',
-            frames: [
-                { key: 'WwalkDownRight1' },
-                { key: 'WwalkDownRight2' },
-                { key: 'WwalkDownRight3' }
-            ],
-            frameRate: 10,
-            repeat: -1
-        });
-        
-        this.anims.create({
-            key: 'WwalkDown',
-            frames: [
-                { key: 'WwalkDown1' },
-                { key: 'WwalkDown2' },
-                { key: 'WwalkDown3' }
-            ],
-            frameRate: 10,
-            repeat: -1
-        });
-        
-        this.anims.create({
-            key: 'WwalkDownLeft',
-            frames: [
-                { key: 'WwalkDownLeft1' },
-                { key: 'WwalkDownLeft2' },
-                { key: 'WwalkDownLeft3' }
-            ],
-            frameRate: 10,
-            repeat: -1
-        });
-        
-        this.anims.create({
-            key: 'WwalkLeft',
-            frames: [
-                { key: 'WwalkLeft1' },
-                { key: 'WwalkLeft2' },
-                { key: 'WwalkLeft3' }
-            ],
-            frameRate: 10,
-            repeat: -1
-        });
-        
-        this.anims.create({
-            key: 'WwalkUpLeft',
-            frames: [
-                { key: 'WwalkUpLeft1' },
-                { key: 'WwalkUpLeft2' },
-                { key: 'WwalkUpLeft3' }
-            ],
-            frameRate: 10,
-            repeat: -1
-        });        
         
         this.cursors = this.input.keyboard.createCursorKeys();
         //player movement
@@ -175,119 +89,194 @@ class Multiplayer extends Phaser.Scene {
                 }
             });
 
-        socket.emit('startGame')
-        this.frontendPlayers = {}
-        //console.log(this.frontendPlayers)
-        this.leaderboard = this.add.dom(-250, -250).createFromHTML(`<div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
-            <div style="margin-bottom: 8px">Leaderboard</div>
-            <div id="playerLabels">
-            </div>
-            </div>`);
-        this.document = this.leaderboard.node.querySelector(`#playerLabels`)
-        
+            socket.emit('startGame')
+            this.frontendPlayers = {}
+            console.log(this.frontendPlayers)
+
+            this.anims.create({
+                key: 'WwalkUp',
+                frames: [
+                    { key: 'WwalkUp1' },
+                    { key: 'WwalkUp2' },
+                    { key: 'WwalkUp3' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });
+            
+            this.anims.create({
+                key: 'WwalkUpRight',
+                frames: [
+                    { key: 'WwalkUpRight1' },
+                    { key: 'WwalkUpRight2' },
+                    { key: 'WwalkUpRight3' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });
+            
+            this.anims.create({
+                key: 'WwalkRight',
+                frames: [
+                    { key: 'WwalkRight1' },
+                    { key: 'WwalkRight2' },
+                    { key: 'WwalkRight3' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });
+            
+            this.anims.create({
+                key: 'WwalkDownRight',
+                frames: [
+                    { key: 'WwalkDownRight1' },
+                    { key: 'WwalkDownRight2' },
+                    { key: 'WwalkDownRight3' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });
+            
+            this.anims.create({
+                key: 'WwalkDown',
+                frames: [
+                    { key: 'WwalkDown1' },
+                    { key: 'WwalkDown2' },
+                    { key: 'WwalkDown3' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });
+            
+            this.anims.create({
+                key: 'WwalkDownLeft',
+                frames: [
+                    { key: 'WwalkDownLeft1' },
+                    { key: 'WwalkDownLeft2' },
+                    { key: 'WwalkDownLeft3' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });
+            
+            this.anims.create({
+                key: 'WwalkLeft',
+                frames: [
+                    { key: 'WwalkLeft1' },
+                    { key: 'WwalkLeft2' },
+                    { key: 'WwalkLeft3' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });
+            
+            this.anims.create({
+                key: 'WwalkUpLeft',
+                frames: [
+                    { key: 'WwalkUpLeft1' },
+                    { key: 'WwalkUpLeft2' },
+                    { key: 'WwalkUpLeft3' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });     
+
     }
 
     update(delta) {
+
         //PLAYER MOVEMENT, CONNECTION, DISCONNECTION
         socket.on('updatePlayers', (backendPlayers) => {
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id]
+
                 
                 if(!this.frontendPlayers[id]) {
-                    this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'player')
+                    this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'WwalkDown2')
                     this.frontendPlayers[id].setScale(4)
                     this.frontendPlayers[id].setCollideWorldBounds(true);
-                    const newPlayerLabel = `<div data-id="${id}" data-score="${backendPlayer.score}">${backendPlayer.username}: ${backendPlayer.score}</div>`
-                    this.document.innerHTML += newPlayerLabel
                 } else {
-                    const playerLabel = this.document.querySelector(`div[data-id="${id}"]`)
-                    if (playerLabel) {
-                        playerLabel.innerHTML = `${backendPlayer.username}: ${backendPlayer.score}`
-                        playerLabel.setAttribute('data-score', backendPlayer.score)
-                    }
                     //update position if a player exists
                     this.frontendPlayers[id].x = backendPlayer.x
                     this.frontendPlayers[id].y = backendPlayer.y
-    
-                    const parentDiv = this.document
-                    const childDivs = Array.from(parentDiv.querySelectorAll('div'))
-                    childDivs.sort((first, second) => {
-                        const scoreFirst = Number(first.getAttribute('data-score'))
-                        const scoreSecond = Number(second.getAttribute('data-score'))
-                        return scoreSecond - scoreFirst
-                    })
-    
-                    parentDiv.innerHTML = ''
-    
-                    childDivs.forEach(div => {
-                        parentDiv.appendChild(div)
-                    })
                 }
             }
-    
+
             for (const id in this.frontendPlayers) {
                 if (!backendPlayers[id]) {
                     this.frontendPlayers[id].destroy()
                     delete this.frontendPlayers[id]
-                    const divToDelete = this.document.querySelector(`div[data-id="${id}"]`)
-                    divToDelete.parentNode.removeChild(divToDelete)
                     if (id === socket.id) {
-                        this.scene.resume()
-                        this.scene.switch('respawn')
+                        this.scene.start('respawn')
                     }
                 }
             }
         });
-    
-        //SHOOTING PROJECTILES (unchanged, not shown for brevity)
-    
-        // Movement logic with direction-based animation
-        if(!this.frontendPlayers[socket.id]) return;
+
+
+        //SHOOTING PROJECTILES
+        socket.on('updateProjectiles', (backendProjectiles) => {
+            for (const id in backendProjectiles) {
+                const backendProjectile = backendProjectiles[id]
+                if (!this.frontendProjectiles[id]) {
+                    this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
+                    this.frontendProjectiles[id].setScale(4)
+                    this.frontendProjectiles[id].rotation = this.frontendPlayers[socket.id].rotation
+                    //this.constrainVelocity(this.frontendProjectiles[id], 1)
+                } else {
+                    //KAZKA PATVARKYT REIKIA, NES assetas JUDA GREICIAU NEI PROJECTILE POSITIONAS
+                    this.frontendProjectiles[id].x += backendProjectiles[id].velocity.x * 0.0003
+                    this.frontendProjectiles[id].y += backendProjectiles[id].velocity.y * 0.0003
+                    //this.constrainVelocity(this.frontendProjectiles[id], 1)
+                }
+            }
+
+            for (const id in this.frontendProjectiles) {
+                if (!backendProjectiles[id]) {
+                    this.frontendProjectiles[id].destroy()
+                    delete this.frontendProjectiles[id]
+                }
+            }
+        });
+
+        // Example movement logic for the playera
+        if(!this.frontendPlayers[socket.id]) return
         else {
-            let direction = null;
-            let moving = false;
-            
+            if (this.a.isDown) {
+                this.frontendPlayers[socket.id].x -= 2
+                this.frontendPlayers[socket.id].anims.play("WwalkLeft", true);
+                socket.emit('playerMove', 'a');
+            } else if (this.d.isDown) {
+                this.frontendPlayers[socket.id].x += 2
+                this.frontendPlayers[socket.id].anims.play("WwalkRight", true);
+                socket.emit('playerMove', 'd');
+            }
             if (this.w.isDown) {
-                this.frontendPlayers[socket.id].y -= 2; // Move player up
-                direction = 'Up';
-                moving = true;
-                if (this.a.isDown) direction = 'UpLeft';
-                else if (this.d.isDown) direction = 'UpRight';
+                this.frontendPlayers[socket.id].y -= 2
+                this.frontendPlayers[socket.id].anims.play("WwalkUp", true);
+                socket.emit('playerMove', 'w');
             } else if (this.s.isDown) {
-                this.frontendPlayers[socket.id].y += 2; // Move player down
-                direction = 'Down';
-                moving = true;
-                if (this.a.isDown) direction = 'DownLeft';
-                else if (this.d.isDown) direction = 'DownRight';
-            }
-    
-            if (this.a.isDown && direction === null) {
-                this.frontendPlayers[socket.id].x -= 2; // Move player left
-                direction = 'Left';
-                moving = true;
-            } else if (this.d.isDown && direction === null) {
-                this.frontendPlayers[socket.id].x += 2; // Move player right
-                direction = 'Right';
-                moving = true;
-            }
-    
-            if (moving) {
-                const animationName = `Wwalk${direction}`; // Convert direction to animation key
-                this.frontendPlayers[socket.id].anims.play(animationName, true);
-            } else {
-                this.frontendPlayers[socket.id].setTexture("WwalkDown2");
-                this.frontendPlayers[socket.id].anims.stop();
+                this.frontendPlayers[socket.id].y += 2
+                this.frontendPlayers[socket.id].anims.play("WwalkDown", true);
+                socket.emit('playerMove', 's');
             }
         }
-    
+
+
+        // Camera position is average between reticle and player positions
+        const avgX = (this.frontendPlayers[socket.id].x + this.crosshair.x) / 2 - 1920/2;
+        const avgY = (this.frontendPlayers[socket.id].y + this.crosshair.y) / 2 - 1080/2;
+        this.cameras.main.scrollX = avgX;
+        this.cameras.main.scrollY = avgY;
+
         // Make reticle move with player
         this.crosshair.body.velocity.x = this.frontendPlayers[socket.id].body.velocity.x;
         this.crosshair.body.velocity.y = this.frontendPlayers[socket.id].body.velocity.y;
-    
+
         // Constrain position of reticle
         this.constrainReticle(this.crosshair, 550);
+
     }
-    
 
     // constrainVelocity (sprite, maxVelocity)
     // {
