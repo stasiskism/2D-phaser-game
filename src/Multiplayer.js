@@ -2,6 +2,7 @@
 
 class Multiplayer extends Phaser.Scene {
     frontendPlayers = {} 
+    frontendWeapons = {}
     frontendProjectiles = {}
 
     constructor() {
@@ -40,6 +41,7 @@ class Multiplayer extends Phaser.Scene {
         this.load.image('player', 'assets/player_23.png')
         this.load.image('bullet', 'assets/Bullets/bullet.png')
         this.load.image('crosshair', 'assets/crosshair008.png')
+        this.load.image('shotgun', 'assets/Weapons/tile001.png')
     }
     
 
@@ -50,7 +52,6 @@ class Multiplayer extends Phaser.Scene {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
-
 
         //CROSSHAIR LOCK ON MOUSE
         this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair')
@@ -211,16 +212,24 @@ class Multiplayer extends Phaser.Scene {
                     this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'WwalkDown2')
                     this.frontendPlayers[id].setScale(4)
                     this.frontendPlayers[id].setCollideWorldBounds(true);
+                    this.frontendWeapons[id] = this.physics.add.sprite(backendPlayer.x + 80, backendPlayer.y, 'shotgun')
+                    this.frontendWeapons[id].setScale(3)
                 } else {
                     //update position if a player exists
                     this.frontendPlayers[id].x = backendPlayer.x
                     this.frontendPlayers[id].y = backendPlayer.y
+                    const angleToPointer = Phaser.Math.Angle.Between(this.frontendPlayers[id].x, this.frontendPlayers[id].y, this.crosshair.x, this.crosshair.y);
+                    this.frontendWeapons[id].setPosition(this.frontendPlayers[id].x, this.frontendPlayers[id].y).setRotation(angleToPointer);
+                    const orbitDistance = 70;
+                    this.frontendWeapons[id].x += Math.cos(angleToPointer) * orbitDistance;
+                    this.frontendWeapons[id].y += Math.sin(angleToPointer) * orbitDistance;
                 }
             }
 
             for (const id in this.frontendPlayers) {
                 if (!backendPlayers[id]) {
                     this.frontendPlayers[id].destroy()
+                    this.frontendPlayers[id].weapon.destroy();
                     delete this.frontendPlayers[id]
                     if (id === socket.id) {
                         this.scene.start('respawn')
@@ -261,7 +270,6 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
-        // Example movement logic for the playera
         if(!this.frontendPlayers[socket.id]) return
         else {
 
