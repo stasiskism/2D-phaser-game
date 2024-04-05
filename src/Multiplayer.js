@@ -237,7 +237,13 @@ class Multiplayer extends Phaser.Scene {
                 if (!this.frontendProjectiles[id]) {
                     this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
                     this.frontendProjectiles[id].setScale(4)
-                    this.frontendProjectiles[id].rotation = this.frontendPlayers[socket.id].rotation
+                    const direction = Phaser.Math.Angle.Between(
+                        this.frontendPlayers[socket.id].x,
+                        this.frontendPlayers[socket.id].y,
+                        this.crosshair.x,
+                        this.crosshair.y
+                    );
+                    this.frontendProjectiles[id].setRotation(direction);
                     //this.constrainVelocity(this.frontendProjectiles[id], 1)
                 } else {
                     //KAZKA PATVARKYT REIKIA, NES assetas JUDA GREICIAU NEI PROJECTILE POSITIONAS
