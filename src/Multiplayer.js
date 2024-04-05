@@ -87,12 +87,12 @@ class Multiplayer extends Phaser.Scene {
                 if(!this.frontendPlayers[id]) {
                     this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'player')
                     this.frontendPlayers[id].setCollideWorldBounds(true);
-                    const newPlayerLabel = `<div data-id="${id}" data-score="${backendPlayer.score}">${backendPlayer.playerUsername}: ${backendPlayer.score}</div>`
+                    const newPlayerLabel = `<div data-id="${id}" data-score="${backendPlayer.score}">${backendPlayer.username}: ${backendPlayer.score}</div>`
                     this.document.innerHTML += newPlayerLabel
                 } else {
                     const playerLabel = this.document.querySelector(`div[data-id="${id}"]`)
                     if (playerLabel) {
-                        playerLabel.innerHTML = `${backendPlayer.playerUsername}: ${backendPlayer.score}`
+                        playerLabel.innerHTML = `${backendPlayer.username}: ${backendPlayer.score}`
                         playerLabel.setAttribute('data-score', backendPlayer.score)
                     }
                     //update position if a player exists

@@ -33,44 +33,43 @@ sql.on('error', (err) => {
     console.error('Error connecting to PostgreSQL database:', err);
 });
 
-app.post('/register', async(req, res) => {
-    const { username, password } = req.body
+// app.post('/register', async(req, res) => {
+//     const { username, password } = req.body
 
-    try {
-        const client = await sql.connect()
-        const encryptedPassword = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [password]);
-        const hashedPassword = encryptedPassword.rows[0].encrypted_password;
-        console.log(hashedPassword)
-        const values = [username, hashedPassword]
-        result = await client.query('INSERT INTO user_authentication (user_name, user_password) VALUES ($1, $2) RETURNING user_id', values)
-        const id = result.rows[0].user_id
-        await client.query('INSERT INTO user_profile (user_id, user_name) VALUES ($1, $2)', [id, username])
-        client.release()
-        res.sendStatus(200)
-    } catch (error) {
-        res.status(500).send('Error inserting data into database')
-    }
-})
+//     try {
+//         const client = await sql.connect()
+//         const encryptedPassword = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [password]);
+//         const hashedPassword = encryptedPassword.rows[0].encrypted_password;
+//         const values = [username, hashedPassword]
+//         result = await client.query('INSERT INTO user_authentication (user_name, user_password) VALUES ($1, $2) RETURNING user_id', values)
+//         const id = result.rows[0].user_id
+//         await client.query('INSERT INTO user_profile (user_id, user_name) VALUES ($1, $2)', [id, username])
+//         client.release()
+//         res.sendStatus(200)
+//     } catch (error) {
+//         res.status(500).send('Error inserting data into database')
+//     }
+// })
 
-app.post('/login', async (req, res) => {
-    const {username, password} = req.body
+// app.post('/login', async (req, res) => {
+//     const {username, password} = req.body
 
-    try {
-        const client = await sql.connect()
-        const result = await client.query(`SELECT user_id from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
-        if (result.rows.length === 0) {
-            res.status(401).send('Invalid username or password')
-            return;
-        }
-        playerUsername = username
-        res.sendStatus(200);
+//     try {
+//         const client = await sql.connect()
+//         const result = await client.query(`SELECT user_id from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
+//         if (result.rows.length === 0) {
+//             res.status(401).send('Invalid username or password')
+//             return;
+//         }
+//         playerUsername = username
+//         res.sendStatus(200);
         
-        client.release()
-    } catch (error) {
-        console.error('Error authenticating user:', error)
-        res.status(500).send('Error authenticating user')
-    }
-})
+//         client.release()
+//     } catch (error) {
+//         console.error('Error authenticating user:', error)
+//         res.status(500).send('Error authenticating user')
+//     }
+// })
 
 //SUKURTI USERIO PROFILIUS
 
@@ -78,13 +77,53 @@ app.post('/login', async (req, res) => {
 const backendPlayers = {}
 const backendProjectiles = {}
 let projectileId = 0
-let playerUsername
+const playerUsername = {}
 
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
 
     // Inform other clients about the new player
     io.emit('updatePlayers', backendPlayers);
+
+
+    socket.on('register', async (data) => {
+        const { username, password } = data;
+        try {
+            const client = await sql.connect();
+            const encryptedPassword = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [password]);
+            const hashedPassword = encryptedPassword.rows[0].encrypted_password;
+            const values = [username, hashedPassword];
+            const result = await client.query('INSERT INTO user_authentication (user_name, user_password) VALUES ($1, $2) RETURNING user_id', values);
+            const id = result.rows[0].user_id;
+            await client.query('INSERT INTO user_profile (user_id, user_name) VALUES ($1, $2)', [id, username]);
+            client.release();
+            // Send response back to the client indicating successful registration
+            socket.emit('registerResponse', { success: true });
+        } catch (error) {
+            console.error('Error inserting data into database:', error);
+            // Send response back to the client indicating registration failure
+            socket.emit('registerResponse', { success: false });
+        }
+    })
+    socket.on('login', async (data) => {
+        const {username, password} = data
+        try {
+                    const client = await sql.connect()
+                    const result = await client.query(`SELECT user_id from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
+                    if (result.rows.length === 0) {
+                        socket.emit('loginResponse', { success: false });
+                    } else {
+                        // Authentication successful
+                        socket.emit('loginResponse', { success: true });
+                        playerUsername[socket.id] = username
+                    }
+                    
+                    client.release();
+                } catch (error) {
+                    console.error('Error authenticating user:', error);
+                    socket.emit('loginResponse', { success: false });
+                }
+    })
 
 
     socket.on('shoot', (frontendPlayer, crosshair, direction) => {
@@ -153,17 +192,22 @@ io.on('connection', (socket) => {
         delete backendPlayers[socket.id]
         // Inform other clients that this player has disconnected
         io.emit('updatePlayers', backendPlayers);
+        delete playerUsername[socket.id]
     });
 
     socket.on('startGame', () => {
+        console.log(playerUsername[socket.id])
+        username = playerUsername[socket.id]
         backendPlayers[socket.id] = { 
             id: socket.id,
             x: 1920 * Math.random(),
             y: 1080 * Math.random(),
             score: 0,
-            playerUsername
+            username
         }
+        console.log(username)
     })
+
 });
 
 setInterval(() => {
