@@ -127,6 +127,15 @@ io.on('connection', (socket) => {
                 }
     })
 
+    socket.on('playerAnimationChange', (AnimData) => {
+        const { playerId, animation } = AnimData;
+        if (AnimData==null){
+        console.log(AnimData);
+        }
+        // Broadcast the animation change to all other clients
+        socket.broadcast.emit('playerAnimationUpdate', { playerId, animation });
+    });
+
 
     socket.on('shoot', (frontendPlayer, crosshair, direction) => {
         projectileId++

@@ -38,7 +38,7 @@ class Multiplayer extends Phaser.Scene {
         this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
         this.load.image('mapas', 'assets/mapas.png')
         this.load.image('player', 'assets/player_23.png')
-        this.load.image('bullet', 'assets/bullet.jpg')
+        this.load.image('bullet', 'assets/Bullets/bullet.png')
         this.load.image('crosshair', 'assets/crosshair008.png')
     }
     
@@ -125,7 +125,15 @@ class Multiplayer extends Phaser.Scene {
                 frameRate: 10,
                 repeat: -1
             });
-            
+
+            this.anims.create({
+                key: 'idle',
+                frames: [
+                    { key: 'WwalkDown2' }
+                ],
+                frameRate: 10,
+                repeat: -1
+            });
             this.anims.create({
                 key: 'WwalkDownRight',
                 frames: [
@@ -179,7 +187,15 @@ class Multiplayer extends Phaser.Scene {
                 ],
                 frameRate: 10,
                 repeat: -1
-            });     
+            });    
+            socket.on('playerAnimationUpdate', (AnimData) => {
+                const { playerId, animation } = AnimData;
+                // Check if the player exists in the current game state
+                if (this.frontendPlayers[playerId]) {
+                    // Update the animation of the specified player
+                    this.frontendPlayers[playerId].anims.play(animation, true);
+                }
+            });
 
     }
 
@@ -242,23 +258,41 @@ class Multiplayer extends Phaser.Scene {
         // Example movement logic for the playera
         if(!this.frontendPlayers[socket.id]) return
         else {
-            if (this.a.isDown) {
-                this.frontendPlayers[socket.id].x -= 2
-                this.frontendPlayers[socket.id].anims.play("WwalkLeft", true);
-                socket.emit('playerMove', 'a');
-            } else if (this.d.isDown) {
-                this.frontendPlayers[socket.id].x += 2
-                this.frontendPlayers[socket.id].anims.play("WwalkRight", true);
-                socket.emit('playerMove', 'd');
-            }
+
+            let moving = false;
+            let direction = '';
+
             if (this.w.isDown) {
+                moving = true;
+                direction += 'Up';
                 this.frontendPlayers[socket.id].y -= 2
-                this.frontendPlayers[socket.id].anims.play("WwalkUp", true);
                 socket.emit('playerMove', 'w');
             } else if (this.s.isDown) {
+                moving = true;
+                direction += 'Down';
                 this.frontendPlayers[socket.id].y += 2
-                this.frontendPlayers[socket.id].anims.play("WwalkDown", true);
                 socket.emit('playerMove', 's');
+            }
+
+            if (this.a.isDown) {
+                moving = true;
+                direction = direction + 'Left';
+                this.frontendPlayers[socket.id].x -= 2
+                socket.emit('playerMove', 'a');
+            } else if (this.d.isDown) {
+                moving = true;
+                direction = direction + 'Right';
+                this.frontendPlayers[socket.id].x += 2
+                socket.emit('playerMove', 'd');
+            }
+
+            if (moving) {
+                const animationName = `Wwalk${direction}`;
+                this.frontendPlayers[socket.id].anims.play(animationName, true);
+                socket.emit('playerAnimationChange', { playerId: socket.id, animation: animationName });
+            } else {
+                this.frontendPlayers[socket.id].anims.stop();
+                socket.emit('playerAnimationChange', { playerId: socket.id, animation: "idle" });
             }
         }
 
