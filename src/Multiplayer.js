@@ -12,9 +12,34 @@ class Multiplayer extends Phaser.Scene {
     }
 
     preload() {
+        this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png')
+        this.load.image('WwalkUp2', 'assets/8-dir-chars/WwalkUp2.png')
+        this.load.image('WwalkUp3', 'assets/8-dir-chars/WwalkUp3.png')
+        this.load.image('WwalkRight1', 'assets/8-dir-chars/WwalkRight1.png')
+        this.load.image('WwalkRight2', 'assets/8-dir-chars/WwalkRight2.png')
+        this.load.image('WwalkRight3', 'assets/8-dir-chars/WwalkRight3.png')
+        this.load.image('WwalkUpRight1', 'assets/8-dir-chars/WwalkUpRight1.png')
+        this.load.image('WwalkUpRight2', 'assets/8-dir-chars/WwalkUpRight2.png')
+        this.load.image('WwalkUpRight3', 'assets/8-dir-chars/WwalkUpRight3.png')
+        this.load.image('WwalkDownRight1', 'assets/8-dir-chars/WwalkDownRight1.png')
+        this.load.image('WwalkDownRight2', 'assets/8-dir-chars/WwalkDownRight2.png')
+        this.load.image('WwalkDownRight3', 'assets/8-dir-chars/WwalkDownRight3.png')
+        this.load.image('WwalkDown1', 'assets/8-dir-chars/WwalkDown1.png')
+        this.load.image('WwalkDown2', 'assets/8-dir-chars/WwalkDown2.png')
+        this.load.image('WwalkDown3', 'assets/8-dir-chars/WwalkDown3.png')
+        this.load.image('WwalkDownLeft1', 'assets/8-dir-chars/WwalkDownLeft1.png')
+        this.load.image('WwalkDownLeft2', 'assets/8-dir-chars/WwalkDownLeft2.png')
+        this.load.image('WwalkDownLeft3', 'assets/8-dir-chars/WwalkDownLeft3.png')
+        this.load.image('WwalkLeft1', 'assets/8-dir-chars/WwalkLeft1.png')
+        this.load.image('WwalkLeft2', 'assets/8-dir-chars/WwalkLeft2.png')
+        this.load.image('WwalkLeft3', 'assets/8-dir-chars/WwalkLeft3.png')
+        this.load.image('WwalkUpLeft1', 'assets/8-dir-chars/WwalkUpLeft1.png')
+        this.load.image('WwalkUpLeft2', 'assets/8-dir-chars/WwalkUpLeft2.png')
+        this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
         this.load.image('mapas', 'assets/mapas.png')
-        this.load.image('player', 'assets/player_23.png')
-        this.load.image('bullet', 'assets/bullet.jpg')
+        this.load.image('player', 'assets/8-dir-chars/WwalkDown2.png')
+        this.load.image('bullet', 'assets/Bullets/bullet.png')
+        this.load.image('shotgun', 'assets/Weapons/tile001.png')
         this.load.image('crosshair', 'assets/crosshair008.png')
     }
     
@@ -86,6 +111,7 @@ class Multiplayer extends Phaser.Scene {
                 
                 if(!this.frontendPlayers[id]) {
                     this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'player')
+                    this.frontendPlayers[id].setScale(4)
                     this.frontendPlayers[id].setCollideWorldBounds(true);
                     const newPlayerLabel = `<div data-id="${id}" data-score="${backendPlayer.score}">${backendPlayer.username}: ${backendPlayer.score}</div>`
                     this.document.innerHTML += newPlayerLabel
@@ -136,7 +162,7 @@ class Multiplayer extends Phaser.Scene {
                     const backendProjectile = backendProjectiles[id]
                     if (!this.frontendProjectiles[id]) {
                         this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
-                        this.frontendProjectiles[id].setScale(0.1)
+                        this.frontendProjectiles[id].setScale(4)
                         this.frontendProjectiles[id].rotation = this.frontendPlayers[socket.id].rotation
                         //this.constrainVelocity(this.frontendProjectiles[id], 1)
                     } else {
