@@ -129,11 +129,14 @@ io.on('connection', (socket) => {
 
     socket.on('playerAnimationChange', (AnimData) => {
         const { playerId, animation } = AnimData;
-        if (AnimData==null){
-        console.log(AnimData);
-        }
         // Broadcast the animation change to all other clients
         socket.broadcast.emit('playerAnimationUpdate', { playerId, animation });
+    });
+
+    socket.on('updateWeaponState', (WSData) => {
+        const { playerId, x, y, rotation } = WSData;
+        // Broadcast weapon state to all clients except the sender
+        socket.broadcast.emit('weaponStateUpdate', { playerId, x, y, rotation });
     });
 
 

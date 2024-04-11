@@ -198,6 +198,16 @@ class Multiplayer extends Phaser.Scene {
                 }
             });
 
+            socket.on('weaponStateUpdate', (WSData) => {
+                const { playerId, x, y, rotation } = WSData;
+        
+                if (this.frontendPlayers[playerId] && this.frontendWeapons[playerId]) {
+                    // Update the weapon's position and rotation
+                    this.frontendWeapons[playerId].setPosition(x, y);
+                    this.frontendWeapons[playerId].setRotation(rotation);
+                }
+            });
+
     }
 
     update(delta) {
@@ -218,13 +228,15 @@ class Multiplayer extends Phaser.Scene {
                     //update position if a player exists
                     this.frontendPlayers[id].x = backendPlayer.x
                     this.frontendPlayers[id].y = backendPlayer.y
-                    const angleToPointer = Phaser.Math.Angle.Between(this.frontendPlayers[id].x, this.frontendPlayers[id].y, this.crosshair.x, this.crosshair.y);
-                    this.frontendWeapons[id].setPosition(this.frontendPlayers[id].x, this.frontendPlayers[id].y).setRotation(angleToPointer);
-                    const orbitDistance = 70;
-                    this.frontendWeapons[id].x += Math.cos(angleToPointer) * orbitDistance;
-                    this.frontendWeapons[id].y += Math.sin(angleToPointer) * orbitDistance;
+                    // const angleToPointer = Phaser.Math.Angle.Between(this.frontendPlayers[id].x, this.frontendPlayers[id].y, this.crosshair.x, this.crosshair.y);
+                    // this.frontendWeapons[id].setPosition(this.frontendPlayers[id].x, this.frontendPlayers[id].y).setRotation(angleToPointer);
+                    // const orbitDistance = 70;
+                    // this.frontendWeapons[id].x += Math.cos(angleToPointer) * orbitDistance;
+                    // this.frontendWeapons[id].y += Math.sin(angleToPointer) * orbitDistance;
                 }
             }
+
+            
 
             for (const id in this.frontendPlayers) {
                 if (!backendPlayers[id]) {
@@ -237,7 +249,27 @@ class Multiplayer extends Phaser.Scene {
                 }
             }
         });
+        
+        if(this.frontendPlayers[socket.id]) {
+            const player = this.frontendPlayers[socket.id];
+            const weapon = this.frontendWeapons[socket.id];
+            if (player && weapon) {
+                const angleToPointer = Phaser.Math.Angle.Between(player.x, player.y, this.crosshair.x, this.crosshair.y);
+                weapon.setRotation(angleToPointer);
+        
+                const orbitDistance = 70;
+                const weaponX = player.x + Math.cos(angleToPointer) * orbitDistance;
+                const weaponY = player.y + Math.sin(angleToPointer) * orbitDistance;
+                weapon.setPosition(weaponX, weaponY);
 
+                socket.emit('updateWeaponState', {
+                    playerId: socket.id,
+                    x: weaponX,
+                    y: weaponY,
+                    rotation: angleToPointer
+                });
+            }
+        }
 
         //SHOOTING PROJECTILES
         socket.on('updateProjectiles', (backendProjectiles) => {
@@ -309,7 +341,6 @@ class Multiplayer extends Phaser.Scene {
                 socket.emit('playerAnimationChange', { playerId: socket.id, animation: "idle" });
             }
         }
-
 
         // Camera position is average between reticle and player positions
         const avgX = (this.frontendPlayers[socket.id].x + this.crosshair.x) / 2 - 1920/2;
