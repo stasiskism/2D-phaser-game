@@ -14,16 +14,17 @@ class Scene1 extends Phaser.Scene {
     }
 
     create (data) {
-      const centerX = this.cameras.main.width / 2;
-      const centerY = this.cameras.main.height / 2;
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.height / 2;
 
-      this.vaizdasImage = this.add.sprite(centerX, centerY, 'vaizdas');
+        this.vaizdasImage = this.add.sprite(centerX, centerY, 'vaizdas');
 
     }
 
     update (time, delta) {
         if (time > 5000){
-        this.scene.switch('mainMenu')
+            this.scene.stop()
+            this.scene.start('authenticate')
         }
     }
 }
