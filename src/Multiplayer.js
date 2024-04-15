@@ -96,7 +96,7 @@ class Multiplayer extends Phaser.Scene {
         });
 
         this.input.on('pointerdown', pointer => {
-            const direction = Math.atan2(this.crosshair.x - this.frontendPlayers[socket.id].x, this.crosshair.y - this.frontendPlayers[socket.id].y);
+            const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y));
             if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown()) return;
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction);
         });
@@ -192,8 +192,8 @@ class Multiplayer extends Phaser.Scene {
 
     updateProjectilePosition(id, backendProjectile) {
         const projectile = this.frontendProjectiles[id];
-        projectile.x += backendProjectile.velocity.x * 0.03; // Adjust the multiplier based on the desired speed
-        projectile.y += backendProjectile.velocity.y * 0.03; // Adjust the multiplier based on the desired speed
+        projectile.x += backendProjectile.velocity.x * 1; // Adjust the multiplier based on the desired speed
+        projectile.y += backendProjectile.velocity.y * 1; // Adjust the multiplier based on the desired speed
     }
 
     removeProjectile(id) {
