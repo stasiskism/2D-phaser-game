@@ -60,6 +60,7 @@ class Multiplayer extends Phaser.Scene {
             </div>
             </div>`);
         this.document = this.leaderboard.node.querySelector(`#playerLabels`)
+        
     }
 
     setupScene() {
@@ -131,7 +132,8 @@ class Multiplayer extends Phaser.Scene {
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id];
                 if (!this.frontendPlayers[id]) {
-                    this.setupPlayer(id, backendPlayer);
+                    console.log('sadasdzxcasda')
+                    this.setupPlayer(id, backendPlayers);
                 } else {
                     this.updatePlayerPosition(id, backendPlayer);
                 }
@@ -152,11 +154,22 @@ class Multiplayer extends Phaser.Scene {
         });
     }
 
-    setupPlayer(id, backendPlayer) {
-        this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
-        this.frontendWeapons[id] = this.physics.add.sprite(backendPlayer.x + 80, backendPlayer.y, 'shotgun').setScale(3);
-        const newPlayerLabel = `<div data-id="${id}" data-score="${backendPlayer.score}">${backendPlayer.username}: ${backendPlayer.score}</div>`
+    setupPlayer(id, backendPlayers) {
+        this.frontendPlayers[id] = this.physics.add.sprite(backendPlayers.x, backendPlayers.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
+        this.frontendWeapons[id] = this.physics.add.sprite(backendPlayers.x + 80, backendPlayers.y, 'shotgun').setScale(3);
+        const newPlayerLabel = `<div data-id="${id}" data-score="${backendPlayers.score}">${backendPlayers.username}: ${backendPlayers.score}</div>`
         this.document.innerHTML += newPlayerLabel
+
+        for (const playerId in backendPlayers) {
+            if (playerId !== id) {
+                const otherPlayer = backendPlayers[playerId];
+                // Create frontend sprites for other players
+                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayer.x, otherPlayer.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
+                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayer.x + 80, otherPlayer.y, 'shotgun').setScale(3);
+                const otherPlayerLabel = `<div data-id="${playerId}" data-score="${otherPlayer.score}">${otherPlayer.username}: ${otherPlayer.score}</div>`;
+                this.document.innerHTML += otherPlayerLabel;
+            }
+        }
     }
 
     updatePlayerPosition(id, backendPlayer) {
@@ -188,13 +201,12 @@ class Multiplayer extends Phaser.Scene {
             this.scene.stop()
             this.scene.start('respawn')
         }
+        this.frontendPlayers[id].anims.stop()
         this.frontendPlayers[id].destroy();
         this.frontendWeapons[id].destroy();
         delete this.frontendPlayers[id];
         const divToDelete = this.document.querySelector(`div[data-id="${id}"]`)
                     divToDelete.parentNode.removeChild(divToDelete)
-        
-        
     }
 
     setupProjectile(id, backendProjectile) {
@@ -237,6 +249,7 @@ class Multiplayer extends Phaser.Scene {
     }
 
     update() {
+        
         this.updatePlayerMovement();
         this.updateCameraPosition();
         this.updateCrosshairPosition();
