@@ -160,6 +160,8 @@ class Multiplayer extends Phaser.Scene {
         this.frontendPlayers[id].destroy();
         this.frontendWeapons[id].destroy();
         delete this.frontendPlayers[id];
+        this.scene.stop()
+        this.scene.start('respawn')
     }
 
     setupProjectile(id, backendProjectile) {
