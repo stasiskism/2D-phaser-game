@@ -84,7 +84,7 @@ class Login extends Phaser.Scene {
         socket.on('loginResponse', (response) => {
             if (response.success) {
                 alert('Login successful');
-                this.scene.start('Multiplayer');
+                this.scene.start('mainMenu');
             } else {
                 alert('Login failed');
             }
