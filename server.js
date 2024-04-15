@@ -257,7 +257,7 @@ setInterval(() => {
     
     io.emit('updateProjectiles', backendProjectiles, backendPlayers)
     io.emit('updatePlayers', backendPlayers)
-})
+}, 15)
 
 const PORT = 443;
 server.listen(PORT, () => {

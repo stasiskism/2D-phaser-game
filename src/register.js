@@ -17,6 +17,25 @@ class Register extends Phaser.Scene {
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'menu');
 
         const register = this.add.dom(centerX, centerY).createFromHTML(`
+            <style>
+                #register {
+                    background-color: rgba(255, 255, 255, 0.5);
+                    padding: 20px;
+                    border-radius: 5px;
+                    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+                    text-align: center;
+                }
+                #register input[type="text"],
+                #register input[type="password"] {
+                    width: 80%;
+                    padding: 10px;
+                    margin: 10px auto;
+                    border-radius: 5px;
+                    border: 1px solid #ccc;
+                    display: block;
+                }
+            </style>
+
             <form id="register">
                 <div>
                     <input type="text" id="uname" placeholder="Username" name="username" class="forminput" required><br>
@@ -28,7 +47,7 @@ class Register extends Phaser.Scene {
                     <input type="password" id="repeatpswd" placeholder="Confirm Password" required><br>
                 </div>
                 <div>
-                    <input type="submit" value="Register account">
+                <input type="submit" value="Register account" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
                 </div>
             </form>
             <p style="color:white">Already have an account? <a href="#" id="login">Sign in</a></p>
