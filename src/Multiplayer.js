@@ -54,6 +54,12 @@ class Multiplayer extends Phaser.Scene {
         this.setupAnimations();
         this.setupInputEvents();
         socket.emit('startGame');
+        this.leaderboard = this.add.dom(-250, -250).createFromHTML(`<div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
+            <div style="margin-bottom: 8px">Leaderboard</div>
+            <div id="playerLabels">
+            </div>
+            </div>`);
+        this.document = this.leaderboard.node.querySelector(`#playerLabels`)
     }
 
     setupScene() {
@@ -96,7 +102,7 @@ class Multiplayer extends Phaser.Scene {
         });
 
         this.input.on('pointerdown', pointer => {
-            const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y));
+            const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
             if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown()) return;
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction);
         });
@@ -149,19 +155,46 @@ class Multiplayer extends Phaser.Scene {
     setupPlayer(id, backendPlayer) {
         this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
         this.frontendWeapons[id] = this.physics.add.sprite(backendPlayer.x + 80, backendPlayer.y, 'shotgun').setScale(3);
+        const newPlayerLabel = `<div data-id="${id}" data-score="${backendPlayer.score}">${backendPlayer.username}: ${backendPlayer.score}</div>`
+        this.document.innerHTML += newPlayerLabel
     }
 
     updatePlayerPosition(id, backendPlayer) {
+        const playerLabel = this.document.querySelector(`div[data-id="${id}"]`)
+                    if (playerLabel) {
+                        playerLabel.innerHTML = `${backendPlayer.username}: ${backendPlayer.score}`
+                        playerLabel.setAttribute('data-score', backendPlayer.score)
+                    }
         this.frontendPlayers[id].x = backendPlayer.x;
         this.frontendPlayers[id].y = backendPlayer.y;
+
+        const parentDiv = this.document
+                    const childDivs = Array.from(parentDiv.querySelectorAll('div'))
+                    childDivs.sort((first, second) => {
+                        const scoreFirst = Number(first.getAttribute('data-score'))
+                        const scoreSecond = Number(second.getAttribute('data-score'))
+                        return scoreSecond - scoreFirst
+                    })
+
+                    parentDiv.innerHTML = ''
+
+                    childDivs.forEach(div => {
+                        parentDiv.appendChild(div)
+                    })
     }
 
     removePlayer(id) {
+        if (id === socket.id) {
+            this.scene.stop()
+            this.scene.start('respawn')
+        }
         this.frontendPlayers[id].destroy();
         this.frontendWeapons[id].destroy();
         delete this.frontendPlayers[id];
-        this.scene.stop()
-        this.scene.start('respawn')
+        const divToDelete = this.document.querySelector(`div[data-id="${id}"]`)
+                    divToDelete.parentNode.removeChild(divToDelete)
+        
+        
     }
 
     setupProjectile(id, backendProjectile) {
@@ -296,3 +329,4 @@ class Multiplayer extends Phaser.Scene {
 }
 
 export default Multiplayer;
+
