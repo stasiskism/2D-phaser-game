@@ -6,7 +6,7 @@ class Authenticate extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#ffffff')
     }
     preload() {
-        this.load.image('menu', 'assets/menuPhoto.jpg')
+        this.load.image('menu', 'assets/ginklas.png')
         this.load.image('login', 'assets/login.PNG')
         this.load.image('register', 'assets/register.PNG')
 
