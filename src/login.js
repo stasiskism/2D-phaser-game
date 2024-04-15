@@ -3,6 +3,7 @@ class Login extends Phaser.Scene {
         super({ key: 'login'});
     }
     init() {
+        //this.cameras.main.setBackgroundColor('#ffffff')
     }
     preload() {
 
@@ -66,8 +67,9 @@ class Login extends Phaser.Scene {
         })
 
     }
+        
 
-
+    
     update() {
 
     }
@@ -87,7 +89,27 @@ class Login extends Phaser.Scene {
                 alert('Login failed');
             }
         });
+        // fetch('/login', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify({username, password})
+        // })
+        // .then(response => {
+        //     if (response.ok) {
+        //         alert('Login successful')
+        //         this.scene.start('Multiplayer')
+        //     } else {
+        //         alert('Login failed')
+        //     }
+        // })
+        // .catch(error => {
+        //     console.log('Error:', error)
+        //     alert('An error occured')
+        // })
+    }
 
 }
 
-export default Login;
+export default Login
