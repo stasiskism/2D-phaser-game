@@ -342,4 +342,3 @@ class Multiplayer extends Phaser.Scene {
 }
 
 export default Multiplayer;
-
