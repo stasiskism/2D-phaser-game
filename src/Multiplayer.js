@@ -12,30 +12,6 @@ class Multiplayer extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png')
-        this.load.image('WwalkUp2', 'assets/8-dir-chars/WwalkUp2.png')
-        this.load.image('WwalkUp3', 'assets/8-dir-chars/WwalkUp3.png')
-        this.load.image('WwalkRight1', 'assets/8-dir-chars/WwalkRight1.png')
-        this.load.image('WwalkRight2', 'assets/8-dir-chars/WwalkRight2.png')
-        this.load.image('WwalkRight3', 'assets/8-dir-chars/WwalkRight3.png')
-        this.load.image('WwalkUpRight1', 'assets/8-dir-chars/WwalkUpRight1.png')
-        this.load.image('WwalkUpRight2', 'assets/8-dir-chars/WwalkUpRight2.png')
-        this.load.image('WwalkUpRight3', 'assets/8-dir-chars/WwalkUpRight3.png')
-        this.load.image('WwalkDownRight1', 'assets/8-dir-chars/WwalkDownRight1.png')
-        this.load.image('WwalkDownRight2', 'assets/8-dir-chars/WwalkDownRight2.png')
-        this.load.image('WwalkDownRight3', 'assets/8-dir-chars/WwalkDownRight3.png')
-        this.load.image('WwalkDown1', 'assets/8-dir-chars/WwalkDown1.png')
-        this.load.image('WwalkDown2', 'assets/8-dir-chars/WwalkDown2.png')
-        this.load.image('WwalkDown3', 'assets/8-dir-chars/WwalkDown3.png')
-        this.load.image('WwalkDownLeft1', 'assets/8-dir-chars/WwalkDownLeft1.png')
-        this.load.image('WwalkDownLeft2', 'assets/8-dir-chars/WwalkDownLeft2.png')
-        this.load.image('WwalkDownLeft3', 'assets/8-dir-chars/WwalkDownLeft3.png')
-        this.load.image('WwalkLeft1', 'assets/8-dir-chars/WwalkLeft1.png')
-        this.load.image('WwalkLeft2', 'assets/8-dir-chars/WwalkLeft2.png')
-        this.load.image('WwalkLeft3', 'assets/8-dir-chars/WwalkLeft3.png')
-        this.load.image('WwalkUpLeft1', 'assets/8-dir-chars/WwalkUpLeft1.png')
-        this.load.image('WwalkUpLeft2', 'assets/8-dir-chars/WwalkUpLeft2.png')
-        this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
         this.load.image('mapas', 'assets/mapas.png')
         this.load.image('player', 'assets/player_23.png')
         this.load.image('bullet', 'assets/bullet.jpg')
@@ -45,7 +21,7 @@ class Multiplayer extends Phaser.Scene {
 
     create() {
 
-        this.cameras.main.zoom = 1;
+        this.cameras.main.zoom = 0.5;
 
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
@@ -89,10 +65,16 @@ class Multiplayer extends Phaser.Scene {
                 }
             });
 
-            socket.emit('startGame')
-            this.frontendPlayers = {}
-            console.log(this.frontendPlayers)
-
+        socket.emit('startGame')
+        this.frontendPlayers = {}
+        //console.log(this.frontendPlayers)
+        this.leaderboard = this.add.dom(-250, -250).createFromHTML(`<div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
+            <div style="margin-bottom: 8px">Leaderboard</div>
+            <div id="playerLabels">
+            </div>
+            </div>`);
+        this.document = this.leaderboard.node.querySelector(`#playerLabels`)
+        
     }
 
     update(delta) {
@@ -101,15 +83,35 @@ class Multiplayer extends Phaser.Scene {
         socket.on('updatePlayers', (backendPlayers) => {
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id]
-
                 
                 if(!this.frontendPlayers[id]) {
                     this.frontendPlayers[id] = this.physics.add.sprite(backendPlayer.x, backendPlayer.y, 'player')
                     this.frontendPlayers[id].setCollideWorldBounds(true);
+                    const newPlayerLabel = `<div data-id="${id}" data-score="${backendPlayer.score}">${backendPlayer.username}: ${backendPlayer.score}</div>`
+                    this.document.innerHTML += newPlayerLabel
                 } else {
+                    const playerLabel = this.document.querySelector(`div[data-id="${id}"]`)
+                    if (playerLabel) {
+                        playerLabel.innerHTML = `${backendPlayer.username}: ${backendPlayer.score}`
+                        playerLabel.setAttribute('data-score', backendPlayer.score)
+                    }
                     //update position if a player exists
                     this.frontendPlayers[id].x = backendPlayer.x
                     this.frontendPlayers[id].y = backendPlayer.y
+
+                    const parentDiv = this.document
+                    const childDivs = Array.from(parentDiv.querySelectorAll('div'))
+                    childDivs.sort((first, second) => {
+                        const scoreFirst = Number(first.getAttribute('data-score'))
+                        const scoreSecond = Number(second.getAttribute('data-score'))
+                        return scoreSecond - scoreFirst
+                    })
+
+                    parentDiv.innerHTML = ''
+
+                    childDivs.forEach(div => {
+                        parentDiv.appendChild(div)
+                    })
                 }
             }
 
@@ -117,37 +119,41 @@ class Multiplayer extends Phaser.Scene {
                 if (!backendPlayers[id]) {
                     this.frontendPlayers[id].destroy()
                     delete this.frontendPlayers[id]
+                    const divToDelete = this.document.querySelector(`div[data-id="${id}"]`)
+                    divToDelete.parentNode.removeChild(divToDelete)
                     if (id === socket.id) {
-                        this.scene.start('respawn')
+                        this.scene.resume()
+                        this.scene.switch('respawn')
                     }
                 }
             }
         });
 
-
         //SHOOTING PROJECTILES
-        socket.on('updateProjectiles', (backendProjectiles) => {
-            for (const id in backendProjectiles) {
-                const backendProjectile = backendProjectiles[id]
-                if (!this.frontendProjectiles[id]) {
-                    this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
-                    this.frontendProjectiles[id].setScale(0.1)
-                    this.frontendProjectiles[id].rotation = this.frontendPlayers[socket.id].rotation
-                    //this.constrainVelocity(this.frontendProjectiles[id], 1)
-                } else {
-                    //KAZKA PATVARKYT REIKIA, NES assetas JUDA GREICIAU NEI PROJECTILE POSITIONAS
-                    this.frontendProjectiles[id].x += backendProjectiles[id].velocity.x * 0.0003
-                    this.frontendProjectiles[id].y += backendProjectiles[id].velocity.y * 0.0003
-                    //this.constrainVelocity(this.frontendProjectiles[id], 1)
+        socket.on('updateProjectiles', (backendProjectiles, backendPlayers) => {
+            if (this.frontendPlayers[socket.id]) {
+                for (const id in backendProjectiles) {
+                    const backendProjectile = backendProjectiles[id]
+                    if (!this.frontendProjectiles[id]) {
+                        this.frontendProjectiles[id] = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet')
+                        this.frontendProjectiles[id].setScale(0.1)
+                        this.frontendProjectiles[id].rotation = this.frontendPlayers[socket.id].rotation
+                        //this.constrainVelocity(this.frontendProjectiles[id], 1)
+                    } else {
+                        //KAZKA PATVARKYT REIKIA, NES assetas JUDA GREICIAU NEI PROJECTILE POSITIONAS
+                        this.frontendProjectiles[id].x += backendProjectiles[id].velocity.x * 0.0003
+                        this.frontendProjectiles[id].y += backendProjectiles[id].velocity.y * 0.0003
+                        //this.constrainVelocity(this.frontendProjectiles[id], 1)
+                    }
                 }
-            }
 
-            for (const id in this.frontendProjectiles) {
-                if (!backendProjectiles[id]) {
-                    this.frontendProjectiles[id].destroy()
-                    delete this.frontendProjectiles[id]
+                for (const id in this.frontendProjectiles) {
+                    if (!backendProjectiles[id]) {
+                        this.frontendProjectiles[id].destroy()
+                        delete this.frontendProjectiles[id]
+                    }
                 }
-            }
+        }
         });
 
         // Example movement logic for the playera

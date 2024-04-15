@@ -83,25 +83,35 @@ class Register extends Phaser.Scene {
     }
 
     sendData(username, password) {
-        fetch('/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({username, password})
-        })
-        .then(response => {
-            if (response.ok) {
-                alert('Registration successful')
-                this.scene.start('login')
+        const data = {username, password}
+        socket.emit('register', data)
+        socket.on('registerResponse', (response) => {
+            if (response.success) {
+                alert('Registration successful');
+                this.scene.start('login');
             } else {
-                alert ('Registration failed')
+                alert('Registration failed');
             }
         })
-        .catch(error => {
-            console.error('Error:', error)
-            alert('An error has occured')
-        })
+        // fetch('/register', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify({username, password})
+        // })
+        // .then(response => {
+        //     if (response.ok) {
+        //         alert('Registration successful')
+        //         this.scene.start('login')
+        //     } else {
+        //         alert ('Registration failed')
+        //     }
+        // })
+        // .catch(error => {
+        //     console.error('Error:', error)
+        //     alert('An error has occured')
+        // })
     }
 
 }
