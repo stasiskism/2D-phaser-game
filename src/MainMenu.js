@@ -1,4 +1,4 @@
-/* global Phaser */
+
 class MainMenu extends Phaser.Scene {
   constructor() {
     super({ key: 'mainMenu' });
@@ -11,9 +11,12 @@ class MainMenu extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('background', 'assets/backgroundas1.jpg');
     this.load.image('player', 'assets/player_23.png');
-    this.load.image('object', 'assets/Multiplayer.png');
+    this.load.image('multiplayer', 'assets/multiplayer.png');
+    this.load.image('singleplayer', 'assets/singleplayer.png');
+    this.load.image('marketplace', 'assets/marketplace.png');
+    this.load.image("tiles", 'assets/assetas.png')
+    this.load.tilemapTiledJSON('map', 'assets/maps.json');
   }
 
   create() {
@@ -21,26 +24,26 @@ class MainMenu extends Phaser.Scene {
     let centerX = this.cameras.main.width / 2;
     let centerY = this.cameras.main.height / 2;
 
-    const blackBackground = this.add.rectangle(centerX, centerY, this.cameras.main.width, this.cameras.main.height, 0x000000).setOrigin(0.5);
+    const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32});
+    const tileset = map.addTilesetImage("asd", "tiles");
+    const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
 
-    this.add.image(centerX, centerY, 'background').setOrigin(0.5, 0.5);
-
-    this.player = this.physics.add.sprite(958, 617, 'player');
+    this.player = this.physics.add.sprite(864, 624, 'player');
 
     this.objects = this.physics.add.staticGroup();
-    this.singleplayerObject = this.objects.create(1056, 787, 'object');
-    this.multiplayerObject = this.objects.create(965, 446, 'object');
+    this.singleplayerObject = this.objects.create(720, 653, 'singleplayer');
+    this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer');
+    this.marketplaceObject = this.objects.create(1290, 653, 'marketplace');
 
     this.objects.getChildren().forEach(object => {
-      object.setScale(0.3); // Adjust scale factor as needed
+      object.setScale(0.2);
     });
 
     const invisibleWalls = [
-      { x: 576, y: 872, width: 768, height: 10 }, // Wall 1
-      { x: 1344, y: 146, width: 10, height: 694 }, // Wall 2
-      { x: 578, y: 146, width: 10, height: 694 }, // Wall 3
-      { x: 576, y: 141, width: 768, height: 10 }, // Wall 4
-      // Add more walls as needed 1344 144
+      { x: 336, y: 959, width: 1250, height: 10 }, // Wall 1
+      { x: 326, y: 315, width: 10, height: 650 }, // Wall 2
+      { x: 1580, y: 315, width: 10, height: 650 }, // Wall 3
+      { x: 326, y: 315, width: 1250, height: 10 }, // Wall 4
     ];
 
     invisibleWalls.forEach(wall => {
@@ -63,7 +66,7 @@ class MainMenu extends Phaser.Scene {
   update() {
 
     console.log('Player Position:', this.player.x, this.player.y);
-  
+
     const cursors = this.input.keyboard.createCursorKeys();
     const wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     const aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -113,6 +116,8 @@ class MainMenu extends Phaser.Scene {
       } else if (object === this.multiplayerObject) {
 
         this.scene.start('Multiplayer');
+      } else if (object === this.marketplaceObject) {
+
       }
     }
   }
