@@ -42,6 +42,7 @@ class Singleplayer extends Phaser.Scene {
       this.load.image('bullet', 'assets/Bullets/bullet.png')
       this.load.image('enemy', 'assets/enemy.png')
       this.load.image('shotgun', 'assets/Weapons/tile001.png')
+      this.load.image('crosshair', 'assets/crosshair008.png');
     }
 
   create () {
@@ -54,6 +55,8 @@ class Singleplayer extends Phaser.Scene {
 
     this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
     this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
+
+    this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setCollideWorldBounds(true);
 
     this.anims.create({
       key: 'WwalkUp',
@@ -182,6 +185,9 @@ this.anims.create({
      // Get the horizontal and vertical velocity components
      let velocityX = 0;
      let velocityY = 0;
+
+     this.crosshair.x = this.input.mousePointer.x;
+     this.crosshair.y = this.input.mousePointer.y;
  
      if (keyInputs.left.isDown || this.a.isDown) {
          velocityX = -300;
@@ -226,6 +232,16 @@ this.anims.create({
      } else {
          this.player.anims.stop();
      }
+
+     const player = this.player;
+
+     if (!player || !this.crosshair) return;
+ 
+     const avgX = (player.x + this.crosshair.x) / 2 - this.cameras.main.width / 2;
+     const avgY = (player.y + this.crosshair.y) / 2 - this.cameras.main.height / 2;
+ 
+     this.cameras.main.scrollX = avgX;
+     this.cameras.main.scrollY = avgY;
 
     //bullets should be deleted that go out of the screen
     for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
