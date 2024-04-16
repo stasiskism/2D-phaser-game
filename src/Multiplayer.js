@@ -129,17 +129,46 @@ class Multiplayer extends Phaser.Scene {
         });
 
         socket.on('updatePlayers', backendPlayers => {
+            const alivePlayers = {}; // To keep track of alive players
+        
+            // Update existing players and mark them as alive
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id];
                 if (!this.frontendPlayers[id]) {
-                    console.log('sadasdzxcasda')
-                    this.setupPlayer(id, backendPlayers);
+                    console.log('Player with ID ' + id + ' joining.');
+                    this.setupPlayer(id, backendPlayer);
                 } else {
                     this.updatePlayerPosition(id, backendPlayer);
                 }
+                // Mark player as alive
+                alivePlayers[id] = true;
             }
+        
+            // Update position for alive players not included in the backend data
             for (const id in this.frontendPlayers) {
-                if (!backendPlayers[id]) this.removePlayer(id);
+                if (alivePlayers[id]) {
+                    if (!backendPlayers[id]) {
+                        console.log('Player with ID ' + id + ' is still alive but not included in the backend data.');
+                        this.updatePlayerPosition(id, null); // Update position to null
+                    }
+                }
+            }
+        
+            // Remove players that are not present in the backend data
+            for (const id in this.frontendPlayers) {
+                if (!alivePlayers[id]) {
+                    console.log('Player with ID ' + id + ' left.');
+                    this.removePlayer(id);
+                }
+            }
+        
+            // Check for respawned players
+            for (const id in backendPlayers) {
+                if (!this.frontendPlayers[id]) {
+                    console.log('Respawned player with ID ' + id + ' detected.');
+                    // If the respawned player is not already loaded, setup the player
+                    this.setupPlayer(id, backendPlayers[id]);
+                }
             }
         });
 
@@ -153,20 +182,34 @@ class Multiplayer extends Phaser.Scene {
             }
         });
     }
-
-    setupPlayer(id, backendPlayers) {
-        this.frontendPlayers[id] = this.physics.add.sprite(backendPlayers.x, backendPlayers.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
-        this.frontendWeapons[id] = this.physics.add.sprite(backendPlayers.x + 80, backendPlayers.y, 'shotgun').setScale(3);
-        const newPlayerLabel = `<div data-id="${id}" data-score="${backendPlayers.score}">${backendPlayers.username}: ${backendPlayers.score}</div>`
-        this.document.innerHTML += newPlayerLabel
-
-        for (const playerId in backendPlayers) {
+    setupPlayer(id, playerData) {
+        // Cleanup existing player sprites if they exist
+        if (this.frontendPlayers[id]) {
+            this.frontendPlayers[id].destroy();
+            this.frontendWeapons[id].destroy();
+        }
+    
+        // Setup the respawned player
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
+        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
+    
+        // Add label for the respawned player
+        const newPlayerLabel = `<div data-id="${id}" data-score="${playerData.score}"</div>`;
+        this.document.innerHTML += newPlayerLabel;
+    
+        // Setup other players
+        for (const playerId in this.frontendPlayers) {
             if (playerId !== id) {
-                const otherPlayer = backendPlayers[playerId];
+                const otherPlayerData = this.frontendPlayers[playerId];
+                // Cleanup existing player sprites if they exist
+                if (this.frontendPlayers[playerId]) {
+                    this.frontendPlayers[playerId].destroy();
+                    this.frontendWeapons[playerId].destroy();
+                }
                 // Create frontend sprites for other players
-                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayer.x, otherPlayer.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
-                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayer.x + 80, otherPlayer.y, 'shotgun').setScale(3);
-                const otherPlayerLabel = `<div data-id="${playerId}" data-score="${otherPlayer.score}">${otherPlayer.username}: ${otherPlayer.score}</div>`;
+                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
+                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 80, otherPlayerData.y, 'shotgun').setScale(3);
+                const otherPlayerLabel = `<div data-id="${playerId}" data-score="${otherPlayerData.score}"</div>`;
                 this.document.innerHTML += otherPlayerLabel;
             }
         }
