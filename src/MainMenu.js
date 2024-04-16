@@ -11,6 +11,30 @@ class MainMenu extends Phaser.Scene {
   }
 
   preload() {
+    this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png')
+    this.load.image('WwalkUp2', 'assets/8-dir-chars/WwalkUp2.png')
+    this.load.image('WwalkUp3', 'assets/8-dir-chars/WwalkUp3.png')
+    this.load.image('WwalkRight1', 'assets/8-dir-chars/WwalkRight1.png')
+    this.load.image('WwalkRight2', 'assets/8-dir-chars/WwalkRight2.png')
+    this.load.image('WwalkRight3', 'assets/8-dir-chars/WwalkRight3.png')
+    this.load.image('WwalkUpRight1', 'assets/8-dir-chars/WwalkUpRight1.png')
+    this.load.image('WwalkUpRight2', 'assets/8-dir-chars/WwalkUpRight2.png')
+    this.load.image('WwalkUpRight3', 'assets/8-dir-chars/WwalkUpRight3.png')
+    this.load.image('WwalkDownRight1', 'assets/8-dir-chars/WwalkDownRight1.png')
+    this.load.image('WwalkDownRight2', 'assets/8-dir-chars/WwalkDownRight2.png')
+    this.load.image('WwalkDownRight3', 'assets/8-dir-chars/WwalkDownRight3.png')
+    this.load.image('WwalkDown1', 'assets/8-dir-chars/WwalkDown1.png')
+    this.load.image('WwalkDown2', 'assets/8-dir-chars/WwalkDown2.png')
+    this.load.image('WwalkDown3', 'assets/8-dir-chars/WwalkDown3.png')
+    this.load.image('WwalkDownLeft1', 'assets/8-dir-chars/WwalkDownLeft1.png')
+    this.load.image('WwalkDownLeft2', 'assets/8-dir-chars/WwalkDownLeft2.png')
+    this.load.image('WwalkDownLeft3', 'assets/8-dir-chars/WwalkDownLeft3.png')
+    this.load.image('WwalkLeft1', 'assets/8-dir-chars/WwalkLeft1.png')
+    this.load.image('WwalkLeft2', 'assets/8-dir-chars/WwalkLeft2.png')
+    this.load.image('WwalkLeft3', 'assets/8-dir-chars/WwalkLeft3.png')
+    this.load.image('WwalkUpLeft1', 'assets/8-dir-chars/WwalkUpLeft1.png')
+    this.load.image('WwalkUpLeft2', 'assets/8-dir-chars/WwalkUpLeft2.png')
+    this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
     this.load.image('player', 'assets/player_23.png');
     this.load.image('multiplayer', 'assets/multiplayer.png');
     this.load.image('singleplayer', 'assets/singleplayer.png');
@@ -28,7 +52,99 @@ class MainMenu extends Phaser.Scene {
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
 
-    this.player = this.physics.add.sprite(864, 624, 'player');
+    this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3); // 'WwalkDown2' is the idle frame
+
+      this.anims.create({
+        key: 'WwalkUp',
+        frames: [
+            { key: 'WwalkUp1' },
+            { key: 'WwalkUp2' },
+            { key: 'WwalkUp3' }
+        ],
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+      key: 'WwalkUpRight',
+      frames: [
+          { key: 'WwalkUpRight1' },
+          { key: 'WwalkUpRight2' },
+          { key: 'WwalkUpRight3' }
+      ],
+      frameRate: 10,
+      repeat: -1
+  });
+
+    this.anims.create({
+      key: 'WwalkRight',
+      frames: [
+          { key: 'WwalkRight1' },
+          { key: 'WwalkRight2' },
+          { key: 'WwalkRight3' }
+      ],
+      frameRate: 10,
+      repeat: -1
+  });
+
+  this.anims.create({
+    key: 'WwalkDownRight',
+    frames: [
+        { key: 'WwalkDownRight1' },
+        { key: 'WwalkDownRight2' },
+        { key: 'WwalkDownRight3' }
+    ],
+    frameRate: 10,
+    repeat: -1
+  });
+
+  this.anims.create({
+    key: 'WwalkDown',
+    frames: [
+        { key: 'WwalkDown1' },
+        { key: 'WwalkDown2' },
+        { key: 'WwalkDown3' }
+    ],
+    frameRate: 10,
+    repeat: -1
+  });
+
+  this.anims.create({
+    key: 'WwalkDownLeft',
+    frames: [
+        { key: 'WwalkDownLeft1' },
+        { key: 'WwalkDownLeft2' },
+        { key: 'WwalkDownLeft3' }
+    ],
+    frameRate: 10,
+    repeat: -1
+  });
+
+  this.anims.create({
+    key: 'WwalkLeft',
+    frames: [
+        { key: 'WwalkLeft1' },
+        { key: 'WwalkLeft2' },
+        { key: 'WwalkLeft3' }
+    ],
+    frameRate: 10,
+    repeat: -1
+  });
+
+  this.anims.create({
+    key: 'WwalkUpLeft',
+    frames: [
+        { key: 'WwalkUpLeft1' },
+        { key: 'WwalkUpLeft2' },
+        { key: 'WwalkUpLeft3' }
+    ],
+    frameRate: 10,
+    repeat: -1
+  });
+
+    
+
+
 
     this.objects = this.physics.add.staticGroup();
     this.singleplayerObject = this.objects.create(720, 653, 'singleplayer');
@@ -73,19 +189,40 @@ class MainMenu extends Phaser.Scene {
     const sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     const dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
+    // Reset player velocity
+    this.player.setVelocity(0);
+
+    // Horizontal movement
     if (cursors.left.isDown || aKey.isDown) {
-      this.player.setVelocityX(-160);
+        this.player.setVelocityX(-160);
+        this.player.anims.play('WwalkLeft', true);
     } else if (cursors.right.isDown || dKey.isDown) {
-      this.player.setVelocityX(160);
-    } else {
-      this.player.setVelocityX(0);
+        this.player.setVelocityX(160);
+        this.player.anims.play('WwalkRight', true);
     }
+
+    // Vertical movement
     if (cursors.up.isDown || wKey.isDown) {
-      this.player.setVelocityY(-160);
+        this.player.setVelocityY(-160);
+        this.player.anims.play('WwalkUp', true);
     } else if (cursors.down.isDown || sKey.isDown) {
-      this.player.setVelocityY(160);
-    } else {
-      this.player.setVelocityY(0);
+        this.player.setVelocityY(160);
+        this.player.anims.play('WwalkDown', true);
+    }
+
+    // Normalize diagonal movement
+    if ((cursors.up.isDown || wKey.isDown) && (cursors.left.isDown || aKey.isDown)) {
+        this.player.body.velocity.normalize().scale(160);
+        this.player.anims.play('WwalkUpLeft', true);
+    } else if ((cursors.up.isDown || wKey.isDown) && (cursors.right.isDown || dKey.isDown)) {
+        this.player.body.velocity.normalize().scale(160);
+        this.player.anims.play('WwalkUpRight', true);
+    } else if ((cursors.down.isDown || sKey.isDown) && (cursors.left.isDown || aKey.isDown)) {
+        this.player.body.velocity.normalize().scale(160);
+        this.player.anims.play('WwalkDownLeft', true);
+    } else if ((cursors.down.isDown || sKey.isDown) && (cursors.right.isDown || dKey.isDown)) {
+        this.player.body.velocity.normalize().scale(160);
+        this.player.anims.play('WwalkDownRight', true);
     }
   }
 
