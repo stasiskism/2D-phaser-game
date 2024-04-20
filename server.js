@@ -110,12 +110,19 @@ io.on('connection', (socket) => {
         const {username, password} = data
         try {
                     const client = await sql.connect()
-                    const result = await client.query(`SELECT user_id from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
+                    const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
                     if (result.rows.length === 0 || activeSessions[username]) {
                         socket.emit('loginResponse', { success: false });
                     } else {
+                        const firstLogin = result.rows[0].first_login
+                        if (firstLogin) {
+                            //await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
+                            socket.emit('loginResponse', { success: true, firstLogin });
+                        }
+                        else {
                         // Authentication successful
                         socket.emit('loginResponse', { success: true });
+                        }
                         playerUsername[socket.id] = username
                         activeSessions[username] = socket.id
                     }

@@ -83,8 +83,15 @@ class Login extends Phaser.Scene {
         socket.emit('login', data)
         socket.on('loginResponse', (response) => {
             if (response.success) {
-                alert('Login successful');
-                this.scene.start('mainMenu');
+                console.log(response.success)
+                if (response.firstLogin) {
+                    alert('Login successful');
+                    this.scene.start('tutorial')
+                } else {
+                    console.log('asd')
+                    alert('Login successful');
+                    this.scene.start('mainMenu');
+                }
             } else {
                 alert('Login failed');
             }

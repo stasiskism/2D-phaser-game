@@ -41,6 +41,7 @@ class MainMenu extends Phaser.Scene {
     this.load.image('marketplace', 'assets/marketplace.png');
     this.load.image("tiles", 'assets/assetas.png')
     this.load.tilemapTiledJSON('map', 'assets/maps.json');
+    this.load.image('wasd', 'assets/wasd.png')
   }
 
   create() {
@@ -51,6 +52,10 @@ class MainMenu extends Phaser.Scene {
     const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32});
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
+    
+    //this.add.text(350, 350, 'Controls:').setScale(1.5)
+    this.add.sprite(430, 430, 'wasd').setScale(0.2)
+    this.add.text(375, 350, 'Movement').setScale(1.5)
 
     this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3); // 'WwalkDown2' is the idle frame
 
