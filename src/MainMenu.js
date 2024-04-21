@@ -42,6 +42,7 @@ class MainMenu extends Phaser.Scene {
     this.load.image("tiles", 'assets/assetas.png')
     this.load.tilemapTiledJSON('map', 'assets/maps.json');
     this.load.image('wasd', 'assets/wasd.png')
+    this.load.image('tutorial', 'assets/tutorials.png')
   }
 
   create() {
@@ -152,9 +153,10 @@ class MainMenu extends Phaser.Scene {
 
 
     this.objects = this.physics.add.staticGroup();
-    this.singleplayerObject = this.objects.create(720, 653, 'singleplayer');
-    this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer');
-    this.marketplaceObject = this.objects.create(1290, 653, 'marketplace');
+    this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
+    this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer')
+    this.marketplaceObject = this.objects.create(1290, 653, 'marketplace')
+    this.tutorialObject = this.objects.create(1290, 453, 'tutorial')
 
     this.objects.getChildren().forEach(object => {
       object.setScale(0.2);
@@ -241,6 +243,9 @@ class MainMenu extends Phaser.Scene {
       } else if (object === this.multiplayerObject) {
         message = 'Press E to start multiplayer';
       }
+      else if (object === this.tutorialObject) {
+        message = 'Press E to start tutorial';
+      }
 
 
       this.popupText.setPosition(object.x - 100, object.y - 50);
@@ -261,6 +266,9 @@ class MainMenu extends Phaser.Scene {
       } else if (object === this.marketplaceObject) {
 
       }
+        else if (object === this.tutorialObject) {
+          this.scene.start('tutorial')
+        }
     }
   }
 }
