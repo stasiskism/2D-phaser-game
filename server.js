@@ -116,7 +116,7 @@ io.on('connection', (socket) => {
                     } else {
                         const firstLogin = result.rows[0].first_login
                         if (firstLogin) {
-                            //await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
+                            await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
                             socket.emit('loginResponse', { success: true, firstLogin });
                         }
                         else {
