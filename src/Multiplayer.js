@@ -47,6 +47,7 @@ class Multiplayer extends Phaser.Scene {
             this.load.image('bullet', 'assets/Bullets/bullet.png')
             this.load.image('crosshair', 'assets/crosshair008.png')
             this.load.image('shotgun', 'assets/Weapons/tile001.png')
+            this.load.image('fullscreen', 'assets/full-screen.png')
     }
 
     create() {
@@ -74,6 +75,16 @@ class Multiplayer extends Phaser.Scene {
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
         this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setCollideWorldBounds(false);
+        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+        this.fullscreenButton.setInteractive({ useHandCursor: true })
+        this.fullscreenButton.on('pointerdown', () => {
+            document.getElementById('phaser-example');
+            if (this.scale.isFullscreen) {
+                this.scale.stopFullscreen();
+            } else {
+                this.scale.startFullscreen();
+            }
+        })
     }
 
     setupAnimations() {

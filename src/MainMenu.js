@@ -43,6 +43,7 @@ class MainMenu extends Phaser.Scene {
     this.load.tilemapTiledJSON('map', 'assets/maps.json');
     this.load.image('wasd', 'assets/wasd.png')
     this.load.image('tutorial', 'assets/tutorials.png')
+    this.load.image('fullscreen', 'assets/full-screen.png')
   }
 
   create() {
@@ -148,7 +149,16 @@ class MainMenu extends Phaser.Scene {
     repeat: -1
   });
 
-    
+  this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+  this.fullscreenButton.setInteractive({ useHandCursor: true })
+  this.fullscreenButton.on('pointerdown', () => {
+      document.getElementById('phaser-example');
+      if (this.scale.isFullscreen) {
+          this.scale.stopFullscreen();
+      } else {
+          this.scale.startFullscreen();
+      }
+  })
 
 
 

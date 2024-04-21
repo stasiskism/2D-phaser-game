@@ -43,6 +43,7 @@ class Singleplayer extends Phaser.Scene {
       this.load.image('enemy', 'assets/enemy.png')
       this.load.image('shotgun', 'assets/Weapons/tile001.png')
       this.load.image('crosshair', 'assets/crosshair008.png');
+      this.load.image('fullscreen', 'assets/full-screen.png')
     }
 
   create () {
@@ -56,7 +57,17 @@ class Singleplayer extends Phaser.Scene {
     this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
     this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
 
-    this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setCollideWorldBounds(true);
+    this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair');
+    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+        this.fullscreenButton.setInteractive({ useHandCursor: true })
+        this.fullscreenButton.on('pointerdown', () => {
+            document.getElementById('phaser-example');
+            if (this.scale.isFullscreen) {
+                this.scale.stopFullscreen();
+            } else {
+                this.scale.startFullscreen();
+            }
+        })
 
     this.anims.create({
       key: 'WwalkUp',
