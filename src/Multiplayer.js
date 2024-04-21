@@ -55,18 +55,21 @@ class Multiplayer extends Phaser.Scene {
         this.setupAnimations();
         this.setupInputEvents();
         socket.emit('startGame');
-        this.leaderboard = this.add.dom(-250, -250).createFromHTML(`<div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
+        this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
+        <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
             <div style="margin-bottom: 8px">Leaderboard</div>
-            <div id="playerLabels">
-            </div>
-            </div>`);
+            <div id="playerLabels"></div>
+        </div>
+        `);
+
+        this.leaderboard.setPosition(100, 100).setScrollFactor(0);
+
         this.document = this.leaderboard.node.querySelector(`#playerLabels`)
-        
 
         const { width, height } = this.cameras.main.worldView;
         const borderThickness = 10;
         const graphics = this.add.graphics();
-        graphics.lineStyle(borderThickness, 0xff0000); 
+        graphics.lineStyle(borderThickness, 0xff0000);
         graphics.strokeRect(0, 0, width, height);
     }
 
@@ -76,6 +79,7 @@ class Multiplayer extends Phaser.Scene {
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
         this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setCollideWorldBounds(false);
         this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+        this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
         this.fullscreenButton.setInteractive({ useHandCursor: true })
         this.fullscreenButton.on('pointerdown', () => {
             document.getElementById('phaser-example');
@@ -85,6 +89,7 @@ class Multiplayer extends Phaser.Scene {
                 this.scale.startFullscreen();
             }
         })
+        //KAI NUEINA I FULLSCREENA DINGSTA LEADERBOARDAS
     }
 
     setupAnimations() {
