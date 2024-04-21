@@ -10,7 +10,7 @@ class Multiplayer extends Phaser.Scene {
     }
 
     init(data) {
-        this.cameras.main.setBackgroundColor('#ffffff');
+        this.cameras.main.setBackgroundColor('#000000');
     }
 
     preload() {
@@ -61,13 +61,19 @@ class Multiplayer extends Phaser.Scene {
             </div>`);
         this.document = this.leaderboard.node.querySelector(`#playerLabels`)
         
+
+        const { width, height } = this.cameras.main.worldView;
+        const borderThickness = 10;
+        const graphics = this.add.graphics();
+        graphics.lineStyle(borderThickness, 0xff0000); 
+        graphics.strokeRect(0, 0, width, height);
     }
 
     setupScene() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
-        this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setCollideWorldBounds(true);
+        this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setCollideWorldBounds(false);
     }
 
     setupAnimations() {

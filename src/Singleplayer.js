@@ -9,7 +9,7 @@ class Singleplayer extends Phaser.Scene {
   }
 
   init (data) {
-      this.cameras.main.setBackgroundColor('#ffffff')
+    this.cameras.main.setBackgroundColor('#000000');
   }
 
   preload () {
@@ -162,6 +162,7 @@ this.anims.create({
     this.bullets = []
     this.enemies = []
     //for everything else to load we need to delay the spawning of enemies
+    
     
     this.time.delayedCall(500, this.spawnEnemies, [], this);
     this.input.on('pointerdown', this.fireBullet, this);
