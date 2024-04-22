@@ -45,6 +45,7 @@ class Singleplayer extends Phaser.Scene {
       this.load.image('shotgun', 'assets/Weapons/tile001.png')
       this.load.image('crosshair', 'assets/crosshair008.png');
       this.load.image('fullscreen', 'assets/full-screen.png')
+      this.graphics = this.add.graphics()
     }
 
   create () {
@@ -80,11 +81,8 @@ class Singleplayer extends Phaser.Scene {
         }
     })
 
-    const { width, height } = this.cameras.main.worldView;
-    const borderThickness = 10;
-    const graphics = this.add.graphics();
-    graphics.lineStyle(borderThickness, 0xff0000);
-    graphics.strokeRect(0, 0, width, height); 
+    this.graphics.lineStyle(10, 0xff0000);
+    this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
 
   }
 

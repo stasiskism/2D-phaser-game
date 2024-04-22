@@ -50,6 +50,7 @@ class Multiplayer extends Phaser.Scene {
             this.load.image('crosshair', 'assets/crosshair008.png')
             this.load.image('shotgun', 'assets/Weapons/tile001.png')
             this.load.image('fullscreen', 'assets/full-screen.png')
+            this.graphics = this.add.graphics()
             
     }
 
@@ -75,7 +76,7 @@ class Multiplayer extends Phaser.Scene {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
-        this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setCollideWorldBounds(false);
+        this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair');
         this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
         this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
         this.fullscreenButton.setInteractive({ useHandCursor: true })
@@ -88,11 +89,8 @@ class Multiplayer extends Phaser.Scene {
 
             }
         })
-        const { width, height } = this.cameras.main.worldView;
-        const borderThickness = 10;
-        const graphics = this.add.graphics();
-        graphics.lineStyle(borderThickness, 0xff0000);
-        graphics.strokeRect(0, 0, width, height);
+        this.graphics.lineStyle(10, 0xff0000);
+        this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
 
         //KAI NUEINA I FULLSCREENA DINGSTA LEADERBOARDAS, BET JO GAL IR NEREIKIA MUSU PAGRINDINIAM GAMEMODUI
     }
@@ -118,9 +116,6 @@ class Multiplayer extends Phaser.Scene {
     }
 
     setupInputEvents() {
-        this.input.on('pointerdown', () => {
-            this.input.mouse.requestPointerLock();
-        });
 
         this.input.on('pointermove', pointer => {
             if (this.input.mouse.locked) {
@@ -130,6 +125,7 @@ class Multiplayer extends Phaser.Scene {
         });
 
         this.input.on('pointerdown', pointer => {
+            this.input.mouse.requestPointerLock();
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
             if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown()) return;
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction);
@@ -216,7 +212,7 @@ class Multiplayer extends Phaser.Scene {
         }
     
         // Setup the respawned player
-        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
         this.playerHealth[id] = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
     
@@ -235,7 +231,7 @@ class Multiplayer extends Phaser.Scene {
                     this.playerHealth[playerId].destroy()
                 }
                 // Create frontend sprites for other players
-                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
+                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
                 this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 80, otherPlayerData.y, 'shotgun').setScale(3);
                 const otherPlayerLabel = `<div data-id="${playerId}" data-score="${otherPlayerData.score}"</div>`;
                 this.document.innerHTML += otherPlayerLabel;
