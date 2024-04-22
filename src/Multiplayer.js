@@ -5,6 +5,7 @@ class Multiplayer extends Phaser.Scene {
     frontendWeapons = {};
     frontendProjectiles = {};
     playerHealth = {}
+    reloading = false
 
 
     constructor() {
@@ -127,7 +128,7 @@ class Multiplayer extends Phaser.Scene {
         this.input.on('pointerdown', pointer => {
             this.input.mouse.requestPointerLock();
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
-            if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown()) return;
+            if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown() || this.reloading) return;
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction);
         });
 
@@ -163,19 +164,24 @@ class Multiplayer extends Phaser.Scene {
                     this.setupPlayer(id, backendPlayer);
                 } else {
                     this.updatePlayerPosition(id, backendPlayer);
+                    this.reloading = false
+                    if (id === socket.id) {
+                        if (backendPlayer.bullets === 0)
+                        this.reloading = true
+                    }
                 }
                 // Mark player as alive
                 alivePlayers[id] = true;
             }
         
             // Update position for alive players not included in the backend data
-            for (const id in this.frontendPlayers) {
-                if (alivePlayers[id]) {
-                    if (!backendPlayers[id]) {
-                        this.updatePlayerPosition(id, null); // Update position to null
-                    }
-                }
-            }
+            // for (const id in this.frontendPlayers) {
+            //     if (alivePlayers[id]) {
+            //         if (!backendPlayers[id]) {
+            //             this.updatePlayerPosition(id, null); // Update position to null
+            //         }
+            //     }
+            // }
         
             // Remove players that are not present in the backend data
             for (const id in this.frontendPlayers) {
@@ -209,13 +215,18 @@ class Multiplayer extends Phaser.Scene {
             this.frontendPlayers[id].destroy();
             this.frontendWeapons[id].destroy();
             this.playerHealth[id].destroy();
+            if (id === socket.id) {
+                this.playerAmmo.destroy()
+            }
         }
     
         // Setup the respawned player
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
         this.playerHealth[id] = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
-    
+        if (id === socket.id) {
+            this.playerAmmo = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+        }
         // Add label for the respawned player
         const newPlayerLabel = `<div data-id="${id}" data-score="${playerData.score}"</div>`;
         this.document.innerHTML += newPlayerLabel;
@@ -251,7 +262,9 @@ class Multiplayer extends Phaser.Scene {
         this.playerHealth[id].setPosition(backendPlayer.x, backendPlayer.y - 50)
         this.playerHealth[id].setText(`Health: ${backendPlayer.health}`);
         this.playerHealth[id].setOrigin(0.5).setScale(2);
-
+        if (id === socket.id) {
+            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 50).setText(`Ammo: ${backendPlayer.bullets}`).setOrigin(0.5).setScale(2)
+        }
         const parentDiv = this.document
                     const childDivs = Array.from(parentDiv.querySelectorAll('div'))
                     childDivs.sort((first, second) => {
@@ -271,6 +284,7 @@ class Multiplayer extends Phaser.Scene {
         if (id === socket.id) {
             this.scene.stop()
             this.scene.start('respawn')
+            this.playerAmmo.destroy()
         }
         this.frontendPlayers[id].anims.stop()
         this.frontendPlayers[id].destroy();

@@ -113,6 +113,11 @@ io.on('connection', (socket) => {
     socket.on('shoot', (frontendPlayer, crosshair, direction) => {
         projectileId++
 
+        if (backendPlayers[socket.id] && backendPlayers[socket.id].bullets > 0) {
+            console.log(backendPlayers[socket.id].bullets)
+            backendPlayers[socket.id].bullets--
+        }
+
         let x, y
         //Calculate X and y velocity of bullet to move it from shooter to target
         if (crosshair.y >= frontendPlayer.y)
@@ -191,11 +196,20 @@ io.on('connection', (socket) => {
             y: 1080 * Math.random(),
             score: 0,
             username,
-            health: 100
+            health: 100,
+            bullets: 10 //NEED TO GET BULLET COUNT FROM DATABASE
         }
     })
 
 });
+
+setInterval(() => {
+    for (const playerId in backendPlayers) {
+        if (backendPlayers[playerId].bullets === 0) {
+            backendPlayers[playerId].bullets = 10 //CHANGE BASED ON WEAPON
+        }
+    }
+}, 3000)
 
 setInterval(() => {
     for (const id in backendProjectiles) {
