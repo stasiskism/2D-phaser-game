@@ -69,6 +69,7 @@ class Singleplayer extends Phaser.Scene {
 
     this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair');
     this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+    this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
     this.fullscreenButton.setInteractive({ useHandCursor: true })
     this.fullscreenButton.on('pointerdown', () => {
         document.getElementById('phaser-example');
