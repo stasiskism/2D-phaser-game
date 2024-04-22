@@ -4,13 +4,16 @@ class Multiplayer extends Phaser.Scene {
     frontendPlayers = {};
     frontendWeapons = {};
     frontendProjectiles = {};
+    playerHealth = {}
+    reloading = false
+
 
     constructor() {
         super({ key: 'Multiplayer' });
     }
 
     init(data) {
-        this.cameras.main.setBackgroundColor('#ffffff');
+        this.cameras.main.setBackgroundColor('#000000');
     }
 
     preload() {
@@ -47,6 +50,9 @@ class Multiplayer extends Phaser.Scene {
             this.load.image('bullet', 'assets/Bullets/bullet.png')
             this.load.image('crosshair', 'assets/crosshair008.png')
             this.load.image('shotgun', 'assets/Weapons/tile001.png')
+            this.load.image('fullscreen', 'assets/full-screen.png')
+            this.graphics = this.add.graphics()
+            
     }
 
     create() {
@@ -54,12 +60,16 @@ class Multiplayer extends Phaser.Scene {
         this.setupAnimations();
         this.setupInputEvents();
         socket.emit('startGame');
-        this.leaderboard = this.add.dom(-250, -250).createFromHTML(`<div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
+        this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
+        <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
             <div style="margin-bottom: 8px">Leaderboard</div>
-            <div id="playerLabels">
-            </div>
-            </div>`);
+            <div id="playerLabels"></div>
+        </div>
+        `);
+
+        this.leaderboard.setPosition(100, 100).setScrollFactor(0);
         this.document = this.leaderboard.node.querySelector(`#playerLabels`)
+
         
     }
 
@@ -67,7 +77,23 @@ class Multiplayer extends Phaser.Scene {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
-        this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setCollideWorldBounds(true);
+        this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair');
+        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+        this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
+        this.fullscreenButton.setInteractive({ useHandCursor: true })
+        this.fullscreenButton.on('pointerdown', () => {
+            document.getElementById('phaser-example');
+            if (this.scale.isFullscreen) {
+                this.scale.stopFullscreen();
+            } else {
+                this.scale.startFullscreen();
+
+            }
+        })
+        this.graphics.lineStyle(10, 0xff0000);
+        this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+
+        //KAI NUEINA I FULLSCREENA DINGSTA LEADERBOARDAS, BET JO GAL IR NEREIKIA MUSU PAGRINDINIAM GAMEMODUI
     }
 
     setupAnimations() {
@@ -91,9 +117,6 @@ class Multiplayer extends Phaser.Scene {
     }
 
     setupInputEvents() {
-        this.input.on('pointerdown', () => {
-            this.input.mouse.requestPointerLock();
-        });
 
         this.input.on('pointermove', pointer => {
             if (this.input.mouse.locked) {
@@ -103,8 +126,9 @@ class Multiplayer extends Phaser.Scene {
         });
 
         this.input.on('pointerdown', pointer => {
+            this.input.mouse.requestPointerLock();
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
-            if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown()) return;
+            if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown() || this.reloading) return;
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction);
         });
 
@@ -114,13 +138,14 @@ class Multiplayer extends Phaser.Scene {
         this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
+        //AR REIKIA SIUSTI SOCKETA DEL ANIMACIJU?
         socket.on('playerAnimationUpdate', animData => {
             const { playerId, animation } = animData;
             if (this.frontendPlayers[playerId]) {
                 this.frontendPlayers[playerId].anims.play(animation, true);
             }
         });
-
+        //AR REIKIA SIUSTI SOCKETA DEL WEAPONO?
         socket.on('weaponStateUpdate', wsData => {
             const { playerId, x, y, rotation } = wsData;
             if (this.frontendPlayers[playerId] && this.frontendWeapons[playerId]) {
@@ -134,30 +159,33 @@ class Multiplayer extends Phaser.Scene {
             // Update existing players and mark them as alive
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id];
+
                 if (!this.frontendPlayers[id]) {
-                    console.log('Player with ID ' + id + ' joining.');
                     this.setupPlayer(id, backendPlayer);
                 } else {
                     this.updatePlayerPosition(id, backendPlayer);
+                    this.reloading = false
+                    if (id === socket.id) {
+                        if (backendPlayer.bullets === 0)
+                        this.reloading = true
+                    }
                 }
                 // Mark player as alive
                 alivePlayers[id] = true;
             }
         
             // Update position for alive players not included in the backend data
-            for (const id in this.frontendPlayers) {
-                if (alivePlayers[id]) {
-                    if (!backendPlayers[id]) {
-                        console.log('Player with ID ' + id + ' is still alive but not included in the backend data.');
-                        this.updatePlayerPosition(id, null); // Update position to null
-                    }
-                }
-            }
+            // for (const id in this.frontendPlayers) {
+            //     if (alivePlayers[id]) {
+            //         if (!backendPlayers[id]) {
+            //             this.updatePlayerPosition(id, null); // Update position to null
+            //         }
+            //     }
+            // }
         
             // Remove players that are not present in the backend data
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {
-                    console.log('Player with ID ' + id + ' left.');
                     this.removePlayer(id);
                 }
             }
@@ -165,7 +193,6 @@ class Multiplayer extends Phaser.Scene {
             // Check for respawned players
             for (const id in backendPlayers) {
                 if (!this.frontendPlayers[id]) {
-                    console.log('Respawned player with ID ' + id + ' detected.');
                     // If the respawned player is not already loaded, setup the player
                     this.setupPlayer(id, backendPlayers[id]);
                 }
@@ -187,12 +214,19 @@ class Multiplayer extends Phaser.Scene {
         if (this.frontendPlayers[id]) {
             this.frontendPlayers[id].destroy();
             this.frontendWeapons[id].destroy();
+            this.playerHealth[id].destroy();
+            if (id === socket.id) {
+                this.playerAmmo.destroy()
+            }
         }
     
         // Setup the respawned player
-        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
-    
+        this.playerHealth[id] = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+        if (id === socket.id) {
+            this.playerAmmo = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+        }
         // Add label for the respawned player
         const newPlayerLabel = `<div data-id="${id}" data-score="${playerData.score}"</div>`;
         this.document.innerHTML += newPlayerLabel;
@@ -205,12 +239,14 @@ class Multiplayer extends Phaser.Scene {
                 if (this.frontendPlayers[playerId]) {
                     this.frontendPlayers[playerId].destroy();
                     this.frontendWeapons[playerId].destroy();
+                    this.playerHealth[playerId].destroy()
                 }
                 // Create frontend sprites for other players
-                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4).setCollideWorldBounds(true);
+                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
                 this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 80, otherPlayerData.y, 'shotgun').setScale(3);
                 const otherPlayerLabel = `<div data-id="${playerId}" data-score="${otherPlayerData.score}"</div>`;
                 this.document.innerHTML += otherPlayerLabel;
+                this.playerHealth[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             }
         }
     }
@@ -223,7 +259,12 @@ class Multiplayer extends Phaser.Scene {
                     }
         this.frontendPlayers[id].x = backendPlayer.x;
         this.frontendPlayers[id].y = backendPlayer.y;
-
+        this.playerHealth[id].setPosition(backendPlayer.x, backendPlayer.y - 50)
+        this.playerHealth[id].setText(`Health: ${backendPlayer.health}`);
+        this.playerHealth[id].setOrigin(0.5).setScale(2);
+        if (id === socket.id) {
+            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 50).setText(`Ammo: ${backendPlayer.bullets}`).setOrigin(0.5).setScale(2)
+        }
         const parentDiv = this.document
                     const childDivs = Array.from(parentDiv.querySelectorAll('div'))
                     childDivs.sort((first, second) => {
@@ -243,10 +284,12 @@ class Multiplayer extends Phaser.Scene {
         if (id === socket.id) {
             this.scene.stop()
             this.scene.start('respawn')
+            this.playerAmmo.destroy()
         }
         this.frontendPlayers[id].anims.stop()
         this.frontendPlayers[id].destroy();
         this.frontendWeapons[id].destroy();
+        this.playerHealth[id].destroy()
         delete this.frontendPlayers[id];
         const divToDelete = this.document.querySelector(`div[data-id="${id}"]`)
                     divToDelete.parentNode.removeChild(divToDelete)
@@ -292,7 +335,6 @@ class Multiplayer extends Phaser.Scene {
     }
 
     update() {
-        
         this.updatePlayerMovement();
         this.updateCameraPosition();
         this.updateCrosshairPosition();

@@ -33,43 +33,6 @@ sql.on('error', (err) => {
     console.error('Error connecting to PostgreSQL database:', err);
 });
 
-// app.post('/register', async(req, res) => {
-//     const { username, password } = req.body
-
-//     try {
-//         const client = await sql.connect()
-//         const encryptedPassword = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [password]);
-//         const hashedPassword = encryptedPassword.rows[0].encrypted_password;
-//         const values = [username, hashedPassword]
-//         result = await client.query('INSERT INTO user_authentication (user_name, user_password) VALUES ($1, $2) RETURNING user_id', values)
-//         const id = result.rows[0].user_id
-//         await client.query('INSERT INTO user_profile (user_id, user_name) VALUES ($1, $2)', [id, username])
-//         client.release()
-//         res.sendStatus(200)
-//     } catch (error) {
-//         res.status(500).send('Error inserting data into database')
-//     }
-// })
-
-// app.post('/login', async (req, res) => {
-//     const {username, password} = req.body
-
-//     try {
-//         const client = await sql.connect()
-//         const result = await client.query(`SELECT user_id from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
-//         if (result.rows.length === 0) {
-//             res.status(401).send('Invalid username or password')
-//             return;
-//         }
-//         playerUsername = username
-//         res.sendStatus(200);
-        
-//         client.release()
-//     } catch (error) {
-//         console.error('Error authenticating user:', error)
-//         res.status(500).send('Error authenticating user')
-//     }
-// })
 
 //SUKURTI USERIO PROFILIUS
 
@@ -110,12 +73,19 @@ io.on('connection', (socket) => {
         const {username, password} = data
         try {
                     const client = await sql.connect()
-                    const result = await client.query(`SELECT user_id from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
+                    const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
                     if (result.rows.length === 0 || activeSessions[username]) {
                         socket.emit('loginResponse', { success: false });
                     } else {
+                        const firstLogin = result.rows[0].first_login
+                        if (firstLogin) {
+                            await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
+                            socket.emit('loginResponse', { success: true, firstLogin });
+                        }
+                        else {
                         // Authentication successful
                         socket.emit('loginResponse', { success: true });
+                        }
                         playerUsername[socket.id] = username
                         activeSessions[username] = socket.id
                     }
@@ -142,6 +112,11 @@ io.on('connection', (socket) => {
 
     socket.on('shoot', (frontendPlayer, crosshair, direction) => {
         projectileId++
+
+        if (backendPlayers[socket.id] && backendPlayers[socket.id].bullets > 0) {
+            console.log(backendPlayers[socket.id].bullets)
+            backendPlayers[socket.id].bullets--
+        }
 
         let x, y
         //Calculate X and y velocity of bullet to move it from shooter to target
@@ -214,19 +189,27 @@ io.on('connection', (socket) => {
     });
 
     socket.on('startGame', () => {
-        console.log(playerUsername[socket.id])
         username = playerUsername[socket.id]
         backendPlayers[socket.id] = { 
             id: socket.id,
             x: 1920 * Math.random(),
             y: 1080 * Math.random(),
             score: 0,
-            username
+            username,
+            health: 100,
+            bullets: 10 //NEED TO GET BULLET COUNT FROM DATABASE
         }
-        console.log(username)
     })
 
 });
+
+setInterval(() => {
+    for (const playerId in backendPlayers) {
+        if (backendPlayers[playerId].bullets === 0) {
+            backendPlayers[playerId].bullets = 10 //CHANGE BASED ON WEAPON
+        }
+    }
+}, 3000)
 
 setInterval(() => {
     for (const id in backendProjectiles) {
@@ -244,12 +227,22 @@ setInterval(() => {
             const backendPlayer = backendPlayers[playerId]
             const distance = Math.hypot(backendProjectiles[id].x - backendPlayer.x, backendProjectiles[id].y - backendPlayer.y)
             if (distance < 30 && backendProjectiles[id].playerId !== playerId) {
-                if (backendPlayers[backendProjectiles[id].playerId]) {
-                    backendPlayers[backendProjectiles[id].playerId].score++
+
+                //console.log(distance)
+                //delete backendPlayers[playerId]
+
+                //change according to the weapon
+                backendPlayers[playerId].health -= 20
+                console.log(backendPlayers[playerId].health)
+                if (backendPlayers[playerId].health <= 0) {
+                    delete backendPlayers[playerId]
+                    if (backendPlayers[backendProjectiles[id].playerId]) {
+                        backendPlayers[backendProjectiles[id].playerId].score++
+                    }
                 }
-                console.log(distance)
+                console.log('delete projectile')
+                //RESPAWNINTAM PLAYERIUI PROJECTILE NESIDELETINA
                 delete backendProjectiles[id]
-                delete backendPlayers[playerId]
                 break
             }
         }

@@ -41,6 +41,9 @@ class MainMenu extends Phaser.Scene {
     this.load.image('marketplace', 'assets/marketplace.png');
     this.load.image("tiles", 'assets/assetas.png')
     this.load.tilemapTiledJSON('map', 'assets/maps.json');
+    this.load.image('wasd', 'assets/wasd.png')
+    this.load.image('tutorial', 'assets/tutorials.png')
+    this.load.image('fullscreen', 'assets/full-screen.png')
   }
 
   create() {
@@ -51,6 +54,10 @@ class MainMenu extends Phaser.Scene {
     const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32});
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
+    
+    //this.add.text(350, 350, 'Controls:').setScale(1.5)
+    this.add.sprite(430, 430, 'wasd').setScale(0.2)
+    this.add.text(375, 350, 'Movement').setScale(1.5)
 
     this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3); // 'WwalkDown2' is the idle frame
 
@@ -142,14 +149,24 @@ class MainMenu extends Phaser.Scene {
     repeat: -1
   });
 
-    
+  this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+  this.fullscreenButton.setInteractive({ useHandCursor: true })
+  this.fullscreenButton.on('pointerdown', () => {
+      document.getElementById('phaser-example');
+      if (this.scale.isFullscreen) {
+          this.scale.stopFullscreen();
+      } else {
+          this.scale.startFullscreen();
+      }
+  })
 
 
 
     this.objects = this.physics.add.staticGroup();
-    this.singleplayerObject = this.objects.create(720, 653, 'singleplayer');
-    this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer');
-    this.marketplaceObject = this.objects.create(1290, 653, 'marketplace');
+    this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
+    this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer')
+    this.marketplaceObject = this.objects.create(1290, 653, 'marketplace')
+    this.tutorialObject = this.objects.create(1290, 453, 'tutorial')
 
     this.objects.getChildren().forEach(object => {
       object.setScale(0.2);
@@ -236,6 +253,9 @@ class MainMenu extends Phaser.Scene {
       } else if (object === this.multiplayerObject) {
         message = 'Press E to start multiplayer';
       }
+      else if (object === this.tutorialObject) {
+        message = 'Press E to start tutorial';
+      }
 
 
       this.popupText.setPosition(object.x - 100, object.y - 50);
@@ -256,6 +276,9 @@ class MainMenu extends Phaser.Scene {
       } else if (object === this.marketplaceObject) {
 
       }
+        else if (object === this.tutorialObject) {
+          this.scene.start('tutorial')
+        }
     }
   }
 }
