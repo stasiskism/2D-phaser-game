@@ -230,34 +230,34 @@ class MainMenu extends Phaser.Scene {
     const distance = Phaser.Math.Distance.Between(player.x, player.y, object.x, object.y);
 
     if (distance < 50) {
-      let message = '';
-      if (object === this.singleplayerObject) {
-        message = 'Press E to start singleplayer';
-      } else if (object === this.multiplayerObject) {
-        message = 'Press E to start multiplayer';
-      }
+        let message = '';
+        if (object === this.singleplayerObject) {
+            message = 'Press E to start singleplayer';
+        } else if (object === this.multiplayerObject) {
+            message = 'Press E to start multiplayer';
+        } else if (object === this.marketplaceObject) {
+            message = 'Press E to enter marketplace';
+        }
 
-
-      this.popupText.setPosition(object.x - 100, object.y - 50);
-      this.popupText.setText(message);
-      this.popupText.setVisible(true);
+        this.popupText.setPosition(object.x - 100, object.y - 50);
+        this.popupText.setText(message);
+        this.popupText.setVisible(true);
     } else {
-
-      this.popupText.setVisible(false);
+        this.popupText.setVisible(false);
     }
 
     if (this.eKey.isDown && distance < 50) {
-      if (object === this.singleplayerObject) {
-
-        this.scene.start('Singleplayer');
-      } else if (object === this.multiplayerObject) {
-
-        this.scene.start('Multiplayer');
-      } else if (object === this.marketplaceObject) {
-
-      }
+        if (object === this.singleplayerObject) {
+            this.scene.start('Singleplayer');
+        } else if (object === this.multiplayerObject) {
+            this.scene.start('Multiplayer');
+        } else if (object === this.marketplaceObject) {
+          this.scene.stop();
+          console.log('yes')
+            this.scene.start('Marketplace');
+        }
     }
-  }
+}
 }
 
 export default MainMenu;
