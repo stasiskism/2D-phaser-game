@@ -42,6 +42,7 @@ const backendProjectiles = {}
 let projectileId = 0
 const playerUsername = {}
 const activeSessions = {}
+const rooms = {}
 
 
 
@@ -95,6 +96,43 @@ io.on('connection', (socket) => {
                     console.error('Error authenticating user:', error);
                     socket.emit('loginResponse', { success: false });
                 }
+    })
+
+    socket.on('createRoom', (roomName) => {
+        const roomId = Math.random().toString(36).substring(7)
+        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id]}
+        console.log(roomId)
+        socket.emit('roomCreated', roomId)
+        io.emit('updateRooms', rooms)
+    })
+
+    socket.on('joinRoom', (roomId) => {
+        if (rooms[roomId] && rooms[roomId].players.length < 4) {//PAKEISTI PLAYERIU SKAICIU PAGAL HOSTO PASIRINKIMA
+            rooms[roomId].players.push(socket.id)
+            socket.join(roomId)
+            socket.emit('roomJoined', roomId)
+            io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players)
+        } else {
+            socket.emit('roomJoinFailed', 'Room is full or does not exist')
+        }
+
+    })
+
+    socket.on('leaveRoom', (roomId) => {
+        if (rooms[roomId]) {
+            const room = rooms[roomId]
+            const index = room.players.indexOf(socket.id)
+            if (index !== -1) {
+                room.players.splice(index, 1)
+                if (socket.id === room.host) {
+                    room.host = room.players[Math.floor(Math.random() * room.players.length)]
+                }
+                if (room.players.length === 0) {
+                    delete rooms[roomId]
+                }
+                socket.leave(roomId)
+            }
+        }
     })
 
     socket.on('playerAnimationChange', (AnimData) => {
@@ -178,6 +216,23 @@ io.on('connection', (socket) => {
     // Handle client disconnection
     socket.on('disconnect', (reason) => {
         console.log('Client disconnected:', socket.id, reason);
+        for (const roomId in rooms) {
+            const room = rooms[roomId];
+            const index = room.players.indexOf(socket.id);
+            if (index !== -1) {
+                room.players.splice(index, 1);
+                if (socket.id === room.host) {
+                    // If host leaves, select a random player as the new host
+                    room.host = room.players[Math.floor(Math.random() * room.players.length)];
+                }
+                if (room.players.length === 0) {
+                    // Delete empty room
+                    delete rooms[roomId];
+                }
+                io.to(roomId).emit('updateRoom', room);
+                break;
+            }
+        }
         delete backendPlayers[socket.id]
         // Inform other clients that this player has disconnected
         io.emit('updatePlayers', backendPlayers);

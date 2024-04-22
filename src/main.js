@@ -10,6 +10,8 @@ import Login from './login.js'
 import Authenticate from './authenticate.js'
 import Respawn from './respawn.js'
 import Tutorial from './tutorial.js'
+import Lobby from './lobby.js'
+import Room from './room.js'
 
 
 const config = {
@@ -48,6 +50,8 @@ game.scene.add('login', Login)
 game.scene.add('authenticate', Authenticate)
 game.scene.add('respawn', Respawn)
 game.scene.add('tutorial', Tutorial)
-game.scene.start('tutorial')
+game.scene.add('lobby', Lobby)
+game.scene.add('room', Room)
+game.scene.start('room')
 //game.scene.start('Multiplayer')
 //game.scene.start('authenticate')
