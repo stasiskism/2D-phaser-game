@@ -43,7 +43,6 @@ let projectileId = 0
 const playerUsername = {}
 const activeSessions = {}
 const rooms = {}
-const backendRoomPlayers = {}
 
 
 
@@ -102,32 +101,26 @@ io.on('connection', (socket) => {
     socket.on('createRoom', (roomName) => {
         const roomId = Math.random().toString(36).substring(7)
         rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id]}
-        console.log(roomId)
+        console.log('roomId: ', roomId)
         socket.emit('roomCreated', roomId)
         io.emit('updateRooms', rooms)
         
     })
 
     socket.on('joinRoom', (roomId) => {
-        if (rooms[roomId] && Object.keys(backendRoomPlayers).length < 4) {//PAKEISTI PLAYERIU SKAICIU PAGAL HOSTO PASIRINKIMA
-            username = playerUsername[socket.id]
-            backendRoomPlayers[socket.id] = { 
-                id: socket.id,
-                x: 1920 / 2,
-                y: 1080 / 2,
-                username,
-            }
-
-        rooms[roomId].players.push(backendRoomPlayers[socket.id]);
-        socket.join(roomId)
-        socket.emit('roomJoined', roomId)
-        io.emit('updateRoomPlayers', backendRoomPlayers)
-        console.log(backendRoomPlayers)
+        if (rooms[roomId] && rooms[roomId].players.length < 4) {
+            const username = playerUsername[socket.id];
+            rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
+            socket.join(roomId);
+            socket.emit('roomJoined', roomId);
+            //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
+            rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
+            io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
+            console.log(rooms[roomId].players)
         } else {
-            socket.emit('roomJoinFailed', 'Room is full or does not exist')
+            socket.emit('roomJoinFailed', 'Room is full or does not exist');
         }
-
-    })
+    });
 
     socket.on('leaveRoom', (roomId) => {
         if (rooms[roomId]) {
@@ -135,7 +128,6 @@ io.on('connection', (socket) => {
             const index = room.players.findIndex(player => player.id === socket.id);
             if (index !== -1) {
                 room.players.splice(index, 1)
-                delete backendRoomPlayers[socket.id];
                 if (socket.id === room.host) {
                     room.host = room.players[Math.floor(Math.random() * room.players.length)]
                 }
@@ -143,7 +135,7 @@ io.on('connection', (socket) => {
                     delete rooms[roomId]
                 }
                 socket.leave(roomId)
-                io.emit('updateRoomPlayers', backendRoomPlayers)
+                io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players);
             }
         }
     })
@@ -198,38 +190,70 @@ io.on('connection', (socket) => {
 
     // Listen for player movement from this client
     socket.on('playerMove', (data) => {
-        if (backendPlayers[socket.id] || backendRoomPlayers[socket.id]) {
-            if (backendPlayers[socket.id]) {
-                player = backendPlayers[socket.id]
-            } else {
-                player = backendRoomPlayers[socket.id]
-            }
+        if (backendPlayers[socket.id]) {
             // Broadcast this player's movement to all other clients
             if (data === 'a') {
-                player.x -= 2
-                if (player.x < 0) {
-                    delete player
+                backendPlayers[socket.id].x -= 2
+                if (backendPlayers[socket.id].x < 0) {
+                    delete backendPlayers[socket.id]
                 }
             } else if (data === 'd') {
-                player.x += 2
-                if (player.x > 1920) {
-                    delete player
+                backendPlayers[socket.id].x += 2
+                if (backendPlayers[socket.id].x > 1920) {
+                    delete backendPlayers[socket.id]
                 }
             }
 
             if (data === 'w') {
-                player.y -= 2
-                if (player.y < 0) {
-                    delete player
+                backendPlayers[socket.id].y -= 2
+                if (backendPlayers[socket.id].y < 0) {
+                    delete backendPlayers[socket.id]
                 }
             } else if (data === 's') {
-                player.y += 2
-                if (player.y > 1080) {
-                    delete player
+                backendPlayers[socket.id].y += 2
+                if (backendPlayers[socket.id].y > 1080) {
+                    delete backendPlayers[socket.id]
                 }
             }
         }
     });
+
+    socket.on('roomPlayerMove', (info) => {
+        const {data, roomId} = info
+        if (rooms[roomId]) {
+            // If the player is within a room
+            const room = rooms[roomId];
+            const playerIndex = room.players.findIndex(player => player.id === socket.id);
+            if (playerIndex !== -1) {
+                const player = room.players[playerIndex];
+                // Update player's position within the room
+                if (data === 'a') {
+                    player.x -= 2;
+                    if (player.x < 0) {
+                        player.x = 0;
+                    }
+                } else if (data === 'd') {
+                    player.x += 2;
+                    if (player.x > 1920) {
+                        player.x = 1920;
+                    }
+                } else if (data === 'w') {
+                    player.y -= 2;
+                    if (player.y < 0) {
+                        player.y = 0;
+                    }
+                } else if (data === 's') {
+                    player.y += 2;
+                    if (player.y > 1080) {
+                        player.y = 1080;
+                    }
+                }
+                // Update the player's position in the room's players array
+                room.players[playerIndex] = player;
+            }
+        }
+    })
+
 
     // Handle client disconnection
     socket.on('disconnect', (reason) => {
@@ -246,14 +270,14 @@ io.on('connection', (socket) => {
                 if (room.players.length === 0) {
                     // Delete empty room
                     delete rooms[roomId];
+                    io.emit('updateRoom', room);
                 }
-                io.emit('updateRoom', room);
+                io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players);
                 break;
             }
         }
         delete backendPlayers[socket.id]
         // Inform other clients that this player has disconnected
-        io.emit('updateRoomPlayers', backendRoomPlayers)
         io.emit('updatePlayers', backendPlayers);
         //Puts usernames in an array, finds the first username associated with the disconnected socket.id
         const username = Object.keys(activeSessions).find(key => activeSessions[key] === socket.id);
@@ -324,7 +348,9 @@ setInterval(() => {
     
     io.emit('updateProjectiles', backendProjectiles, backendPlayers)
     io.emit('updatePlayers', backendPlayers)
-    io.emit('updateRoomPlayers', backendRoomPlayers)
+    for (const roomId in rooms) {
+        io.emit('updateRoomPlayers', rooms[roomId].players)
+    }
 }, 15)
 
 const PORT = 443;

@@ -59,8 +59,16 @@ class Room extends Phaser.Scene {
 
         //NEGAUNU BACKENDPLAYERIU, GALIMAI NES REIKIA SERVER SIDE UPDATINT PLAAYERIUS ROOME
         socket.on('updateRoomPlayers', roomPlayers => {
-            this.updateRoomPlayers(roomPlayers)
-        })
+            for (const playerIndex in roomPlayers) {
+                const playerData = roomPlayers[playerIndex];
+                const roomId = playerData.roomId
+               //if (this.room !== roomId) return;
+                //KAI NAUDOJU IF CIA ISSIUNCIA VISA DATA BET GAUNA TIK ID
+                if (playerData) {
+                this.updateRoomPlayers(playerData); 
+                }
+            }
+        });
 
         socket.on('playerAnimationUpdate', animData => {
             const { playerId, animation } = animData;
@@ -147,15 +155,13 @@ class Room extends Phaser.Scene {
         if (this.frontendPlayers[id]) {
             this.frontendPlayers[id].destroy();
         }
-    
         // Setup the respawned player
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
-
+        //console.log(this.frontendPlayers[id])
     
         // Setup other players
         for (const playerId in this.frontendPlayers) {
             if (playerId !== id) {
-                console.log('asdzxcqe')
                 const otherPlayerData = this.frontendPlayers[playerId];
                 // Cleanup existing player sprites if they exist
                 if (this.frontendPlayers[playerId]) {
@@ -170,27 +176,34 @@ class Room extends Phaser.Scene {
     update() {
         this.updatePlayerMovement();
     }
-
-    updateRoomPlayers(roomPlayers) {
+    //CIA GAUNU PLAYER ID O REIKIA VISA DATA GAUT
+    updateRoomPlayers(playerData) {
         // Iterate through the roomPlayers object and update player sprites accordingly
-        for (const id in roomPlayers) {
-            const playerData = roomPlayers[id];
+        //for (const id in roomPlayers) {
+            //console.log(playerData)
 
             // Check if the player sprite already exists
-            if (this.frontendPlayers[id]) {
+            if (this.frontendPlayers[playerData.id]) {
                 // If the player sprite exists, update its position
-                this.updatePlayerPosition(id, playerData);
+                console.log('updatina positiona')
+                this.updatePlayerPosition(playerData.id, playerData);
             } else {
                 // If the player sprite doesn't exist, create it
-                this.setupPlayer(id, playerData);
+                this.setupPlayer(playerData.id, playerData);
             }
-        }
+        
+       // }
+        // for (const id in this.frontendPlayers) {
+        //     if (!roomPlayers[id]) {
+        //         this.frontendPlayers[id].destroy(); // Remove the sprite
+        //         delete this.frontendPlayers[id]; // Remove reference to the player
+        //     }
+        // }
     }
 
 
     updatePlayerMovement() {
-        if (!this.frontendPlayers[socket.id]) return;
-        //console.log('MOVING')
+        if (!this.frontendPlayers[socket.id] || !this.roomId) return;
         const player = this.frontendPlayers[socket.id];
         let moving = false;
         let direction = '';
@@ -199,24 +212,24 @@ class Room extends Phaser.Scene {
             moving = true;
             direction += 'Up';
             player.y -= 2;
-            socket.emit('playerMove', 'w');
+            socket.emit('roomPlayerMove', { data: 'w', roomId: this.roomId });
         } else if (this.s.isDown) {
             moving = true;
             direction += 'Down';
             player.y += 2;
-            socket.emit('playerMove', 's');
+            socket.emit('roomPlayerMove', { data: 's', roomId: this.roomId });
         }
 
         if (this.a.isDown) {
             moving = true;
             direction += 'Left';
             player.x -= 2;
-            socket.emit('playerMove', 'a');
+            socket.emit('roomPlayerMove', { data: 'a', roomId: this.roomId });
         } else if (this.d.isDown) {
             moving = true;
             direction += 'Right';
             player.x += 2;
-            socket.emit('playerMove', 'd');
+            socket.emit('roomPlayerMove', { data: 'd', roomId: this.roomId });
         }
 
         if (moving) {
