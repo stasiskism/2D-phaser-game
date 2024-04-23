@@ -3,8 +3,8 @@ class Room extends Phaser.Scene {
     constructor() {
         super({ key: 'room'});
     }
-    init() {
-
+    init(data) {
+        this.roomId = data.roomId
     }
     preload() {
         this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png')
@@ -55,42 +55,20 @@ class Room extends Phaser.Scene {
         this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
+        socket.emit('joinRoom', this.roomId)
 
         //NEGAUNU BACKENDPLAYERIU, GALIMAI NES REIKIA SERVER SIDE UPDATINT PLAAYERIUS ROOME
-        socket.on('updatePlayers', backendPlayers => {
-            const alivePlayers = {}; // To keep track of alive players
-        
-            // Update existing players and mark them as alive
-            for (const id in backendPlayers) {
-                const backendPlayer = backendPlayers[id];
-
-                if (!this.frontendPlayers[id]) {
-                    this.setupPlayer(id, backendPlayer);
-                } else {
-                    this.updatePlayerPosition(id, backendPlayer);
-                    this.reloading = false
-                    if (id === socket.id) {
-                        if (backendPlayer.bullets === 0)
-                        this.reloading = true
-                    }
-                }
-                // Mark player as alive
-                alivePlayers[id] = true;
-            }
-            for (const id in this.frontendPlayers) {
-                if (!alivePlayers[id]) {
-                    this.removePlayer(id);
-                }
-            }
-        
-            // Check for respawned players
-            for (const id in backendPlayers) {
-                if (!this.frontendPlayers[id]) {
-                    // If the respawned player is not already loaded, setup the player
-                    this.setupPlayer(id, backendPlayers[id]);
-                }
-            }
+        socket.on('updateRoomPlayers', roomPlayers => {
+            this.updateRoomPlayers(roomPlayers)
         })
+
+        socket.on('playerAnimationUpdate', animData => {
+            const { playerId, animation } = animData;
+            if (this.frontendPlayers[playerId]) {
+                this.frontendPlayers[playerId].anims.play(animation, true);
+            }
+        });
+
     }
 
     setupScene() {
@@ -112,36 +90,36 @@ class Room extends Phaser.Scene {
             }
         })
 
-        this.objects = this.physics.add.staticGroup();
-        this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
-        this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer')
-        this.marketplaceObject = this.objects.create(1290, 653, 'marketplace')
-        this.tutorialObject = this.objects.create(1290, 453, 'tutorial')
+        // this.objects = this.physics.add.staticGroup();
+        // this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
+        // this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer')
+        // this.marketplaceObject = this.objects.create(1290, 653, 'marketplace')
+        // this.tutorialObject = this.objects.create(1290, 453, 'tutorial')
 
-        this.objects.getChildren().forEach(object => {
-            object.setScale(0.2);
-        });
+        // this.objects.getChildren().forEach(object => {
+        //     object.setScale(0.2);
+        // });
 
-        const invisibleWalls = [
-            { x: 336, y: 959, width: 1250, height: 10 }, // Wall 1
-            { x: 326, y: 315, width: 10, height: 650 }, // Wall 2
-            { x: 1580, y: 315, width: 10, height: 650 }, // Wall 3
-            { x: 326, y: 315, width: 1250, height: 10 }, // Wall 4
-        ];
+        // const invisibleWalls = [
+        //     { x: 336, y: 959, width: 1250, height: 10 }, // Wall 1
+        //     { x: 326, y: 315, width: 10, height: 650 }, // Wall 2
+        //     { x: 1580, y: 315, width: 10, height: 650 }, // Wall 3
+        //     { x: 326, y: 315, width: 1250, height: 10 }, // Wall 4
+        // ];
 
-        invisibleWalls.forEach(wall => {
-            const invisibleWall = this.physics.add.sprite(wall.x + wall.width / 2, wall.y + wall.height / 2, 'invisible-wall').setVisible(false).setSize(wall.width, wall.height);
-            invisibleWall.body.setAllowGravity(false);
-            invisibleWall.body.setImmovable(true);
-            this.physics.add.collider(this.player, invisibleWall);
-        });
+        // invisibleWalls.forEach(wall => {
+        //     const invisibleWall = this.physics.add.sprite(wall.x + wall.width / 2, wall.y + wall.height / 2, 'invisible-wall').setVisible(false).setSize(wall.width, wall.height);
+        //     invisibleWall.body.setAllowGravity(false);
+        //     invisibleWall.body.setImmovable(true);
+        //     this.physics.add.collider(this.player, invisibleWall);
+        // });
 
         this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
 
         this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
         this.popupText.setVisible(false);
 
-        this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
+        //this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
     }
 
     setupAnimations() {
@@ -177,6 +155,7 @@ class Room extends Phaser.Scene {
         // Setup other players
         for (const playerId in this.frontendPlayers) {
             if (playerId !== id) {
+                console.log('asdzxcqe')
                 const otherPlayerData = this.frontendPlayers[playerId];
                 // Cleanup existing player sprites if they exist
                 if (this.frontendPlayers[playerId]) {
@@ -187,14 +166,31 @@ class Room extends Phaser.Scene {
             }
         }
     }
-
     
     update() {
         this.updatePlayerMovement();
     }
 
+    updateRoomPlayers(roomPlayers) {
+        // Iterate through the roomPlayers object and update player sprites accordingly
+        for (const id in roomPlayers) {
+            const playerData = roomPlayers[id];
+
+            // Check if the player sprite already exists
+            if (this.frontendPlayers[id]) {
+                // If the player sprite exists, update its position
+                this.updatePlayerPosition(id, playerData);
+            } else {
+                // If the player sprite doesn't exist, create it
+                this.setupPlayer(id, playerData);
+            }
+        }
+    }
+
+
     updatePlayerMovement() {
         if (!this.frontendPlayers[socket.id]) return;
+        //console.log('MOVING')
         const player = this.frontendPlayers[socket.id];
         let moving = false;
         let direction = '';
@@ -233,9 +229,9 @@ class Room extends Phaser.Scene {
         }
     }
 
-    updatePlayerPosition(id, backendPlayer) {
-        this.frontendPlayers[id].x = backendPlayer.x;
-        this.frontendPlayers[id].y = backendPlayer.y;
+    updatePlayerPosition(id, roomPlayer) {
+        this.frontendPlayers[id].x = roomPlayer.x;
+        this.frontendPlayers[id].y = roomPlayer.y;
     }
 
 
