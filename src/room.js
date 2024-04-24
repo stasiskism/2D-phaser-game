@@ -39,6 +39,7 @@ class Room extends Phaser.Scene {
         this.load.image('wasd', 'assets/wasd.png')
         this.load.image('tutorial', 'assets/tutorials.png')
         this.load.image('fullscreen', 'assets/full-screen.png')
+        this.load.image('exit', 'assets/exit.png')
     }
     create() {
         this.setupScene()
@@ -59,15 +60,26 @@ class Room extends Phaser.Scene {
 
         //NEGAUNU BACKENDPLAYERIU, GALIMAI NES REIKIA SERVER SIDE UPDATINT PLAAYERIUS ROOME
         socket.on('updateRoomPlayers', roomPlayers => {
+            const alivePlayers = {}
             for (const playerIndex in roomPlayers) {
                 const playerData = roomPlayers[playerIndex];
                 const roomId = playerData.roomId
-               //if (this.room !== roomId) return;
-                //KAI NAUDOJU IF CIA ISSIUNCIA VISA DATA BET GAUNA TIK ID
-                if (playerData) {
-                this.updateRoomPlayers(playerData); 
+                if (this.roomId !== roomId) return;
+                const id = playerData.id
+                if (!this.frontendPlayers[id]) {
+                    this.setupPlayer(id, playerData)
+                } else {
+                    this.updatePlayerPosition(id, playerData)
+                }
+                alivePlayers[id] = true
+            }
+
+            for (const id in this.frontendPlayers) {
+                if (!alivePlayers[id]) {
+                    console.log(id)
                 }
             }
+
         });
 
         socket.on('playerAnimationUpdate', animData => {
@@ -97,6 +109,20 @@ class Room extends Phaser.Scene {
                 this.scale.startFullscreen();
             }
         })
+
+        this.exitButton = this.add.sprite(100, 30, 'exit').setScale(0.5)
+        this.exitButton.setInteractive({ useHandCursor: true })
+        this.exitButton.on('pointerdown', () => {
+            socket.emit('leaveRoom', this.roomId)
+            this.scene.start('lobby')
+            this.scene.stop()
+            if (this.frontendPlayers[socket.id]) {
+                this.frontendPlayers[socket.id].anims.stop()
+                this.frontendPlayers[socket.id].destroy();
+                delete this.frontendPlayers[socket.id];
+            }
+        })
+
 
         // this.objects = this.physics.add.staticGroup();
         // this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
@@ -175,32 +201,9 @@ class Room extends Phaser.Scene {
     
     update() {
         this.updatePlayerMovement();
+        console.log(this.frontendPlayers)
     }
     //CIA GAUNU PLAYER ID O REIKIA VISA DATA GAUT
-    updateRoomPlayers(playerData) {
-        // Iterate through the roomPlayers object and update player sprites accordingly
-        //for (const id in roomPlayers) {
-            //console.log(playerData)
-
-            // Check if the player sprite already exists
-            if (this.frontendPlayers[playerData.id]) {
-                // If the player sprite exists, update its position
-                console.log('updatina positiona')
-                this.updatePlayerPosition(playerData.id, playerData);
-            } else {
-                // If the player sprite doesn't exist, create it
-                this.setupPlayer(playerData.id, playerData);
-            }
-        
-       // }
-        // for (const id in this.frontendPlayers) {
-        //     if (!roomPlayers[id]) {
-        //         this.frontendPlayers[id].destroy(); // Remove the sprite
-        //         delete this.frontendPlayers[id]; // Remove reference to the player
-        //     }
-        // }
-    }
-
 
     updatePlayerMovement() {
         if (!this.frontendPlayers[socket.id] || !this.roomId) return;
@@ -233,12 +236,16 @@ class Room extends Phaser.Scene {
         }
 
         if (moving) {
-            const animationName = `Wwalk${direction}`;
-            player.anims.play(animationName, true);
-            socket.emit('playerAnimationChange', { playerId: socket.id, animation: animationName });
+            if (player && player.anims) {
+                const animationName = `Wwalk${direction}`;
+                player.anims.play(animationName, true);
+                socket.emit('playerAnimationChange', { playerId: socket.id, animation: animationName });
+            }
         } else {
+            if (player && player.anims) {
             player.anims.stop();
             socket.emit('playerAnimationChange', { playerId: socket.id, animation: 'idle' });
+            }
         }
     }
 
@@ -246,6 +253,7 @@ class Room extends Phaser.Scene {
         this.frontendPlayers[id].x = roomPlayer.x;
         this.frontendPlayers[id].y = roomPlayer.y;
     }
+
 
 
 }

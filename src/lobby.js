@@ -2,6 +2,7 @@ class Lobby extends Phaser.Scene {
     constructor() {
         super({ key: 'lobby'});
     }
+    createdSprites = {}
     init() {
 
     }
@@ -17,18 +18,18 @@ class Lobby extends Phaser.Scene {
         this.createButton = this.add.sprite(1920 / 2, (1080 / 2) - 200, 'create');
         this.createButton.setInteractive({ useHandCursor: true })
         this.createButton.on('pointerdown', () => this.createRoom())
-
+        this.distance = 0
         this.setupInputEvents()
-
+        this.createdSprites = {}
     }
 
     setupInputEvents() {
         socket.on('updateRooms', (rooms) => {
             for (const roomId in rooms) {
-                const room = rooms[roomId];
-                console.log(room);
-                
-                const roomSprite = this.add.sprite(1920 / 2, (1080 / 2) + 200, 'join').setInteractive({ useHandCursor: true });
+                if (this.createdSprites[roomId]) return        
+                const roomSprite = this.add.sprite(1920 / 2, (1080 / 2) + this.distance, 'join').setInteractive({ useHandCursor: true });
+                this.distance += 200
+                this.createdSprites[roomId] = roomSprite
                 roomSprite.on('pointerdown', () => this.joinRoom(roomId));
             }
         });
@@ -43,7 +44,7 @@ class Lobby extends Phaser.Scene {
     socket.emit('createRoom', roomName);
 
     // Listen for the 'roomCreated' event from the server
-    socket.on('roomCreated', (roomId) => {
+    socket.once('roomCreated', (roomId) => {
         // Start the 'room' scene with the specified roomId
         this.scene.start('room', {roomId: roomId });
         this.scene.stop()

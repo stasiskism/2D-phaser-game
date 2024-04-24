@@ -70,6 +70,7 @@ io.on('connection', (socket) => {
             socket.emit('registerResponse', { success: false });
         }
     })
+
     socket.on('login', async (data) => {
         const {username, password} = data
         try {
@@ -113,10 +114,11 @@ io.on('connection', (socket) => {
             rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
             socket.join(roomId);
             socket.emit('roomJoined', roomId);
+            console.log('KAI JOININA ROOMA roomId: ', roomId)
             //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
             io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
-            console.log(rooms[roomId].players)
+            console.log('KAI JOININA', rooms[roomId].players)
         } else {
             socket.emit('roomJoinFailed', 'Room is full or does not exist');
         }
@@ -132,11 +134,15 @@ io.on('connection', (socket) => {
                     room.host = room.players[Math.floor(Math.random() * room.players.length)]
                 }
                 if (room.players.length === 0) {
+                    console.log('deleteina kambari')
                     delete rooms[roomId]
                 }
+                if (room.players.length != 0) {
+                    io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players);
+                } 
                 socket.leave(roomId)
-                io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players);
             }
+            console.log('KAI LEAVINA', room.players)
         }
     })
 
@@ -261,19 +267,9 @@ io.on('connection', (socket) => {
         for (const roomId in rooms) {
             const room = rooms[roomId];
             const index = room.players.indexOf(socket.id);
-            if (index !== -1) {
-                room.players.splice(index, 1);
-                if (socket.id === room.host) {
-                    // If host leaves, select a random player as the new host
-                    room.host = room.players[Math.floor(Math.random() * room.players.length)];
-                }
-                if (room.players.length === 0) {
-                    // Delete empty room
-                    delete rooms[roomId];
-                    io.emit('updateRoom', room);
-                }
-                io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players);
-                break;
+            if (index === -1) {
+                console.log('CLIENTAS LEAVINA')
+                socket.emit('leaveRoom', roomId)
             }
         }
         delete backendPlayers[socket.id]
@@ -348,6 +344,7 @@ setInterval(() => {
     
     io.emit('updateProjectiles', backendProjectiles, backendPlayers)
     io.emit('updatePlayers', backendPlayers)
+    io.emit('updateRooms', rooms)
     for (const roomId in rooms) {
         io.emit('updateRoomPlayers', rooms[roomId].players)
     }
