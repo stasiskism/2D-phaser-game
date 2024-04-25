@@ -102,18 +102,25 @@ io.on('connection', (socket) => {
     socket.on('createRoom', (roomName) => {
         const roomId = Math.random().toString(36).substring(7)
         rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id]}
-        console.log('roomId: ', roomId)
+        console.log('Created roomId: ', roomId)
         socket.emit('roomCreated', roomId)
         io.emit('updateRooms', rooms)
         
     })
 
-    socket.on('joinRoom', (roomId) => {
+    socket.on('checkRoom', (roomId) => {
         if (rooms[roomId] && rooms[roomId].players.length < 4) {
+            socket.emit('roomJoined', roomId)
+        } else {
+            socket.emit('roomJoinFailed', 'Room is full or does not exist');
+        }
+    })
+
+    socket.on('joinRoom', (roomId) => {
+        if (rooms[roomId]) {
             const username = playerUsername[socket.id];
             rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
             socket.join(roomId);
-            socket.emit('roomJoined', roomId);
             console.log('KAI JOININA ROOMA roomId: ', roomId)
             //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);

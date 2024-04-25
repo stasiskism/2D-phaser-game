@@ -60,6 +60,12 @@ class Room extends Phaser.Scene {
 
         socket.emit('joinRoom', this.roomId)
 
+        socket.on('roomJoinFailed', errorMessage => {
+            alert(errorMessage)
+            this.scene.start('lobby')
+            this.scene.stop()
+        })
+
         //NEGAUNU BACKENDPLAYERIU, GALIMAI NES REIKIA SERVER SIDE UPDATINT PLAAYERIUS ROOME
         socket.on('updateRoomPlayers', roomPlayers => {
             const alivePlayers = {}

@@ -52,10 +52,20 @@ class Lobby extends Phaser.Scene {
 }
 
     joinRoom(roomId) {
-        console.log('JOININA')
+        socket.off('roomJoined');
+        socket.off('roomJoinFailed');
+        console.log('joinina')
         //const roomName = window.prompt('Enter the name of the room to join:');
-        this.scene.start('room', {roomId: roomId });
-        this.scene.stop()
+        //SITOJ VIETOJ GALBUT REIKETU PATIKRINTI AR FULL ROOM AR NE, TAI CIA REIKTU SOCKET.EMIT JOIN ROOM 
+        socket.emit('checkRoom', roomId)
+
+        socket.on('roomJoined', roomId => {
+            this.scene.start('room', {roomId: roomId });
+            this.scene.stop()
+        })
+        socket.on('roomJoinFailed', errorMessage => {
+            alert(errorMessage)
+        })
     }
 
 }
