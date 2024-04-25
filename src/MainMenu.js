@@ -272,7 +272,7 @@ class MainMenu extends Phaser.Scene {
         this.scene.start('Singleplayer');
       } else if (object === this.multiplayerObject) {
 
-        this.scene.start('Multiplayer');
+        this.scene.start('lobby');
       } else if (object === this.marketplaceObject) {
 
       }

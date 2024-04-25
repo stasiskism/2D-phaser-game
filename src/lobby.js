@@ -41,11 +41,10 @@ class Lobby extends Phaser.Scene {
 
    createRoom() {
     const roomName = window.prompt('Enter the name of the room:');
+    //REIKIA PADARYTI KAD KUREJAS GALETU PASIRINKTI MAX PLAYER SKAICIU
     socket.emit('createRoom', roomName);
 
-    // Listen for the 'roomCreated' event from the server
     socket.once('roomCreated', (roomId) => {
-        // Start the 'room' scene with the specified roomId
         this.scene.start('room', {roomId: roomId });
         this.scene.stop()
     });
@@ -55,8 +54,7 @@ class Lobby extends Phaser.Scene {
         socket.off('roomJoined');
         socket.off('roomJoinFailed');
         console.log('joinina')
-        //const roomName = window.prompt('Enter the name of the room to join:');
-        //SITOJ VIETOJ GALBUT REIKETU PATIKRINTI AR FULL ROOM AR NE, TAI CIA REIKTU SOCKET.EMIT JOIN ROOM 
+        
         socket.emit('checkRoom', roomId)
 
         socket.on('roomJoined', roomId => {

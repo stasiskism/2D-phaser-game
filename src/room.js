@@ -1,6 +1,7 @@
 class Room extends Phaser.Scene {
     frontendPlayers = {};
     readyPlayers = {}
+    readyPlayersCount = 0
     countdownTime = 6
     constructor() {
         super({ key: 'room'});
@@ -131,12 +132,19 @@ class Room extends Phaser.Scene {
             }
         })
 
-        this.readyButton = this.add.text(800, 600, 'Ready', { fill: '#0f0' }).setInteractive({ useHandCursor: true }).setScale(4);
+        this.readyButton = this.add.text(800, 400, 'Ready', { fill: '#0f0' }).setInteractive({ useHandCursor: true }).setScale(4);
         this.readyButton.on('pointerdown', () => {
-            this.readyPlayers[socket.id] = true
+            if (this.readyPlayers[socket.id]) {
+                this.readyPlayers[socket.id] = false;
+                this.readyPlayersCount--;
+            } else {
+                this.readyPlayers[socket.id] = true
+                this.readyPlayersCount++
+            }
+            this.updateReadyPlayersText()
             this.checkAllPlayersReady()
         })
-
+        this.readyPlayersText = this.add.text(700, 300, `Ready Players: ${this.readyPlayersCount}`, { fontSize: '32px', fill: '#fff' }).setScale(2)
 
         // this.objects = this.physics.add.staticGroup();
         // this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
@@ -276,6 +284,10 @@ class Room extends Phaser.Scene {
         this.countdownText = this.add.text(800, 200, '', { fontSize: '64px', fill: '#fff' });
         this.countdownText.setOrigin(0.5);
         this.startCountdown()
+    }
+
+    updateReadyPlayersText() {
+        this.readyPlayersText.setText(`Ready Players: ${this.readyPlayersCount}`);
     }
 
     startCountdown() {
