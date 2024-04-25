@@ -1,5 +1,7 @@
 class Room extends Phaser.Scene {
     frontendPlayers = {};
+    readyPlayers = {}
+    countdownTime = 6
     constructor() {
         super({ key: 'room'});
     }
@@ -123,6 +125,12 @@ class Room extends Phaser.Scene {
             }
         })
 
+        this.readyButton = this.add.text(800, 600, 'Ready', { fill: '#0f0' }).setInteractive({ useHandCursor: true }).setScale(4);
+        this.readyButton.on('pointerdown', () => {
+            this.readyPlayers[socket.id] = true
+            this.checkAllPlayersReady()
+        })
+
 
         // this.objects = this.physics.add.staticGroup();
         // this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
@@ -201,7 +209,6 @@ class Room extends Phaser.Scene {
     
     update() {
         this.updatePlayerMovement();
-        console.log(this.frontendPlayers)
     }
     //CIA GAUNU PLAYER ID O REIKIA VISA DATA GAUT
 
@@ -252,6 +259,38 @@ class Room extends Phaser.Scene {
     updatePlayerPosition(id, roomPlayer) {
         this.frontendPlayers[id].x = roomPlayer.x;
         this.frontendPlayers[id].y = roomPlayer.y;
+    }
+
+    checkAllPlayersReady() {
+        for (const playerId in this.readyPlayers) {
+            if (!this.readyPlayers[playerId]) {
+                break
+            }
+        }
+        this.countdownText = this.add.text(800, 200, '', { fontSize: '64px', fill: '#fff' });
+        this.countdownText.setOrigin(0.5);
+        this.startCountdown()
+    }
+
+    startCountdown() {
+        this.timerEvent = this.time.addEvent({
+            delay: 1000, // 1 second
+            callback: this.updateCountdown,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    updateCountdown() {
+        this.countdownTime--;
+        this.countdownText.setText(`Game starts in: ${this.countdownTime}`);
+        if (this.countdownTime === 0) {
+            // Stop the countdown timer
+            this.timerEvent.remove();
+            // Start the game
+            this.scene.start('Multiplayer');
+            this.scene.stop()
+        }
     }
 
 
