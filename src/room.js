@@ -2,7 +2,7 @@ class Room extends Phaser.Scene {
     frontendPlayers = {};
     readyPlayers = {}
     readyPlayersCount = 0
-    countdownTime = 6
+    countdownTime = 0
     constructor() {
         super({ key: 'room'});
     }
@@ -48,8 +48,6 @@ class Room extends Phaser.Scene {
         this.setupScene()
         this.setupInputEvents()
         this.setupAnimations()
-        
-        
     }
 
     setupInputEvents() {
@@ -64,8 +62,9 @@ class Room extends Phaser.Scene {
         socket.on('roomJoinFailed', errorMessage => {
             alert(errorMessage)
             this.scene.start('lobby')
-            this.scene.stop()
+            this.scene.pause()
         })
+
 
         //NEGAUNU BACKENDPLAYERIU, GALIMAI NES REIKIA SERVER SIDE UPDATINT PLAAYERIUS ROOME
         socket.on('updateRoomPlayers', roomPlayers => {
@@ -77,6 +76,7 @@ class Room extends Phaser.Scene {
                 const id = playerData.id
                 if (!this.frontendPlayers[id]) {
                     this.setupPlayer(id, playerData)
+                    this.readyPlayers[id] = false
                 } else {
                     this.updatePlayerPosition(id, playerData)
                 }
@@ -85,11 +85,20 @@ class Room extends Phaser.Scene {
 
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {
-                    console.log(id)
                 }
             }
 
         });
+
+        socket.on('countdownEnd', () => {
+            this.scene.start('Multiplayer')
+            this.scene.stop()
+            if (this.frontendPlayers[socket.id]) {
+                this.frontendPlayers[socket.id].anims.stop()
+                this.frontendPlayers[socket.id].destroy();
+                delete this.frontendPlayers[socket.id];
+            }
+        })
 
         socket.on('playerAnimationUpdate', animData => {
             const { playerId, animation } = animData;
@@ -97,6 +106,28 @@ class Room extends Phaser.Scene {
                 this.frontendPlayers[playerId].anims.play(animation, true);
             }
         });
+
+        socket.on('updateReadyPlayers', ({readyCount, readyPlayers}) => {
+            console.log('updatina ready playerius')
+            this.readyPlayersCount = readyCount
+            console.log(this.readyPlayersCount)
+            for (const playerId in readyPlayers) {
+                if (socket.id === playerId) {
+                    this.readyPlayers[socket.id] = readyPlayers[playerId]
+                }
+            }
+            if (this.readyPlayersText) {
+                this.readyPlayersText.setText(`Ready Players: ${this.readyPlayersCount}`);
+            }
+            this.checkAllPlayersReady();
+        })
+
+        socket.on('updateCountdown', (countdownTime) => {
+            this.countdownTime = countdownTime
+            if (this.countdownText) {
+                this.countdownText.setText(`Game starts in: ${this.countdownTime}`);
+            }
+        })
 
     }
 
@@ -134,16 +165,11 @@ class Room extends Phaser.Scene {
 
         this.readyButton = this.add.text(800, 400, 'Ready', { fill: '#0f0' }).setInteractive({ useHandCursor: true }).setScale(4);
         this.readyButton.on('pointerdown', () => {
-            if (this.readyPlayers[socket.id]) {
-                this.readyPlayers[socket.id] = false;
-                this.readyPlayersCount--;
-            } else {
-                this.readyPlayers[socket.id] = true
-                this.readyPlayersCount++
-            }
-            this.updateReadyPlayersText()
-            this.checkAllPlayersReady()
-        })
+            let isReady = !this.readyPlayers[socket.id];
+            socket.emit('updateReadyState', { playerId: socket.id, isReady, roomId: this.roomId });
+        
+        });
+
         this.readyPlayersText = this.add.text(700, 300, `Ready Players: ${this.readyPlayersCount}`, { fontSize: '32px', fill: '#fff' }).setScale(2)
 
         // this.objects = this.physics.add.staticGroup();
@@ -224,7 +250,6 @@ class Room extends Phaser.Scene {
     update() {
         this.updatePlayerMovement();
     }
-    //CIA GAUNU PLAYER ID O REIKIA VISA DATA GAUT
 
     updatePlayerMovement() {
         if (!this.frontendPlayers[socket.id] || !this.roomId) return;
@@ -276,42 +301,21 @@ class Room extends Phaser.Scene {
     }
 
     checkAllPlayersReady() {
+        let allPlayersReady = true
+
         for (const playerId in this.readyPlayers) {
             if (!this.readyPlayers[playerId]) {
+                allPlayersReady = false
                 break
             }
         }
-        this.countdownText = this.add.text(800, 200, '', { fontSize: '64px', fill: '#fff' });
-        this.countdownText.setOrigin(0.5);
-        this.startCountdown()
-    }
-
-    updateReadyPlayersText() {
-        this.readyPlayersText.setText(`Ready Players: ${this.readyPlayersCount}`);
-    }
-
-    startCountdown() {
-        this.timerEvent = this.time.addEvent({
-            delay: 1000, // 1 second
-            callback: this.updateCountdown,
-            callbackScope: this,
-            loop: true
-        });
-    }
-
-    updateCountdown() {
-        this.countdownTime--;
-        this.countdownText.setText(`Game starts in: ${this.countdownTime}`);
-        if (this.countdownTime === 0) {
-            // Stop the countdown timer
-            this.timerEvent.remove();
-            // Start the game
-            this.scene.start('Multiplayer');
-            this.scene.stop()
+        if (allPlayersReady) {
+            console.log('VISI PLAYERIAI READY')
+            this.countdownText = this.add.text(800, 200, '', { fontSize: '64px', fill: '#fff' });
+            this.countdownText.setOrigin(0.5);
+            socket.emit('startCountdown', this.roomId)
         }
     }
-
-
 
 }
 

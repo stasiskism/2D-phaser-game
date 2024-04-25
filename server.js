@@ -43,6 +43,9 @@ let projectileId = 0
 const playerUsername = {}
 const activeSessions = {}
 const rooms = {}
+const readyPlayers = {}
+let countdownTime = 6
+let countdownInterval
 
 
 
@@ -124,6 +127,7 @@ io.on('connection', (socket) => {
             console.log('KAI JOININA ROOMA roomId: ', roomId)
             //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
+            readyPlayers[socket.id] = false
             io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
             console.log('KAI JOININA', rooms[roomId].players)
         } else {
@@ -148,10 +152,35 @@ io.on('connection', (socket) => {
                     io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players);
                 } 
                 socket.leave(roomId)
+                delete readyPlayers[socket.id]
             }
             console.log('KAI LEAVINA', room.players)
         }
     })
+
+    socket.on('updateReadyState', ({playerId, isReady, roomId}) => {
+        readyPlayers[playerId] = isReady
+        console.log('readyPlayers:', readyPlayers)
+        io.to(roomId).emit('updateReadyPlayers', {readyCount: calculateReadyPlayers(readyPlayers), readyPlayers})
+    })
+
+    socket.on('startCountdown', (roomId) => {
+        if (roomId && !rooms[roomId].countdownStarted) {
+            rooms[roomId].countdownStarted = true;
+            
+            countdownInterval = setInterval(() => {
+                countdownTime--;
+                if (countdownTime === 0) {
+                    clearInterval(countdownInterval);
+                    io.emit('countdownEnd');
+                    rooms[roomId].countdownStarted = false;
+                } else {
+                    io.emit('updateCountdown', countdownTime);
+                }
+            }, 1000);
+        }
+    })
+
 
     socket.on('playerAnimationChange', (AnimData) => {
         const { playerId, animation } = AnimData;
@@ -303,6 +332,16 @@ io.on('connection', (socket) => {
     })
 
 });
+
+function calculateReadyPlayers(readyPlayers) {
+    let count = 0;
+    for (const playerId in readyPlayers) {
+        if (readyPlayers[playerId]) {
+            count++;
+        }
+    }
+    return count;
+}
 
 setInterval(() => {
     for (const playerId in backendPlayers) {
