@@ -91,12 +91,14 @@ class Room extends Phaser.Scene {
         });
 
         socket.on('countdownEnd', () => {
-            this.scene.start('Multiplayer')
-            this.scene.stop()
-            if (this.frontendPlayers[socket.id]) {
+            //REIKIA PALEIST MULTIPLAYERI TIK SU PLAYERIAIS ESANCIAIS SITAM ROOM
+            console.log('socketroomID', socket.roomId)
+            if (this.roomId === socket.roomId) {
                 this.frontendPlayers[socket.id].anims.stop()
                 this.frontendPlayers[socket.id].destroy();
                 delete this.frontendPlayers[socket.id];
+                this.scene.start('Multiplayer', { multiplayerId: this.roomId });
+                this.scene.stop();
             }
         })
 
@@ -108,14 +110,15 @@ class Room extends Phaser.Scene {
         });
 
         socket.on('updateReadyPlayers', ({readyCount, readyPlayers}) => {
-            console.log('updatina ready playerius')
+            console.log('updatina ready playerius', readyPlayers)
             this.readyPlayersCount = readyCount
             console.log(this.readyPlayersCount)
-            for (const playerId in readyPlayers) {
-                if (socket.id === playerId) {
-                    this.readyPlayers[socket.id] = readyPlayers[playerId]
-                }
-            }
+            // for (const playerId in readyPlayers) {
+            //     if (socket.id === playerId) {
+            //         this.readyPlayers[socket.id] = readyPlayers[playerId]
+            //     }
+            // }
+            console.log('visi', this.readyPlayers)
             if (this.readyPlayersText) {
                 this.readyPlayersText.setText(`Ready Players: ${this.readyPlayersCount}`);
             }
@@ -226,9 +229,9 @@ class Room extends Phaser.Scene {
 
     setupPlayer(id, playerData) {
         // Cleanup existing player sprites if they exist
-        if (this.frontendPlayers[id]) {
-            this.frontendPlayers[id].destroy();
-        }
+        // if (this.frontendPlayers[id]) {
+        //     this.frontendPlayers[id].destroy();
+        // }
         // Setup the respawned player
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         //console.log(this.frontendPlayers[id])
@@ -237,12 +240,10 @@ class Room extends Phaser.Scene {
         for (const playerId in this.frontendPlayers) {
             if (playerId !== id) {
                 const otherPlayerData = this.frontendPlayers[playerId];
-                // Cleanup existing player sprites if they exist
-                if (this.frontendPlayers[playerId]) {
-                    this.frontendPlayers[playerId].destroy();
+                if (otherPlayerData) {
+                    otherPlayerData.destroy()
+                    this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
                 }
-                // Create frontend sprites for other players
-                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
             }
         }
     }
@@ -301,15 +302,11 @@ class Room extends Phaser.Scene {
     }
 
     checkAllPlayersReady() {
-        let allPlayersReady = true
-
+        let count = 0
         for (const playerId in this.readyPlayers) {
-            if (!this.readyPlayers[playerId]) {
-                allPlayersReady = false
-                break
-            }
+           count++
         }
-        if (allPlayersReady) {
+        if (count === this.readyPlayersCount) {
             console.log('VISI PLAYERIAI READY')
             this.countdownText = this.add.text(800, 200, '', { fontSize: '64px', fill: '#fff' });
             this.countdownText.setOrigin(0.5);

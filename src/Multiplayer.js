@@ -14,6 +14,7 @@ class Multiplayer extends Phaser.Scene {
 
     init(data) {
         this.cameras.main.setBackgroundColor('#000000');
+        this.multiplayerId = data.multiplayerId
     }
 
     preload() {
@@ -59,7 +60,7 @@ class Multiplayer extends Phaser.Scene {
         this.setupScene();
         this.setupAnimations();
         this.setupInputEvents();
-        socket.emit('startGame');
+        socket.emit('startGame', this.multiplayerId);
         this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
         <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
             <div style="margin-bottom: 8px">Leaderboard</div>
@@ -97,23 +98,23 @@ class Multiplayer extends Phaser.Scene {
     }
 
     setupAnimations() {
-        const animations = [
-            { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
-            { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
-            { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
-            { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
-            { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
-            { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
-            { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
-            { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
-            { key: 'idle', frames: ['WwalkDown2'] }
-        ];
-        animations.forEach(anim => this.anims.create({
-            key: anim.key,
-            frames: anim.frames.map(frame => ({ key: frame })),
-            frameRate: 10,
-            repeat: -1
-        }));
+        // const animations = [
+        //     { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
+        //     { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
+        //     { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
+        //     { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
+        //     { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
+        //     { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
+        //     { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
+        //     { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
+        //     { key: 'idle', frames: ['WwalkDown2'] }
+        // ];
+        // animations.forEach(anim => this.anims.create({
+        //     key: anim.key,
+        //     frames: anim.frames.map(frame => ({ key: frame })),
+        //     frameRate: 10,
+        //     repeat: -1
+        // }));
     }
 
     setupInputEvents() {
@@ -127,9 +128,10 @@ class Multiplayer extends Phaser.Scene {
 
         this.input.on('pointerdown', pointer => {
             this.input.mouse.requestPointerLock();
+            console.log('tikrinu x', this.frontendPlayers[socket.id])
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
             if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown() || this.reloading) return;
-            socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction);
+            socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
         });
 
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -155,17 +157,18 @@ class Multiplayer extends Phaser.Scene {
 
         socket.on('updatePlayers', backendPlayers => {
             const alivePlayers = {}; // To keep track of alive players
-        
+            console.log('va toki data', backendPlayers)
             // Update existing players and mark them as alive
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id];
-
-                if (!this.frontendPlayers[id]) {
-                    this.setupPlayer(id, backendPlayer);
+                if (this.multiplayerId !== backendPlayer.multiplayerId) return
+                const playerId = backendPlayer.id
+                if (!this.frontendPlayers[playerId]) {
+                    this.setupPlayer(playerId, backendPlayer);
                 } else {
-                    this.updatePlayerPosition(id, backendPlayer);
+                    this.updatePlayerPosition(playerId, backendPlayer);
                     this.reloading = false
-                    if (id === socket.id) {
+                    if (playerId === socket.id) {
                         if (backendPlayer.bullets === 0)
                         this.reloading = true
                     }
@@ -173,15 +176,6 @@ class Multiplayer extends Phaser.Scene {
                 // Mark player as alive
                 alivePlayers[id] = true;
             }
-        
-            // Update position for alive players not included in the backend data
-            // for (const id in this.frontendPlayers) {
-            //     if (alivePlayers[id]) {
-            //         if (!backendPlayers[id]) {
-            //             this.updatePlayerPosition(id, null); // Update position to null
-            //         }
-            //     }
-            // }
         
             // Remove players that are not present in the backend data
             for (const id in this.frontendPlayers) {
