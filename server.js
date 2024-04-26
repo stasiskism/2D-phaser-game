@@ -45,7 +45,6 @@ const activeSessions = {}
 const rooms = {}
 const readyPlayers = {}
 const multiplayerSession = {}
-let countdownTime = 1
 let countdownInterval
 
 
@@ -132,7 +131,10 @@ io.on('connection', (socket) => {
             console.log('KAI JOININA ROOMA roomId: ', roomId)
             //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
-            readyPlayers[socket.id] = false
+            if (!readyPlayers[roomId]) {
+                readyPlayers[roomId] = {}
+            }
+            readyPlayers[roomId][socket.id] = false
             io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
             console.log('KAI JOININA', rooms[roomId].players)
         } else {
@@ -164,13 +166,14 @@ io.on('connection', (socket) => {
     })
 
     socket.on('updateReadyState', ({playerId, isReady, roomId}) => {
-        readyPlayers[playerId] = isReady
+        readyPlayers[roomId][playerId] = isReady
         console.log('readyPlayers:', readyPlayers)
-        io.to(roomId).emit('updateReadyPlayers', {readyCount: calculateReadyPlayers(readyPlayers), readyPlayers})
+        io.to(roomId).emit('updateReadyPlayers', {readyCount: calculateReadyPlayers(readyPlayers[roomId]), readyPlayers: readyPlayers[roomId]})
     })
 
     socket.on('startCountdown', (roomId) => {
         if (roomId && !rooms[roomId].countdownStarted) {
+            let countdownTime = 5
             rooms[roomId].countdownStarted = true;
             
             countdownInterval = setInterval(() => {
@@ -179,6 +182,11 @@ io.on('connection', (socket) => {
                     clearInterval(countdownInterval);
                     io.to(roomId).emit('countdownEnd');
                     rooms[roomId].countdownStarted = false;
+                    for (const playerId in readyPlayers[roomId]) {
+                        if (readyPlayers[roomId][playerId]) {
+                            delete readyPlayers[roomId][playerId]
+                        }
+                    }
                 } else {
                     io.to(roomId).emit('updateCountdown', countdownTime);
                 }
