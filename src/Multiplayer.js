@@ -157,7 +157,6 @@ class Multiplayer extends Phaser.Scene {
 
         socket.on('updatePlayers', backendPlayers => {
             const alivePlayers = {}; // To keep track of alive players
-            console.log('va toki data', backendPlayers)
             // Update existing players and mark them as alive
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id];

@@ -177,10 +177,10 @@ io.on('connection', (socket) => {
                 countdownTime--;
                 if (countdownTime === 0) {
                     clearInterval(countdownInterval);
-                    io.emit('countdownEnd');
+                    io.to(roomId).emit('countdownEnd');
                     rooms[roomId].countdownStarted = false;
                 } else {
-                    io.emit('updateCountdown', countdownTime);
+                    io.to(roomId).emit('updateCountdown', countdownTime);
                 }
             }, 1000);
         }
@@ -381,7 +381,7 @@ function filterProjectilesByMultiplayerId(multiplayerId) {
             projectilesInSession[id] = backendProjectiles[id]
         }
     }
-    console.log('projectiles', projectilesInSession)
+    //console.log('projectiles', projectilesInSession)
     return projectilesInSession
 }
 

@@ -92,13 +92,12 @@ class Room extends Phaser.Scene {
 
         socket.on('countdownEnd', () => {
             //REIKIA PALEIST MULTIPLAYERI TIK SU PLAYERIAIS ESANCIAIS SITAM ROOM
-            console.log('socketroomID', socket.roomId)
-            if (this.roomId === socket.roomId) {
+            this.scene.start('Multiplayer', {multiplayerId: this.roomId})
+            this.scene.stop()
+            if (this.frontendPlayers[socket.id]) {
                 this.frontendPlayers[socket.id].anims.stop()
                 this.frontendPlayers[socket.id].destroy();
                 delete this.frontendPlayers[socket.id];
-                this.scene.start('Multiplayer', { multiplayerId: this.roomId });
-                this.scene.stop();
             }
         })
 
