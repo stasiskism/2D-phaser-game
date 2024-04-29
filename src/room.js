@@ -93,12 +93,7 @@ class Room extends Phaser.Scene {
             //REIKIA PALEIST MULTIPLAYERI TIK SU PLAYERIAIS ESANCIAIS SITAM ROOM
             this.scene.start('Multiplayer', {multiplayerId: this.roomId})
             this.scene.stop()
-            // if (this.frontendPlayers[socket.id]) {
-            //     console.log('trina frontplayeri')
-            //     this.frontendPlayers[socket.id].anims.stop()
-            //     this.frontendPlayers[socket.id].destroy();
-            //     delete this.frontendPlayers[socket.id];
-            // }
+            
             for (const id in this.frontendPlayers) {
                 this.frontendPlayers[id].anims.stop()
                 this.frontendPlayers[id].destroy();

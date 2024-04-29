@@ -59,7 +59,6 @@ class Multiplayer extends Phaser.Scene {
     create() {
         this.setupScene();
         this.setupInputEvents();
-        socket.emit('startGame', this.multiplayerId);
         this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
         <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
             <div style="margin-bottom: 8px">Leaderboard</div>

@@ -44,7 +44,6 @@ const playerUsername = {}
 const activeSessions = {}
 const rooms = {}
 const readyPlayers = {}
-const multiplayerSession = {}
 let countdownInterval
 
 
@@ -187,6 +186,7 @@ io.on('connection', (socket) => {
                             delete readyPlayers[roomId][playerId]
                         }
                     }
+                    startGame(roomId)
                 } else {
                     io.to(roomId).emit('updateCountdown', countdownTime);
                 }
@@ -334,31 +334,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('startGame', (multiplayerId) => {
-        multiplayerSession[multiplayerId] = {}
-        if (rooms[multiplayerId] && rooms[multiplayerId].players) {
-        let playersInRoom = {}
-        playersInRoom = rooms[multiplayerId].players
-        console.log('playeriai kambaryje', playersInRoom)
-        playersInRoom.forEach((player) => {
-            const id = player.id
-            const username = playerUsername[id];
-            backendPlayers[id] = { 
-                id,
-                multiplayerId,
-                x: 1920 * Math.random(),
-                y: 1080 * Math.random(),
-                score: 0,
-                username,
-                health: 100,
-                bullets: 10 //NEED TO GET BULLET COUNT FROM DATABASE
-            };
-        });
-    }
-    for (const id in backendPlayers)
-        console.log(backendPlayers[id].id)
-    })
-
 });
 
 function calculateReadyPlayers(readyPlayers) {
@@ -391,6 +366,30 @@ function filterProjectilesByMultiplayerId(multiplayerId) {
     }
     //console.log('projectiles', projectilesInSession)
     return projectilesInSession
+}
+
+function startGame(multiplayerId) {
+    console.log('zaidimas startuotas')
+        if (rooms[multiplayerId] && rooms[multiplayerId].players) {
+        let playersInRoom = {}
+        playersInRoom = rooms[multiplayerId].players
+        console.log('playeriai kambaryje', playersInRoom)
+        playersInRoom.forEach((player) => {
+            const id = player.id
+            const username = playerUsername[id];
+
+            backendPlayers[id] = { 
+                id,
+                multiplayerId,
+                x: 1920 * Math.random(),
+                y: 1080 * Math.random(),
+                score: 0,
+                username,
+                health: 100,
+                bullets: 10, //NEED TO GET BULLET COUNT FROM DATABASE
+            };
+        });
+    }
 }
 
 setInterval(() => {
