@@ -67,8 +67,8 @@ class Room extends Phaser.Scene {
 
 
         //NEGAUNU BACKENDPLAYERIU, GALIMAI NES REIKIA SERVER SIDE UPDATINT PLAAYERIUS ROOME
+        //PASTOVIAI NAUJINA NES YRA BACKENDE PLAYERIS
         socket.on('updateRoomPlayers', roomPlayers => {
-            const alivePlayers = {}
             for (const playerIndex in roomPlayers) {
                 const playerData = roomPlayers[playerIndex];
                 const roomId = playerData.roomId
@@ -80,13 +80,12 @@ class Room extends Phaser.Scene {
                 } else {
                     this.updatePlayerPosition(id, playerData)
                 }
-                alivePlayers[id] = true
             }
 
-            for (const id in this.frontendPlayers) {
-                if (!alivePlayers[id]) {
-                }
-            }
+            // for (const id in this.frontendPlayers) {
+            //     if (!alivePlayers[id]) {
+            //     }
+            // }
 
         });
 
@@ -94,11 +93,19 @@ class Room extends Phaser.Scene {
             //REIKIA PALEIST MULTIPLAYERI TIK SU PLAYERIAIS ESANCIAIS SITAM ROOM
             this.scene.start('Multiplayer', {multiplayerId: this.roomId})
             this.scene.stop()
-            if (this.frontendPlayers[socket.id]) {
-                this.frontendPlayers[socket.id].anims.stop()
-                this.frontendPlayers[socket.id].destroy();
-                delete this.frontendPlayers[socket.id];
+            // if (this.frontendPlayers[socket.id]) {
+            //     console.log('trina frontplayeri')
+            //     this.frontendPlayers[socket.id].anims.stop()
+            //     this.frontendPlayers[socket.id].destroy();
+            //     delete this.frontendPlayers[socket.id];
+            // }
+            for (const id in this.frontendPlayers) {
+                this.frontendPlayers[id].anims.stop()
+                this.frontendPlayers[id].destroy();
+                delete this.frontendPlayers[id];
             }
+            socket.off('updateRoomPlayers')
+            console.log('po starto', this.frontendPlayers)
         })
 
         socket.on('playerAnimationUpdate', animData => {
@@ -232,6 +239,7 @@ class Room extends Phaser.Scene {
         //     this.frontendPlayers[id].destroy();
         // }
         // Setup the respawned player
+        //CIA ERRORAI KAI STARTINAM MULTIPLAYER GAME
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         //console.log(this.frontendPlayers[id])
     

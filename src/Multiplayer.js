@@ -58,7 +58,6 @@ class Multiplayer extends Phaser.Scene {
 
     create() {
         this.setupScene();
-        this.setupAnimations();
         this.setupInputEvents();
         socket.emit('startGame', this.multiplayerId);
         this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
@@ -97,25 +96,6 @@ class Multiplayer extends Phaser.Scene {
         //KAI NUEINA I FULLSCREENA DINGSTA LEADERBOARDAS, BET JO GAL IR NEREIKIA MUSU PAGRINDINIAM GAMEMODUI
     }
 
-    setupAnimations() {
-        // const animations = [
-        //     { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
-        //     { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
-        //     { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
-        //     { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
-        //     { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
-        //     { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
-        //     { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
-        //     { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
-        //     { key: 'idle', frames: ['WwalkDown2'] }
-        // ];
-        // animations.forEach(anim => this.anims.create({
-        //     key: anim.key,
-        //     frames: anim.frames.map(frame => ({ key: frame })),
-        //     frameRate: 10,
-        //     repeat: -1
-        // }));
-    }
 
     setupInputEvents() {
 
@@ -128,7 +108,6 @@ class Multiplayer extends Phaser.Scene {
 
         this.input.on('pointerdown', pointer => {
             this.input.mouse.requestPointerLock();
-            console.log('tikrinu x', this.frontendPlayers[socket.id])
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
             if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown() || this.reloading) return;
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
