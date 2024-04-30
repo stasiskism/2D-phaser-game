@@ -12,6 +12,7 @@ import Respawn from './respawn.js'
 import Tutorial from './tutorial.js'
 import Lobby from './lobby.js'
 import Room from './room.js'
+import Spectator from './spectator.js'
 
 
 const config = {
@@ -52,6 +53,7 @@ game.scene.add('respawn', Respawn)
 game.scene.add('tutorial', Tutorial)
 game.scene.add('lobby', Lobby)
 game.scene.add('room', Room)
-game.scene.start('room')
+game.scene.add('specator', Spectator)
+game.scene.start('lobby')
 //game.scene.start('Multiplayer')
 //game.scene.start('authenticate')

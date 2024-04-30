@@ -31,8 +31,8 @@ class Respawn extends Phaser.Scene {
 
     }
     clickRespawnButton() {
-        this.scene.restart('Multiplayer')
-        this.scene.start('Multiplayer')
+        //this.scene.restart('Multiplayer')
+        this.scene.start('spectator')
         this.scene.stop()
     }
 
