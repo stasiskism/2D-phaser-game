@@ -135,6 +135,7 @@ class Multiplayer extends Phaser.Scene {
 
         socket.on('updatePlayers', backendPlayers => {
             const alivePlayers = {}; // To keep track of alive players
+            console.log(backendPlayers)
             // Update existing players and mark them as alive
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id];
@@ -161,13 +162,6 @@ class Multiplayer extends Phaser.Scene {
                 }
             }
         
-            // Check for respawned players
-            for (const id in backendPlayers) {
-                if (!this.frontendPlayers[id]) {
-                    // If the respawned player is not already loaded, setup the player
-                    this.setupPlayer(id, backendPlayers[id]);
-                }
-            }
         });
 
         socket.on('updateProjectiles', backendProjectiles => {
@@ -190,15 +184,14 @@ class Multiplayer extends Phaser.Scene {
                 this.playerAmmo.destroy()
             }
         }
-    
-        // Setup the respawned player
+        // Setup the player
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
         this.playerHealth[id] = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         if (id === socket.id) {
             this.playerAmmo = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         }
-        // Add label for the respawned player
+        // Add label for the player
         const newPlayerLabel = `<div data-id="${id}" data-score="${playerData.score}"</div>`;
         this.document.innerHTML += newPlayerLabel;
     
@@ -252,6 +245,7 @@ class Multiplayer extends Phaser.Scene {
     }
 
     removePlayer(id) {
+  
         if (id === socket.id) {
             this.scene.stop()
             this.scene.start('respawn')

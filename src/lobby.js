@@ -26,11 +26,17 @@ class Lobby extends Phaser.Scene {
     setupInputEvents() {
         socket.on('updateRooms', (rooms) => {
             for (const roomId in rooms) {
-                if (this.createdSprites[roomId]) return        
+                if (this.createdSprites[roomId]) continue        
                 const roomSprite = this.add.sprite(1920 / 2, (1080 / 2) + this.distance, 'join').setInteractive({ useHandCursor: true });
                 this.distance += 200
                 this.createdSprites[roomId] = roomSprite
                 roomSprite.on('pointerdown', () => this.joinRoom(roomId));
+            }
+            for (const id in this.createdSprites) {
+                if (!rooms[id]) {
+                    this.createdSprites[id].destroy();
+                    delete this.createdSprites[id];
+                }
             }
         });
     }

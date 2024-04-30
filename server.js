@@ -141,33 +141,10 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('leaveRoom', (roomId) => {
-        if (rooms[roomId]) {
-            const room = rooms[roomId]
-            const index = room.players.findIndex(player => player.id === socket.id);
-            if (index !== -1) {
-                room.players.splice(index, 1)
-                if (socket.id === room.host) {
-                    room.host = room.players[Math.floor(Math.random() * room.players.length)]
-                }
-                if (room.players.length === 0) {
-                    console.log('deleteina kambari')
-                    delete rooms[roomId]
-                }
-                if (room.players.length != 0) {
-                    io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players);
-                } 
-                socket.leave(roomId)
-                delete readyPlayers[socket.id]
-            }
-            console.log('KAI LEAVINA', room.players)
-        }
-    })
-
     socket.on('updateReadyState', ({playerId, isReady, roomId}) => {
         readyPlayers[roomId][playerId] = isReady
         console.log('readyPlayers:', readyPlayers)
-        io.to(roomId).emit('updateReadyPlayers', {readyCount: calculateReadyPlayers(readyPlayers[roomId]), readyPlayers: readyPlayers[roomId]})
+        io.to(roomId).emit('updateReadyPlayers', calculateReadyPlayers(readyPlayers[roomId]))
     })
 
     socket.on('startCountdown', (roomId) => {
@@ -315,13 +292,27 @@ io.on('connection', (socket) => {
     socket.on('disconnect', (reason) => {
         console.log('Client disconnected:', socket.id, reason);
         for (const roomId in rooms) {
-            const room = rooms[roomId];
-            const index = room.players.indexOf(socket.id);
-            if (index === -1) {
-                console.log('CLIENTAS LEAVINA')
-                socket.emit('leaveRoom', roomId)
+        const room = rooms[roomId];
+        const index = room.players.findIndex(player => player.id === socket.id);
+        if (index !== -1) {
+            console.log('Player leaving room:', socket.id);
+            room.players.splice(index, 1);
+            if (socket.id === room.host && room.players.length > 1) {
+                room.host = room.players[Math.floor(Math.random() * room.players.length)].id;
             }
+            if (room.players.length === 0) {
+                console.log('Deleting room:', roomId);
+                delete rooms[roomId];
+            } else {
+                // Update room players for remaining clients
+                io.to(roomId).emit('updateRoomPlayers', room.players);
+            }
+            socket.leave(roomId); // Leave the room
+            delete readyPlayers[socket.id]; // Remove from ready players
+            io.to(roomId).emit('updateRooms', rooms); // Update room list
+            break; // Exit the loop after handling the player's room
         }
+    }
         delete backendPlayers[socket.id]
         // Inform other clients that this player has disconnected
         for (const roomId in rooms) {
@@ -369,11 +360,9 @@ function filterProjectilesByMultiplayerId(multiplayerId) {
 }
 
 function startGame(multiplayerId) {
-    console.log('zaidimas startuotas')
         if (rooms[multiplayerId] && rooms[multiplayerId].players) {
         let playersInRoom = {}
         playersInRoom = rooms[multiplayerId].players
-        console.log('playeriai kambaryje', playersInRoom)
         playersInRoom.forEach((player) => {
             const id = player.id
             const username = playerUsername[id];
@@ -405,7 +394,6 @@ setInterval(() => {
         backendProjectiles[id].x += backendProjectiles[id].velocity.x
         backendProjectiles[id].y += backendProjectiles[id].velocity.y
 
-        //REMOVES PROJECTILE, BUT WITH VELOCITY 0.02 TAKES A LONG TIME
         if (backendProjectiles[id].x >= 1920 || backendProjectiles[id].x <= 0 || backendProjectiles[id].y >= 1080 || backendProjectiles[id].y <= 0) {
             delete backendProjectiles[id]
             continue
