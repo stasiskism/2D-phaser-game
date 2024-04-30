@@ -7,6 +7,11 @@ class Respawn extends Phaser.Scene {
 
     init (data) {
         this.cameras.main.setBackgroundColor('#ffffff')
+        this.multiplayerId = data.multiplayerId
+        this.frontendPlayers = data.frontendPlayers
+        this.fronendProjectiles = data.fronendProjectiles
+        this.frontendWeapons = data.frontendWeapons
+        this.playerHealth = data.playerHealth
     }
 
     preload () {
@@ -31,8 +36,8 @@ class Respawn extends Phaser.Scene {
 
     }
     clickRespawnButton() {
-        //this.scene.restart('Multiplayer')
-        this.scene.start('spectator')
+        this.scene.stop('Multiplayer')
+        this.scene.start('spectator', {multiplayerId: this.multiplayerId, frontendPlayers: this.frontendPlayers, frontendProjectiles: this.frontendProjectiles, frontendWeapons: this.frontendWeapons, playerHealt: this.playerHealth})
         this.scene.stop()
     }
 

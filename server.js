@@ -149,7 +149,7 @@ io.on('connection', (socket) => {
 
     socket.on('startCountdown', (roomId) => {
         if (roomId && !rooms[roomId].countdownStarted) {
-            let countdownTime = 5
+            let countdownTime = 1
             rooms[roomId].countdownStarted = true;
             
             countdownInterval = setInterval(() => {
@@ -175,50 +175,48 @@ io.on('connection', (socket) => {
     socket.on('playerAnimationChange', (AnimData) => {
         const { playerId, animation } = AnimData;
         // Broadcast the animation change to all other clients
-        socket.broadcast.emit('playerAnimationUpdate', { playerId, animation });
+        io.emit('playerAnimationUpdate', { playerId, animation });
     });
 
     socket.on('updateWeaponState', (WSData) => {
         const { playerId, x, y, rotation } = WSData;
         // Broadcast weapon state to all clients except the sender
-        socket.broadcast.emit('weaponStateUpdate', { playerId, x, y, rotation });
+        io.emit('weaponStateUpdate', { playerId, x, y, rotation });
     });
 
 
     socket.on('shoot', (frontendPlayer, crosshair, direction, multiplayerId) => {
-        projectileId++
 
         if (backendPlayers[socket.id] && backendPlayers[socket.id].bullets > 0) {
             console.log(backendPlayers[socket.id].bullets)
             backendPlayers[socket.id].bullets--
-        }
+            projectileId++
+            let x, y
+            //Calculate X and y velocity of bullet to move it from shooter to target
+            if (crosshair.y >= frontendPlayer.y)
+            {
+                x = 30 * Math.sin(direction);
+                y = 30 * Math.cos(direction);
+            }
+            else
+            {
+                x = -30 * Math.sin(direction);
+                y = -30 * Math.cos(direction);
+            }
 
-        let x, y
-        //Calculate X and y velocity of bullet to move it from shooter to target
-        if (crosshair.y >= frontendPlayer.y)
-        {
-            x = 30 * Math.sin(direction);
-            y = 30 * Math.cos(direction);
-        }
-        else
-        {
-            x = -30 * Math.sin(direction);
-            y = -30 * Math.cos(direction);
-        }
+            const velocity = {
+                x,
+                y
+            }
 
-        const velocity = {
-            x,
-            y
+            backendProjectiles[projectileId] = {
+                x: frontendPlayer.x,
+                y: frontendPlayer.y,
+                velocity,
+                playerId: socket.id,
+                multiplayerId
+            }
         }
-
-        backendProjectiles[projectileId] = {
-            x: frontendPlayer.x,
-            y: frontendPlayer.y,
-            velocity,
-            playerId: socket.id,
-            multiplayerId
-        }
-        //console.log(backendProjectiles)
     })
 
     // Listen for player movement from this client
@@ -325,6 +323,34 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('leaveRoom', (roomId) => {
+        for (const id in rooms) {
+            if (id === roomId) {
+                const room = rooms[roomId];
+                const index = room.players.findIndex(player => player.id === socket.id);
+                if (index !== -1) {
+                    console.log('Player leaving room:', socket.id);
+                    room.players.splice(index, 1);
+                    if (socket.id === room.host && room.players.length > 1) {
+                        room.host = room.players[Math.floor(Math.random() * room.players.length)].id;
+                    }
+                    if (room.players.length === 0) {
+                        console.log('Deleting room:', roomId);
+                        delete rooms[roomId];
+                    } else {
+                        // Update room players for remaining clients
+                        io.to(roomId).emit('updateRoomPlayers', room.players);
+                    }
+                    socket.leave(roomId); // Leave the room
+                    delete readyPlayers[socket.id]; // Remove from ready players
+                    io.to(roomId).emit('updateRooms', rooms); // Update room list
+                    break; // Exit the loop after handling the player's room
+                }
+            }
+        }
+        
+    })
+
 });
 
 function calculateReadyPlayers(readyPlayers) {
@@ -382,9 +408,11 @@ function startGame(multiplayerId) {
 }
 
 setInterval(() => {
+    //HOSTUI INFINITE KULKOS
     for (const playerId in backendPlayers) {
         if (backendPlayers[playerId].bullets === 0) {
             backendPlayers[playerId].bullets = 10 //CHANGE BASED ON WEAPON
+            io.emit('reloaded', playerId)
         }
     }
 }, 3000) //RELOAD TIME CHANGE BASED ON WEAPON
@@ -417,7 +445,6 @@ setInterval(() => {
                         backendPlayers[backendProjectiles[id].playerId].score++
                     }
                 }
-                console.log('delete projectile')
                 //RESPAWNINTAM PLAYERIUI PROJECTILE NESIDELETINA
                 delete backendProjectiles[id]
                 break

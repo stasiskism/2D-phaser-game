@@ -82,10 +82,14 @@ class Room extends Phaser.Scene {
                 }
             }
 
-            // for (const id in this.frontendPlayers) {
-            //     if (!alivePlayers[id]) {
-            //     }
-            // }
+            for (const playerId in this.frontendPlayers) {
+                //goes through players, get their id, and if returns undefined, then the player does not exist
+                if (!roomPlayers.find(player => player.id === playerId)) { 
+                    this.frontendPlayers[playerId].anims.stop();
+                    this.frontendPlayers[playerId].destroy();
+                    delete this.frontendPlayers[playerId];
+                }
+            }
 
         });
 
@@ -100,7 +104,6 @@ class Room extends Phaser.Scene {
                 delete this.frontendPlayers[id];
             }
             socket.off('updateRoomPlayers')
-            console.log('po starto', this.frontendPlayers)
         })
 
         socket.on('playerAnimationUpdate', animData => {
@@ -110,16 +113,8 @@ class Room extends Phaser.Scene {
             }
         });
 
-        socket.on('updateReadyPlayers', ({readyCount, readyPlayers}) => {
-            console.log('updatina ready playerius', readyPlayers)
+        socket.on('updateReadyPlayers', (readyCount) => {
             this.readyPlayersCount = readyCount
-            console.log(this.readyPlayersCount)
-            // for (const playerId in readyPlayers) {
-            //     if (socket.id === playerId) {
-            //         this.readyPlayers[socket.id] = readyPlayers[playerId]
-            //     }
-            // }
-            console.log('visi', this.readyPlayers)
             if (this.readyPlayersText) {
                 this.readyPlayersText.setText(`Ready Players: ${this.readyPlayersCount}`);
             }
@@ -154,12 +149,13 @@ class Room extends Phaser.Scene {
             }
         })
 
-        this.exitButton = this.add.sprite(100, 30, 'exit').setScale(0.5)
+        this.exitButton = this.add.sprite(100, 60, 'exit').setScale(0.2)
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
             socket.emit('leaveRoom', this.roomId)
             this.scene.start('lobby')
             this.scene.stop()
+            socket.removeAllListeners()
             if (this.frontendPlayers[socket.id]) {
                 this.frontendPlayers[socket.id].anims.stop()
                 this.frontendPlayers[socket.id].destroy();
@@ -170,8 +166,8 @@ class Room extends Phaser.Scene {
         this.readyButton = this.add.text(800, 400, 'Ready', { fill: '#0f0' }).setInteractive({ useHandCursor: true }).setScale(4);
         this.readyButton.on('pointerdown', () => {
             let isReady = !this.readyPlayers[socket.id];
+            this.readyPlayers[socket.id] = isReady
             socket.emit('updateReadyState', { playerId: socket.id, isReady, roomId: this.roomId });
-        
         });
 
         this.readyPlayersText = this.add.text(700, 300, `Ready Players: ${this.readyPlayersCount}`, { fontSize: '32px', fill: '#fff' }).setScale(2)
@@ -309,6 +305,7 @@ class Room extends Phaser.Scene {
            count++
         }
         if (count === this.readyPlayersCount) {
+            this.readyButton.destroy()
             console.log('VISI PLAYERIAI READY')
             this.countdownText = this.add.text(800, 200, '', { fontSize: '64px', fill: '#fff' });
             this.countdownText.setOrigin(0.5);
