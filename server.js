@@ -445,20 +445,14 @@ setInterval(() => {
             const backendPlayer = backendPlayers[playerId]
             const distance = Math.hypot(backendProjectiles[id].x - backendPlayer.x, backendProjectiles[id].y - backendPlayer.y)
             if (distance < 30 && backendProjectiles[id].playerId !== playerId) {
-
-                //console.log(distance)
-                //delete backendPlayers[playerId]
-
-                //change according to the weapon
-                backendPlayers[playerId].health -= 20
-                console.log(backendPlayers[playerId].health)
+                const damage = weaponDetails[backendProjectiles[id].playerId].damage
+                backendPlayers[playerId].health -= damage
                 if (backendPlayers[playerId].health <= 0) {
                     delete backendPlayers[playerId]
                     if (backendPlayers[backendProjectiles[id].playerId]) {
                         backendPlayers[backendProjectiles[id].playerId].score++
                     }
                 }
-                //RESPAWNINTAM PLAYERIUI PROJECTILE NESIDELETINA
                 delete backendProjectiles[id]
                 break
             }
