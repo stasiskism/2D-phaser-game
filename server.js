@@ -149,7 +149,7 @@ io.on('connection', (socket) => {
 
     socket.on('startCountdown', (roomId) => {
         if (roomId && !rooms[roomId].countdownStarted) {
-            let countdownTime = 1
+            let countdownTime = 5
             rooms[roomId].countdownStarted = true;
             
             countdownInterval = setInterval(() => {

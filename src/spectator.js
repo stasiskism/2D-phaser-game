@@ -5,6 +5,7 @@ class Spectator extends Phaser.Scene {
     frontendWeapons = {};
     frontendProjectiles = {};
     playerHealth = {}
+    playerAmmo = {}
     currentPlayerIndex = 0
     playerIds = []
 
@@ -60,7 +61,6 @@ class Spectator extends Phaser.Scene {
     create () {
         this.setupScene();
         this.setupInputEvents();
-        this.playerIds = Object.keys(this.frontendPlayers)
     }
 
     setupScene() {
@@ -100,9 +100,9 @@ class Spectator extends Phaser.Scene {
         this.graphics.lineStyle(10, 0xff0000);
         this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
 
-         //   this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) - 400, 'quitButton')
-    //   this.quitButton.setInteractive({useHandCursor: true})
-    //   this.quitButton.on('pointerdown', () => this.clickQuitButton())
+        this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) - 400, 'quitButton')
+        this.quitButton.setInteractive({useHandCursor: true}).setScale(0.75).setPosition(centerX, 1000).setScrollFactor(0)
+        this.quitButton.on('pointerdown', () => this.clickQuitButton())
     }
     //NELOADINA PROJECTILE IR ANIMACIJU, BORDERIU
     setupInputEvents() {
@@ -149,6 +149,12 @@ class Spectator extends Phaser.Scene {
                     this.removePlayer(id);
                 }
             }
+
+            Object.keys(alivePlayers).forEach(playerId => {
+                if (!this.playerIds.includes(playerId)) {
+                    this.playerIds.push(playerId);
+                }
+            });
         
         });
 
@@ -175,12 +181,14 @@ class Spectator extends Phaser.Scene {
             this.frontendPlayers[id].destroy();
             this.frontendWeapons[id].destroy();
             this.playerHealth[id].destroy();
+            this.playerAmmo[id].destroy()
         }
         // Setup the player
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         console.log('kai setupina playeri: ', this.frontendPlayers[id])
         this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
         this.playerHealth[id] = this.add.text(playerData.x, playerData.y - 30, `Health: ${playerData.health}`, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+        this.playerAmmo[id] = this.add.text(playerData.x, playerData.y + 30, `Ammo: ${playerData.bullets}`, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         // You can add more customization or adjustments here if needed
     }
 
@@ -188,8 +196,10 @@ class Spectator extends Phaser.Scene {
         // Update player position, health, etc.
         this.frontendPlayers[id].x = backendPlayer.x;
         this.frontendPlayers[id].y = backendPlayer.y;
-        this.playerHealth[id].setPosition(backendPlayer.x, backendPlayer.y - 50);
-        this.playerHealth[id].setText(`Health: ${backendPlayer.health}`);
+        this.playerHealth[id].setPosition(backendPlayer.x - 33, backendPlayer.y - 50);
+        this.playerHealth[id].setText(`Health: ${backendPlayer.health}`).setScale(2);
+        this.playerAmmo[id].setPosition(backendPlayer.x - 33, backendPlayer.y + 50)
+        this.playerAmmo[id].setText(`Ammo: ${backendPlayer.bullets}`).setScale(2);
     }
 
     removePlayer(id) {
@@ -198,9 +208,11 @@ class Spectator extends Phaser.Scene {
             this.frontendPlayers[id].destroy();
             this.frontendWeapons[id].destroy();
             this.playerHealth[id].destroy();
+            this.playerAmmo[id].destroy();
             delete this.frontendPlayers[id];
             delete this.frontendWeapons[id];
             delete this.playerHealth[id];
+            delete this.playerAmmo[id];
         }
     }
 
@@ -254,6 +266,7 @@ class Spectator extends Phaser.Scene {
 
         // Get the ID of the current player to focus on
         const playerId = this.playerIds[this.currentPlayerIndex];
+        console.log('camera' , playerId)
         if (!this.frontendPlayers[playerId]) return; // Player not found
 
         const playerX = this.frontendPlayers[playerId].x;
@@ -268,7 +281,7 @@ class Spectator extends Phaser.Scene {
 
     nextPlayer() {
         if (this.playerIds.length === 0) return;
-
+        console.log('next')
         this.currentPlayerIndex++;
         if (this.currentPlayerIndex >= this.playerIds.length) {
             this.currentPlayerIndex = 0; // Reset index to loop back to the first player
@@ -277,7 +290,7 @@ class Spectator extends Phaser.Scene {
 
     previousPlayer() {
         if (this.playerIds.length === 0) return; // No players to cycle through
-
+        console.log('previous')
         // Decrement the current player index
         this.currentPlayerIndex--;
         if (this.currentPlayerIndex < 0) {
@@ -293,11 +306,11 @@ class Spectator extends Phaser.Scene {
         }
     }
 
-    // clickQuitButton() {
-    //     this.scene.start('mainMenu')
-    //     this.scene.stop('spectator')
-    //     this.scene.stop()
-    // }
+    clickQuitButton() {
+        this.scene.start('mainMenu')
+        this.scene.stop('spectator')
+        this.scene.stop()
+    }
 }
 
 export default Spectator
