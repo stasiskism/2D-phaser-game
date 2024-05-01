@@ -5,7 +5,6 @@ class Multiplayer extends Phaser.Scene {
     frontendWeapons = {};
     frontendProjectiles = {};
     playerHealth = {}
-    reloading = false
 
 
     constructor() {
@@ -14,6 +13,7 @@ class Multiplayer extends Phaser.Scene {
 
     init(data) {
         this.cameras.main.setBackgroundColor('#000000');
+        this.multiplayerId = data.multiplayerId
     }
 
     preload() {
@@ -57,9 +57,7 @@ class Multiplayer extends Phaser.Scene {
 
     create() {
         this.setupScene();
-        this.setupAnimations();
         this.setupInputEvents();
-        socket.emit('startGame');
         this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
         <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
             <div style="margin-bottom: 8px">Leaderboard</div>
@@ -96,25 +94,6 @@ class Multiplayer extends Phaser.Scene {
         //KAI NUEINA I FULLSCREENA DINGSTA LEADERBOARDAS, BET JO GAL IR NEREIKIA MUSU PAGRINDINIAM GAMEMODUI
     }
 
-    setupAnimations() {
-        const animations = [
-            { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
-            { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
-            { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
-            { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
-            { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
-            { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
-            { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
-            { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
-            { key: 'idle', frames: ['WwalkDown2'] }
-        ];
-        animations.forEach(anim => this.anims.create({
-            key: anim.key,
-            frames: anim.frames.map(frame => ({ key: frame })),
-            frameRate: 10,
-            repeat: -1
-        }));
-    }
 
     setupInputEvents() {
 
@@ -128,8 +107,8 @@ class Multiplayer extends Phaser.Scene {
         this.input.on('pointerdown', pointer => {
             this.input.mouse.requestPointerLock();
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
-            if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown() || this.reloading) return;
-            socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction);
+            if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown()) return;
+            socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
         });
 
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -155,33 +134,19 @@ class Multiplayer extends Phaser.Scene {
 
         socket.on('updatePlayers', backendPlayers => {
             const alivePlayers = {}; // To keep track of alive players
-        
             // Update existing players and mark them as alive
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id];
-
-                if (!this.frontendPlayers[id]) {
-                    this.setupPlayer(id, backendPlayer);
+                if (this.multiplayerId !== backendPlayer.multiplayerId) return
+                const playerId = backendPlayer.id
+                if (!this.frontendPlayers[playerId]) {
+                    this.setupPlayer(playerId, backendPlayer);
                 } else {
-                    this.updatePlayerPosition(id, backendPlayer);
-                    this.reloading = false
-                    if (id === socket.id) {
-                        if (backendPlayer.bullets === 0)
-                        this.reloading = true
-                    }
+                    this.updatePlayerPosition(playerId, backendPlayer);
                 }
                 // Mark player as alive
                 alivePlayers[id] = true;
             }
-        
-            // Update position for alive players not included in the backend data
-            // for (const id in this.frontendPlayers) {
-            //     if (alivePlayers[id]) {
-            //         if (!backendPlayers[id]) {
-            //             this.updatePlayerPosition(id, null); // Update position to null
-            //         }
-            //     }
-            // }
         
             // Remove players that are not present in the backend data
             for (const id in this.frontendPlayers) {
@@ -190,18 +155,11 @@ class Multiplayer extends Phaser.Scene {
                 }
             }
         
-            // Check for respawned players
-            for (const id in backendPlayers) {
-                if (!this.frontendPlayers[id]) {
-                    // If the respawned player is not already loaded, setup the player
-                    this.setupPlayer(id, backendPlayers[id]);
-                }
-            }
         });
 
         socket.on('updateProjectiles', backendProjectiles => {
             for (const id in backendProjectiles) {
-                if (!this.frontendProjectiles[id]) this.setupProjectile(id, backendProjectiles[id]);
+                if (!this.frontendProjectiles[id]) this.setupProjectile(backendProjectiles[id].playerId, id, backendProjectiles[id]);
                 else this.updateProjectilePosition(id, backendProjectiles[id]);
             }
             for (const id in this.frontendProjectiles) {
@@ -219,15 +177,14 @@ class Multiplayer extends Phaser.Scene {
                 this.playerAmmo.destroy()
             }
         }
-    
-        // Setup the respawned player
+        // Setup the player
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
         this.playerHealth[id] = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         if (id === socket.id) {
             this.playerAmmo = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         }
-        // Add label for the respawned player
+        // Add label for the player
         const newPlayerLabel = `<div data-id="${id}" data-score="${playerData.score}"</div>`;
         this.document.innerHTML += newPlayerLabel;
     
@@ -281,9 +238,12 @@ class Multiplayer extends Phaser.Scene {
     }
 
     removePlayer(id) {
+  
         if (id === socket.id) {
-            this.scene.stop()
-            this.scene.start('respawn')
+            socket.removeAllListeners()
+            this.scene.stop('Multiplayer')
+            this.scene.start('respawn', {multiplayerId: this.multiplayerId, frontendPlayers: this.frontendPlayers, frontendProjectiles: this.frontendProjectiles, frontendWeapons: this.frontendWeapons, playerHealt: this.playerHealth})
+
             this.playerAmmo.destroy()
         }
         this.frontendPlayers[id].anims.stop()
@@ -295,11 +255,11 @@ class Multiplayer extends Phaser.Scene {
                     divToDelete.parentNode.removeChild(divToDelete)
     }
 
-    setupProjectile(id, backendProjectile) {
+    setupProjectile(playerId, id, backendProjectile) {
         const projectile = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet').setScale(4);
         const direction = Phaser.Math.Angle.Between(
-            this.frontendPlayers[socket.id].x,
-            this.frontendPlayers[socket.id].y,
+            this.frontendPlayers[playerId].x,
+            this.frontendPlayers[playerId].y,
             this.crosshair.x,
             this.crosshair.y
         );
@@ -311,7 +271,7 @@ class Multiplayer extends Phaser.Scene {
         for (const id in backendProjectiles) {
             const backendProjectile = backendProjectiles[id];
             if (!this.frontendProjectiles[id]) {
-                this.setupProjectile(id, backendProjectile);
+                this.setupProjectile(backendProjectile.playerId, id, backendProjectile);
             } else {
                 this.updateProjectilePosition(id, backendProjectile);
             }
@@ -411,11 +371,11 @@ class Multiplayer extends Phaser.Scene {
         const distX = reticle.x - this.frontendPlayers[socket.id].x;
         const distY = reticle.y - this.frontendPlayers[socket.id].y;
 
-        if (distX > 1920) reticle.x = this.frontendPlayers[socket.id].x + 1920;
-        else if (distX < -1920) reticle.x = this.frontendPlayers[socket.id].x - 1920;
+        // if (distX > 1920) reticle.x = this.frontendPlayers[socket.id].x + 1920;
+        // else if (distX < -1920) reticle.x = this.frontendPlayers[socket.id].x - 1920;
 
-        if (distY > 1080) reticle.y = this.frontendPlayers[socket.id].y + 1080;
-        else if (distY < -1080) reticle.y = this.frontendPlayers[socket.id].y - 1080;
+        // if (distY > 1080) reticle.y = this.frontendPlayers[socket.id].y + 1080;
+        // else if (distY < -1080) reticle.y = this.frontendPlayers[socket.id].y - 1080;
 
         const distBetween = Phaser.Math.Distance.Between(this.frontendPlayers[socket.id].x, this.frontendPlayers[socket.id].y, reticle.x, reticle.y);
         if (distBetween > radius) {

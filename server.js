@@ -42,14 +42,21 @@ const backendProjectiles = {}
 let projectileId = 0
 const playerUsername = {}
 const activeSessions = {}
+const rooms = {}
+const readyPlayers = {}
+let countdownInterval
+
 
 
 
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
 
+    for (const roomId in rooms) {
+        io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
+    }
     // Inform other clients about the new player
-    io.emit('updatePlayers', backendPlayers);
+    //io.emit('updatePlayers', backendPlayers);
 
 
     socket.on('register', async (data) => {
@@ -69,6 +76,7 @@ io.on('connection', (socket) => {
             socket.emit('registerResponse', { success: false });
         }
     })
+
     socket.on('login', async (data) => {
         const {username, password} = data
         try {
@@ -97,52 +105,118 @@ io.on('connection', (socket) => {
                 }
     })
 
+    socket.on('createRoom', (roomName) => {
+        const roomId = Math.random().toString(36).substring(7)
+        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false}
+        console.log('Created roomId: ', roomId)
+        socket.emit('roomCreated', roomId)
+        io.emit('updateRooms', rooms)
+        
+    })
+
+    socket.on('checkRoom', (roomId) => {
+        if (rooms[roomId] && rooms[roomId].players.length < 4 && !rooms[roomId].gameStarted) {
+            socket.emit('roomJoined', roomId)
+        } else {
+            socket.emit('roomJoinFailed', 'Room is full or does not exist');
+        }
+    })
+
+    socket.on('joinRoom', (roomId) => {
+        if (rooms[roomId]) {
+            const username = playerUsername[socket.id];
+            rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
+            socket.join(roomId);
+            console.log('KAI JOININA ROOMA roomId: ', roomId)
+            //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
+            rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
+            if (!readyPlayers[roomId]) {
+                readyPlayers[roomId] = {}
+            }
+            readyPlayers[roomId][socket.id] = false
+            io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
+            console.log('KAI JOININA', rooms[roomId].players)
+        } else {
+            socket.emit('roomJoinFailed', 'Room is full or does not exist');
+        }
+    });
+
+    socket.on('updateReadyState', ({playerId, isReady, roomId}) => {
+        readyPlayers[roomId][playerId] = isReady
+        console.log('readyPlayers:', readyPlayers)
+        io.to(roomId).emit('updateReadyPlayers', calculateReadyPlayers(readyPlayers[roomId]))
+    })
+
+    socket.on('startCountdown', (roomId) => {
+        if (roomId && !rooms[roomId].countdownStarted) {
+            let countdownTime = 5
+            rooms[roomId].countdownStarted = true;
+            
+            countdownInterval = setInterval(() => {
+                countdownTime--;
+                if (countdownTime === 0) {
+                    clearInterval(countdownInterval);
+                    io.to(roomId).emit('countdownEnd');
+                    rooms[roomId].countdownStarted = false;
+                    for (const playerId in readyPlayers[roomId]) {
+                        if (readyPlayers[roomId][playerId]) {
+                            delete readyPlayers[roomId][playerId]
+                        }
+                    }
+                    startGame(roomId)
+                } else {
+                    io.to(roomId).emit('updateCountdown', countdownTime);
+                }
+            }, 1000);
+        }
+    })
+
+
     socket.on('playerAnimationChange', (AnimData) => {
         const { playerId, animation } = AnimData;
         // Broadcast the animation change to all other clients
-        socket.broadcast.emit('playerAnimationUpdate', { playerId, animation });
+        io.emit('playerAnimationUpdate', { playerId, animation });
     });
 
     socket.on('updateWeaponState', (WSData) => {
         const { playerId, x, y, rotation } = WSData;
         // Broadcast weapon state to all clients except the sender
-        socket.broadcast.emit('weaponStateUpdate', { playerId, x, y, rotation });
+        io.emit('weaponStateUpdate', { playerId, x, y, rotation });
     });
 
 
-    socket.on('shoot', (frontendPlayer, crosshair, direction) => {
-        projectileId++
+    socket.on('shoot', (frontendPlayer, crosshair, direction, multiplayerId) => {
 
         if (backendPlayers[socket.id] && backendPlayers[socket.id].bullets > 0) {
             console.log(backendPlayers[socket.id].bullets)
             backendPlayers[socket.id].bullets--
-        }
+            projectileId++
+            let x, y
+            //Calculate X and y velocity of bullet to move it from shooter to target
+            if (crosshair.y >= frontendPlayer.y)
+            {
+                x = 30 * Math.sin(direction);
+                y = 30 * Math.cos(direction);
+            }
+            else
+            {
+                x = -30 * Math.sin(direction);
+                y = -30 * Math.cos(direction);
+            }
 
-        let x, y
-        //Calculate X and y velocity of bullet to move it from shooter to target
-        if (crosshair.y >= frontendPlayer.y)
-        {
-            x = 30 * Math.sin(direction);
-            y = 30 * Math.cos(direction);
-        }
-        else
-        {
-            x = -30 * Math.sin(direction);
-            y = -30 * Math.cos(direction);
-        }
+            const velocity = {
+                x,
+                y
+            }
 
-        const velocity = {
-            x,
-            y
+            backendProjectiles[projectileId] = {
+                x: frontendPlayer.x,
+                y: frontendPlayer.y,
+                velocity,
+                playerId: socket.id,
+                multiplayerId
+            }
         }
-
-        backendProjectiles[projectileId] = {
-            x: frontendPlayer.x,
-            y: frontendPlayer.y,
-            velocity,
-            playerId: socket.id
-        }
-        //console.log(backendProjectiles)
     })
 
     // Listen for player movement from this client
@@ -175,12 +249,73 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('roomPlayerMove', (info) => {
+        const {data, roomId} = info
+        if (rooms[roomId]) {
+            // If the player is within a room
+            const room = rooms[roomId];
+            const playerIndex = room.players.findIndex(player => player.id === socket.id);
+            if (playerIndex !== -1) {
+                const player = room.players[playerIndex];
+                // Update player's position within the room
+                if (data === 'a') {
+                    player.x -= 2;
+                    if (player.x < 0) {
+                        player.x = 0;
+                    }
+                } else if (data === 'd') {
+                    player.x += 2;
+                    if (player.x > 1920) {
+                        player.x = 1920;
+                    }
+                } else if (data === 'w') {
+                    player.y -= 2;
+                    if (player.y < 0) {
+                        player.y = 0;
+                    }
+                } else if (data === 's') {
+                    player.y += 2;
+                    if (player.y > 1080) {
+                        player.y = 1080;
+                    }
+                }
+                // Update the player's position in the room's players array
+                room.players[playerIndex] = player;
+            }
+        }
+    })
+
+
     // Handle client disconnection
     socket.on('disconnect', (reason) => {
         console.log('Client disconnected:', socket.id, reason);
+        for (const roomId in rooms) {
+        const room = rooms[roomId];
+        const index = room.players.findIndex(player => player.id === socket.id);
+        if (index !== -1) {
+            console.log('Player leaving room:', socket.id);
+            room.players.splice(index, 1);
+            if (socket.id === room.host && room.players.length > 1) {
+                room.host = room.players[Math.floor(Math.random() * room.players.length)].id;
+            }
+            if (room.players.length === 0) {
+                console.log('Deleting room:', roomId);
+                delete rooms[roomId];
+            } else {
+                // Update room players for remaining clients
+                io.to(roomId).emit('updateRoomPlayers', room.players);
+            }
+            socket.leave(roomId); // Leave the room
+            delete readyPlayers[socket.id]; // Remove from ready players
+            io.to(roomId).emit('updateRooms', rooms); // Update room list
+            break; // Exit the loop after handling the player's room
+        }
+    }
         delete backendPlayers[socket.id]
         // Inform other clients that this player has disconnected
-        io.emit('updatePlayers', backendPlayers);
+        for (const roomId in rooms) {
+            io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
+        }
         //Puts usernames in an array, finds the first username associated with the disconnected socket.id
         const username = Object.keys(activeSessions).find(key => activeSessions[key] === socket.id);
         if (username) {
@@ -188,35 +323,106 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('startGame', () => {
-        username = playerUsername[socket.id]
-        backendPlayers[socket.id] = { 
-            id: socket.id,
-            x: 1920 * Math.random(),
-            y: 1080 * Math.random(),
-            score: 0,
-            username,
-            health: 100,
-            bullets: 10 //NEED TO GET BULLET COUNT FROM DATABASE
+    socket.on('leaveRoom', (roomId) => {
+        for (const id in rooms) {
+            if (id === roomId) {
+                const room = rooms[roomId];
+                const index = room.players.findIndex(player => player.id === socket.id);
+                if (index !== -1) {
+                    console.log('Player leaving room:', socket.id);
+                    room.players.splice(index, 1);
+                    if (socket.id === room.host && room.players.length > 1) {
+                        room.host = room.players[Math.floor(Math.random() * room.players.length)].id;
+                    }
+                    if (room.players.length === 0) {
+                        console.log('Deleting room:', roomId);
+                        delete rooms[roomId];
+                    } else {
+                        // Update room players for remaining clients
+                        io.to(roomId).emit('updateRoomPlayers', room.players);
+                    }
+                    socket.leave(roomId); // Leave the room
+                    delete readyPlayers[socket.id]; // Remove from ready players
+                    io.to(roomId).emit('updateRooms', rooms); // Update room list
+                    break; // Exit the loop after handling the player's room
+                }
+            }
         }
+        
     })
 
 });
 
+function calculateReadyPlayers(readyPlayers) {
+    let count = 0;
+    for (const playerId in readyPlayers) {
+        if (readyPlayers[playerId]) {
+            count++;
+        }
+    }
+    return count;
+}
+
+function filterPlayersByMultiplayerId(multiplayerId) {
+    let playersInSession = {}
+    for (const playerId in backendPlayers) {
+        if (backendPlayers[playerId].multiplayerId === multiplayerId) {
+            playersInSession[playerId] = backendPlayers[playerId]
+        }
+    }
+    //console.log(playersInSession)
+    return playersInSession
+}
+
+function filterProjectilesByMultiplayerId(multiplayerId) {
+    let projectilesInSession = {}
+    for (const id in backendProjectiles) {
+        if (backendProjectiles[id].multiplayerId === multiplayerId) {
+            projectilesInSession[id] = backendProjectiles[id]
+        }
+    }
+    //console.log('projectiles', projectilesInSession)
+    return projectilesInSession
+}
+
+function startGame(multiplayerId) {
+        if (rooms[multiplayerId] && rooms[multiplayerId].players) {
+        let playersInRoom = {}
+        rooms[multiplayerId].gameStarted = true
+        playersInRoom = rooms[multiplayerId].players
+        playersInRoom.forEach((player) => {
+            const id = player.id
+            const username = playerUsername[id];
+
+            backendPlayers[id] = { 
+                id,
+                multiplayerId,
+                x: 1920 * Math.random(),
+                y: 1080 * Math.random(),
+                score: 0,
+                username,
+                health: 100,
+                bullets: 10, //NEED TO GET BULLET COUNT FROM DATABASE
+            };
+        });
+    }
+}
+
 setInterval(() => {
+    //HOSTUI INFINITE KULKOS
     for (const playerId in backendPlayers) {
         if (backendPlayers[playerId].bullets === 0) {
             backendPlayers[playerId].bullets = 10 //CHANGE BASED ON WEAPON
+            io.emit('reloaded', playerId)
         }
     }
-}, 3000)
+}, 3000) //RELOAD TIME CHANGE BASED ON WEAPON
 
 setInterval(() => {
     for (const id in backendProjectiles) {
         backendProjectiles[id].x += backendProjectiles[id].velocity.x
         backendProjectiles[id].y += backendProjectiles[id].velocity.y
 
-        //REMOVES PROJECTILE, BUT WITH VELOCITY 0.02 TAKES A LONG TIME
         if (backendProjectiles[id].x >= 1920 || backendProjectiles[id].x <= 0 || backendProjectiles[id].y >= 1080 || backendProjectiles[id].y <= 0) {
             delete backendProjectiles[id]
             continue
@@ -240,16 +446,23 @@ setInterval(() => {
                         backendPlayers[backendProjectiles[id].playerId].score++
                     }
                 }
-                console.log('delete projectile')
                 //RESPAWNINTAM PLAYERIUI PROJECTILE NESIDELETINA
                 delete backendProjectiles[id]
                 break
             }
         }
     }
-    
-    io.emit('updateProjectiles', backendProjectiles, backendPlayers)
-    io.emit('updatePlayers', backendPlayers)
+    for (const roomId in rooms) {
+        //console.log('tikrinu roomus', roomId)
+        const players = filterPlayersByMultiplayerId(roomId)
+        const projectiles = filterProjectilesByMultiplayerId(roomId)
+        io.to(roomId).emit('updateProjectiles', projectiles)
+        io.to(roomId).emit('updatePlayers', players)
+    }
+    io.emit('updateRooms', rooms)
+    for (const roomId in rooms) {
+        io.emit('updateRoomPlayers', rooms[roomId].players)
+    }
 }, 15)
 
 const PORT = 443;

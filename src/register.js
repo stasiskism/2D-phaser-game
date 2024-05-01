@@ -112,25 +112,6 @@ class Register extends Phaser.Scene {
                 alert('Registration failed');
             }
         })
-        // fetch('/register', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json'
-        //     },
-        //     body: JSON.stringify({username, password})
-        // })
-        // .then(response => {
-        //     if (response.ok) {
-        //         alert('Registration successful')
-        //         this.scene.start('login')
-        //     } else {
-        //         alert ('Registration failed')
-        //     }
-        // })
-        // .catch(error => {
-        //     console.error('Error:', error)
-        //     alert('An error has occured')
-        // })
     }
 
 }
