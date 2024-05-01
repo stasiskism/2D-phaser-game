@@ -46,6 +46,7 @@ const rooms = {}
 const readyPlayers = {}
 let countdownInterval
 const weaponDetails = {}
+let reloading = false
 
 
 
@@ -125,7 +126,6 @@ io.on('connection', (socket) => {
             const username = playerUsername[socket.id];
             rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
             socket.join(roomId);
-            console.log('KAI JOININA ROOMA roomId: ', roomId)
             //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
             if (!readyPlayers[roomId]) {
@@ -133,7 +133,6 @@ io.on('connection', (socket) => {
             }
             readyPlayers[roomId][socket.id] = false
             io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
-            console.log('KAI JOININA', rooms[roomId].players)
         } else {
             socket.emit('roomJoinFailed', 'Room is full or does not exist');
         }
@@ -165,7 +164,6 @@ io.on('connection', (socket) => {
                             const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload FROM weapons WHERE weapon_id = $1', [weaponId]);
                             const weapons = weaponDetailsResult.rows[0];
                             weaponDetails[playerId] = weapons
-                            console.log('paema detales', weaponDetails[socket.id])
                             io.to(roomId).emit('weapon', weaponDetails)
                             delete readyPlayers[roomId][playerId]
                         }
@@ -195,7 +193,7 @@ io.on('connection', (socket) => {
 
     socket.on('shoot', (frontendPlayer, crosshair, direction, multiplayerId) => {
 
-        if (backendPlayers[socket.id]) {
+        if (backendPlayers[socket.id] && !reloading) {
             if (backendPlayers[socket.id].bullets > 0) {
                 backendPlayers[socket.id].bullets--
                 projectileId++
@@ -226,13 +224,19 @@ io.on('connection', (socket) => {
                 }
             } 
             if (backendPlayers[socket.id].bullets === 0) {
-                console.log('reloadina', socket.id)
+                if (!weaponDetails[socket.id]) return
                 const reloadTime = weaponDetails[socket.id].reload
                 const bullets = weaponDetails[socket.id].ammo
                 reload(reloadTime, bullets, socket.id)
             }
 
         }
+    })
+
+    socket.on('reload', (id) => {
+        const reloadTime = weaponDetails[id].reload
+        const bullets = weaponDetails[id].ammo
+        reload(reloadTime, bullets, id)
     })
 
     // Listen for player movement from this client
@@ -386,7 +390,6 @@ function filterPlayersByMultiplayerId(multiplayerId) {
             playersInSession[playerId] = backendPlayers[playerId]
         }
     }
-    //console.log(playersInSession)
     return playersInSession
 }
 
@@ -397,7 +400,6 @@ function filterProjectilesByMultiplayerId(multiplayerId) {
             projectilesInSession[id] = backendProjectiles[id]
         }
     }
-    //console.log('projectiles', projectilesInSession)
     return projectilesInSession
 }
 
@@ -424,9 +426,11 @@ function startGame(multiplayerId) {
     }
 }
 function reload(reloadTime, bullets, id) {
+    reloading = true
     const reloadInterval = setInterval(() => {
         backendPlayers[id].bullets = bullets //CHANGE BASED ON WEAPON
         clearInterval(reloadInterval)
+        reloading = false
     }, reloadTime) //RELOAD TIME CHANGE BASED ON WEAPON
 }
 
@@ -439,7 +443,6 @@ setInterval(() => {
             delete backendProjectiles[id]
             continue
         }
-        //console.log(backendProjectiles)
 
         for (const playerId in backendPlayers) {
             const backendPlayer = backendPlayers[playerId]
@@ -459,7 +462,6 @@ setInterval(() => {
         }
     }
     for (const roomId in rooms) {
-        //console.log('tikrinu roomus', roomId)
         const players = filterPlayersByMultiplayerId(roomId)
         const projectiles = filterProjectilesByMultiplayerId(roomId)
         io.to(roomId).emit('updateProjectiles', projectiles)

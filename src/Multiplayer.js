@@ -122,6 +122,18 @@ class Multiplayer extends Phaser.Scene {
 
         this.input.on('pointerup', this.stopShooting, this)
 
+        let canReload = true
+
+        this.input.keyboard.on('keydown-R', () => {
+            if (!this.weaponDetails[socket.id] || !canReload) return;
+            const reloadTime = this.weaponDetails[socket.id].reload;
+            canReload = false;
+            socket.emit('reload', socket.id);
+            setTimeout(() => {
+                canReload = true;
+            }, reloadTime);
+        });
+
         this.cursors = this.input.keyboard.createCursorKeys();
         this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
