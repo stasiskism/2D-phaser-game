@@ -310,6 +310,7 @@ class Spectator extends Phaser.Scene {
         this.scene.start('mainMenu')
         this.scene.stop('spectator')
         this.scene.stop()
+        socket.removeAllListeners()
     }
 }
 

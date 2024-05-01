@@ -153,9 +153,10 @@ class Room extends Phaser.Scene {
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
             socket.emit('leaveRoom', this.roomId)
+            socket.removeAllListeners()
             this.scene.start('lobby')
             this.scene.stop()
-            socket.removeAllListeners()
+            console.log(socket.id)
             if (this.frontendPlayers[socket.id]) {
                 this.frontendPlayers[socket.id].anims.stop()
                 this.frontendPlayers[socket.id].destroy();
