@@ -165,11 +165,13 @@ io.on('connection', (socket) => {
                             const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload FROM weapons WHERE weapon_id = $1', [weaponId]);
                             const weapons = weaponDetailsResult.rows[0];
                             weaponDetails[playerId] = weapons
+                            console.log('paema detales', weaponDetails[socket.id])
                             io.to(roomId).emit('weapon', weaponDetails)
                             delete readyPlayers[roomId][playerId]
                         }
                     }
                     startGame(roomId)
+                    client.release();
                 } else {
                     io.to(roomId).emit('updateCountdown', countdownTime);
                 }
@@ -193,35 +195,43 @@ io.on('connection', (socket) => {
 
     socket.on('shoot', (frontendPlayer, crosshair, direction, multiplayerId) => {
 
-        if (backendPlayers[socket.id] && backendPlayers[socket.id].bullets > 0) {
-            console.log(backendPlayers[socket.id].bullets)
-            backendPlayers[socket.id].bullets--
-            projectileId++
-            let x, y
-            //Calculate X and y velocity of bullet to move it from shooter to target
-            if (crosshair.y >= frontendPlayer.y)
-            {
-                x = 30 * Math.sin(direction);
-                y = 30 * Math.cos(direction);
-            }
-            else
-            {
-                x = -30 * Math.sin(direction);
-                y = -30 * Math.cos(direction);
+        if (backendPlayers[socket.id]) {
+            if (backendPlayers[socket.id].bullets > 0) {
+                backendPlayers[socket.id].bullets--
+                projectileId++
+                let x, y
+                //Calculate X and y velocity of bullet to move it from shooter to target
+                if (crosshair.y >= frontendPlayer.y)
+                {
+                    x = 30 * Math.sin(direction);
+                    y = 30 * Math.cos(direction);
+                }
+                else
+                {
+                    x = -30 * Math.sin(direction);
+                    y = -30 * Math.cos(direction);
+                }
+
+                const velocity = {
+                    x,
+                    y
+                }
+
+                backendProjectiles[projectileId] = {
+                    x: frontendPlayer.x,
+                    y: frontendPlayer.y,
+                    velocity,
+                    playerId: socket.id,
+                    multiplayerId,
+                }
+            } 
+            if (backendPlayers[socket.id].bullets === 0) {
+                console.log('reloadina', socket.id)
+                const reloadTime = weaponDetails[socket.id].reload
+                const bullets = weaponDetails[socket.id].ammo
+                reload(reloadTime, bullets, socket.id)
             }
 
-            const velocity = {
-                x,
-                y
-            }
-
-            backendProjectiles[projectileId] = {
-                x: frontendPlayer.x,
-                y: frontendPlayer.y,
-                velocity,
-                playerId: socket.id,
-                multiplayerId,
-            }
         }
     })
 
@@ -413,16 +423,12 @@ function startGame(multiplayerId) {
         });
     }
 }
-
-setInterval(() => {
-    for (const playerId in backendPlayers) {
-        const reloadTime = weaponDetails[playerId].reload
-        if (backendPlayers[playerId].bullets === 0) {
-            backendPlayers[playerId].bullets = 10 //CHANGE BASED ON WEAPON
-            io.emit('reloaded', playerId)
-        }
-    }
-}, 3000) //RELOAD TIME CHANGE BASED ON WEAPON
+function reload(reloadTime, bullets, id) {
+    const reloadInterval = setInterval(() => {
+        backendPlayers[id].bullets = bullets //CHANGE BASED ON WEAPON
+        clearInterval(reloadInterval)
+    }, reloadTime) //RELOAD TIME CHANGE BASED ON WEAPON
+}
 
 setInterval(() => {
     for (const id in backendProjectiles) {

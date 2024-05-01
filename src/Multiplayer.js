@@ -107,6 +107,7 @@ class Multiplayer extends Phaser.Scene {
         let canShoot = true
 
         this.input.on('pointerdown', (pointer) => {
+            if (!this.weaponDetails[socket.id]) return
             const firerate = this.weaponDetails[socket.id].fire_rate
             console.log(firerate)
             if (pointer.leftButtonDown() && canShoot) {
