@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
 
     socket.on('createRoom', (roomName) => {
         const roomId = Math.random().toString(36).substring(7)
-        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id]}
+        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false}
         console.log('Created roomId: ', roomId)
         socket.emit('roomCreated', roomId)
         io.emit('updateRooms', rooms)
@@ -115,7 +115,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('checkRoom', (roomId) => {
-        if (rooms[roomId] && rooms[roomId].players.length < 4) {
+        if (rooms[roomId] && rooms[roomId].players.length < 4 && !rooms[roomId].gameStarted) {
             socket.emit('roomJoined', roomId)
         } else {
             socket.emit('roomJoinFailed', 'Room is full or does not exist');
@@ -388,6 +388,7 @@ function filterProjectilesByMultiplayerId(multiplayerId) {
 function startGame(multiplayerId) {
         if (rooms[multiplayerId] && rooms[multiplayerId].players) {
         let playersInRoom = {}
+        rooms[multiplayerId].gameStarted = true
         playersInRoom = rooms[multiplayerId].players
         playersInRoom.forEach((player) => {
             const id = player.id

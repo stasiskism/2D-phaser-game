@@ -59,7 +59,6 @@ class Lobby extends Phaser.Scene {
     joinRoom(roomId) {
         socket.off('roomJoined');
         socket.off('roomJoinFailed');
-        console.log('joinina')
         
         socket.emit('checkRoom', roomId)
 
