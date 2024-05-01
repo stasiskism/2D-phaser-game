@@ -18,7 +18,7 @@ class Lobby extends Phaser.Scene {
         this.createButton = this.add.sprite(1920 / 2, (1080 / 2) - 200, 'create');
         this.createButton.setInteractive({ useHandCursor: true })
         this.createButton.on('pointerdown', () => this.createRoom())
-        this.distance = 0
+        this.distance = -100
         this.setupInputEvents()
         this.createdSprites = {}
     }
@@ -26,11 +26,12 @@ class Lobby extends Phaser.Scene {
     setupInputEvents() {
         socket.on('updateRooms', (rooms) => {
             for (const roomId in rooms) {
-                if (this.createdSprites[roomId]) continue        
-                const roomSprite = this.add.sprite(1920 / 2, (1080 / 2) + this.distance, 'join').setInteractive({ useHandCursor: true });
-                this.distance += 200
-                this.createdSprites[roomId] = roomSprite
-                roomSprite.on('pointerdown', () => this.joinRoom(roomId));
+                if (this.createdSprites[roomId]) continue   
+                const roomName = rooms[roomId].name
+                const roomButton = this.add.text(1920 / 2, (1080 / 2) + this.distance, roomName, { fill: '#ffffff', fontSize: '24px', fontStyle: 'bold'}).setInteractive({useHandCursor: true}).setScale(2).setOrigin(0.5)
+                this.distance += 40
+                this.createdSprites[roomId] = roomButton
+                roomButton.on('pointerdown', () => this.joinRoom(roomId));
             }
             for (const id in this.createdSprites) {
                 if (!rooms[id]) {
