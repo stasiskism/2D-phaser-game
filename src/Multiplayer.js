@@ -5,7 +5,7 @@ class Multiplayer extends Phaser.Scene {
     frontendWeapons = {};
     frontendProjectiles = {};
     playerHealth = {}
-
+    weaponDetails = {}
 
     constructor() {
         super({ key: 'Multiplayer' });
@@ -104,9 +104,21 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
+        let canShoot = true
+
         this.input.on('pointerdown', (pointer) => {
-            this.startShooting(pointer)
-        })
+            const firerate = this.weaponDetails[socket.id].fire_rate
+            console.log(firerate)
+            if (pointer.leftButtonDown() && canShoot) {
+
+                this.startShooting(firerate);
+                canShoot = false;
+                setTimeout(() => {
+                    canShoot = true;
+                }, firerate); 
+            }
+        });
+
         this.input.on('pointerup', this.stopShooting, this)
 
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -129,6 +141,14 @@ class Multiplayer extends Phaser.Scene {
                 this.frontendWeapons[playerId].setPosition(x, y).setRotation(rotation);
             }
         });
+
+        socket.on('weapon', (weaponDetails) => {
+            for (const id in weaponDetails) {
+                if (id === socket.id) {
+                    this.weaponDetails[id] = weaponDetails[id]
+                }
+            }
+        })
 
         socket.on('updatePlayers', backendPlayers => {
             const alivePlayers = {}; // To keep track of alive players
@@ -166,14 +186,17 @@ class Multiplayer extends Phaser.Scene {
         });
     }
 
-    startShooting(pointer) {
+    //KAZKA REIKIA SUTVARKYTI, KAD PIRMA KULKA ISSAUTU ISKART, O NE PO FIRERATO, BET IR NETURETU BUTI GALIMA SPAMMINTI, KAD APEITI FIRERATE
+    startShooting(firerate) {    
         this.input.mouse.requestPointerLock();
-        if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown()) return;
+        if (!this.frontendPlayers[socket.id]) return;
+        const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
+        socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
         this.shootingInterval = setInterval(() => {
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
-            if (!this.frontendPlayers[socket.id]) return;
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
-        }, 100); // fire rate based on weapon
+        }, firerate); // fire rate based on weapon
+
     }
 
     stopShooting() {

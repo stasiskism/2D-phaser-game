@@ -45,6 +45,7 @@ const activeSessions = {}
 const rooms = {}
 const readyPlayers = {}
 let countdownInterval
+const weaponDetails = {}
 
 
 
@@ -55,9 +56,6 @@ io.on('connection', (socket) => {
     for (const roomId in rooms) {
         io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
     }
-    // Inform other clients about the new player
-    //io.emit('updatePlayers', backendPlayers);
-
 
     socket.on('register', async (data) => {
         const { username, password } = data;
@@ -147,19 +145,27 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('updateReadyPlayers', calculateReadyPlayers(readyPlayers[roomId]))
     })
 
-    socket.on('startCountdown', (roomId) => {
+    socket.on('startCountdown', async (roomId) => {
         if (roomId && !rooms[roomId].countdownStarted) {
-            let countdownTime = 5
+            let countdownTime = 1
             rooms[roomId].countdownStarted = true;
             
-            countdownInterval = setInterval(() => {
+            countdownInterval = setInterval(async () => {
                 countdownTime--;
                 if (countdownTime === 0) {
                     clearInterval(countdownInterval);
                     io.to(roomId).emit('countdownEnd');
                     rooms[roomId].countdownStarted = false;
+                    const client = await sql.connect()
                     for (const playerId in readyPlayers[roomId]) {
                         if (readyPlayers[roomId][playerId]) {
+                            const username = 'asd' //playerUsername[playerId]
+                            const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
+                            const weaponId = weaponIdResult.rows[0].weapon;
+                            const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload FROM weapons WHERE weapon_id = $1', [weaponId]);
+                            const weapons = weaponDetailsResult.rows[0];
+                            weaponDetails[playerId] = weapons
+                            io.to(roomId).emit('weapon', weaponDetails)
                             delete readyPlayers[roomId][playerId]
                         }
                     }
@@ -214,7 +220,7 @@ io.on('connection', (socket) => {
                 y: frontendPlayer.y,
                 velocity,
                 playerId: socket.id,
-                multiplayerId
+                multiplayerId,
             }
         }
     })
@@ -393,7 +399,7 @@ function startGame(multiplayerId) {
         playersInRoom.forEach((player) => {
             const id = player.id
             const username = playerUsername[id];
-
+            const bullets = weaponDetails[id].ammo
             backendPlayers[id] = { 
                 id,
                 multiplayerId,
@@ -402,15 +408,15 @@ function startGame(multiplayerId) {
                 score: 0,
                 username,
                 health: 100,
-                bullets: 10, //NEED TO GET BULLET COUNT FROM DATABASE
+                bullets
             };
         });
     }
 }
 
 setInterval(() => {
-    //HOSTUI INFINITE KULKOS
     for (const playerId in backendPlayers) {
+        const reloadTime = weaponDetails[playerId].reload
         if (backendPlayers[playerId].bullets === 0) {
             backendPlayers[playerId].bullets = 10 //CHANGE BASED ON WEAPON
             io.emit('reloaded', playerId)
