@@ -104,12 +104,10 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
-        this.input.on('pointerdown', pointer => {
-            this.input.mouse.requestPointerLock();
-            const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
-            if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown()) return;
-            socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
-        });
+        this.input.on('pointerdown', (pointer) => {
+            this.startShooting(pointer)
+        })
+        this.input.on('pointerup', this.stopShooting, this)
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -167,6 +165,22 @@ class Multiplayer extends Phaser.Scene {
             }
         });
     }
+
+    startShooting(pointer) {
+        this.input.mouse.requestPointerLock();
+        if (!this.frontendPlayers[socket.id] || !pointer.leftButtonDown()) return;
+        this.shootingInterval = setInterval(() => {
+            const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
+            if (!this.frontendPlayers[socket.id]) return;
+            socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
+        }, 100); // fire rate based on weapon
+    }
+
+    stopShooting() {
+        clearInterval(this.shootingInterval)
+    }
+
+
     setupPlayer(id, playerData) {
         // Cleanup existing player sprites if they exist
         if (this.frontendPlayers[id]) {
