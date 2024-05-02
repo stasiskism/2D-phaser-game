@@ -428,6 +428,7 @@ function startGame(multiplayerId) {
 function reload(reloadTime, bullets, id) {
     reloading = true
     const reloadInterval = setInterval(() => {
+        if (!backendPlayers[id]) return
         backendPlayers[id].bullets = bullets //CHANGE BASED ON WEAPON
         clearInterval(reloadInterval)
         reloading = false

@@ -6,6 +6,7 @@ class Multiplayer extends Phaser.Scene {
     frontendProjectiles = {};
     playerHealth = {}
     weaponDetails = {}
+    playerUsername = {}
 
     constructor() {
         super({ key: 'Multiplayer' });
@@ -230,9 +231,11 @@ class Multiplayer extends Phaser.Scene {
         // Setup the player
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
-        this.playerHealth[id] = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+        this.playerHealth[id] = this.add.text(playerData.x, playerData.y + 55, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+        this.playerUsername[id] = this.add.text(playerData.x, playerData.y - 50, playerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         if (id === socket.id) {
-            this.playerAmmo = this.add.text(playerData.x, playerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+            this.playerAmmo = this.add.text(playerData.x, playerData.y + 750, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+
         }
         // Add label for the player
         const newPlayerLabel = `<div data-id="${id}" data-score="${playerData.score}"</div>`;
@@ -254,6 +257,7 @@ class Multiplayer extends Phaser.Scene {
                 const otherPlayerLabel = `<div data-id="${playerId}" data-score="${otherPlayerData.score}"</div>`;
                 this.document.innerHTML += otherPlayerLabel;
                 this.playerHealth[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+                this.playerUsername[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 50, otherPlayerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             }
         }
     }
@@ -266,11 +270,14 @@ class Multiplayer extends Phaser.Scene {
                     }
         this.frontendPlayers[id].x = backendPlayer.x;
         this.frontendPlayers[id].y = backendPlayer.y;
-        this.playerHealth[id].setPosition(backendPlayer.x, backendPlayer.y - 50)
+        this.playerHealth[id].setPosition(backendPlayer.x, backendPlayer.y + 55)
         this.playerHealth[id].setText(`Health: ${backendPlayer.health}`);
         this.playerHealth[id].setOrigin(0.5).setScale(2);
+        this.playerUsername[id].setPosition(backendPlayer.x, backendPlayer.y - 50)
+        this.playerUsername[id].setText(`${backendPlayer.username}`);
+        this.playerUsername[id].setOrigin(0.5).setScale(2);
         if (id === socket.id) {
-            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 50).setText(`Ammo: ${backendPlayer.bullets}`).setOrigin(0.5).setScale(2)
+            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 75).setText(`Ammo: ${backendPlayer.bullets}`).setOrigin(0.5).setScale(2)
         }
         const parentDiv = this.document
                     const childDivs = Array.from(parentDiv.querySelectorAll('div'))
