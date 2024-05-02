@@ -125,6 +125,7 @@ io.on('connection', (socket) => {
         if (rooms[roomId]) {
             const username = playerUsername[socket.id];
             rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
+            console.log('room joined', roomId)
             socket.join(roomId);
             //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
@@ -158,13 +159,13 @@ io.on('connection', (socket) => {
                     const client = await sql.connect()
                     for (const playerId in readyPlayers[roomId]) {
                         if (readyPlayers[roomId][playerId]) {
-                            const username = 'asd' //playerUsername[playerId]
+                            const username = playerUsername[playerId]
                             const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
                             const weaponId = weaponIdResult.rows[0].weapon;
                             const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload FROM weapons WHERE weapon_id = $1', [weaponId]);
                             const weapons = weaponDetailsResult.rows[0];
                             weaponDetails[playerId] = weapons
-                            io.to(roomId).emit('weapon', weaponDetails)
+                            io.to(roomId).emit('weapon', weaponDetails) // NEVEIKE KAI PADARYTA TO.(ROOMID), BET KAI PRIDEJAU CONSOLE LOGA 128 EILUTEJ PRIE JOIN ROOM, TADA SUVEIKE
                             delete readyPlayers[roomId][playerId]
                         }
                     }

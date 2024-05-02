@@ -106,8 +106,11 @@ class Multiplayer extends Phaser.Scene {
         });
 
         let canShoot = true
+        this.input.mouse.requestPointerLock();
 
         this.input.on('pointerdown', (pointer) => {
+            this.input.mouse.requestPointerLock();
+            console.log(this.weaponDetails[socket.id])
             if (!this.weaponDetails[socket.id]) return
             const firerate = this.weaponDetails[socket.id].fire_rate
             console.log(firerate)
@@ -202,7 +205,6 @@ class Multiplayer extends Phaser.Scene {
 
     //KAZKA REIKIA SUTVARKYTI, KAD PIRMA KULKA ISSAUTU ISKART, O NE PO FIRERATO, BET IR NETURETU BUTI GALIMA SPAMMINTI, KAD APEITI FIRERATE
     startShooting(firerate) {    
-        this.input.mouse.requestPointerLock();
         if (!this.frontendPlayers[socket.id]) return;
         const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
         socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
