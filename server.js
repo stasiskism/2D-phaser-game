@@ -159,13 +159,13 @@ io.on('connection', (socket) => {
                     const client = await sql.connect()
                     for (const playerId in readyPlayers[roomId]) {
                         if (readyPlayers[roomId][playerId]) {
-                            const username = playerUsername[playerId]
+                            const username = 'asd' //playerUsername[playerId]
                             const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
                             const weaponId = weaponIdResult.rows[0].weapon;
                             const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload FROM weapons WHERE weapon_id = $1', [weaponId]);
                             const weapons = weaponDetailsResult.rows[0];
                             weaponDetails[playerId] = weapons
-                            io.to(roomId).emit('weapon', weaponDetails) // NEVEIKE KAI PADARYTA TO.(ROOMID), BET KAI PRIDEJAU CONSOLE LOGA 128 EILUTEJ PRIE JOIN ROOM, TADA SUVEIKE
+                            io.emit('weapon', weaponDetails) // NEVEIKE KAI PADARYTA TO.(ROOMID), BET KAI PRIDEJAU CONSOLE LOGA 128 EILUTEJ PRIE JOIN ROOM, TADA SUVEIKE
                             delete readyPlayers[roomId][playerId]
                         }
                     }
@@ -370,6 +370,24 @@ io.on('connection', (socket) => {
             }
         }
         
+    })
+
+    socket.on('gameWon', (multiplayerId) => {
+        for (const playerId in backendPlayers) {
+            if (backendPlayers[playerId].multiplayerId === multiplayerId) {
+                delete backendPlayers[playerId];
+            }
+        }
+    
+        for (const id in backendProjectiles) {
+            if (backendProjectiles[id].multiplayerId === multiplayerId) {
+                delete backendProjectiles[id];
+            }
+        }
+
+        delete readyPlayers[multiplayerId];
+    
+        delete rooms[multiplayerId];
     })
 
 });

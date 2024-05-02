@@ -62,7 +62,7 @@ class Room extends Phaser.Scene {
         socket.on('roomJoinFailed', errorMessage => {
             alert(errorMessage)
             this.scene.start('lobby')
-            this.scene.pause()
+            this.scene.stop()
         })
 
 
@@ -156,7 +156,6 @@ class Room extends Phaser.Scene {
             socket.removeAllListeners()
             this.scene.start('lobby')
             this.scene.stop()
-            console.log(socket.id)
             if (this.frontendPlayers[socket.id]) {
                 this.frontendPlayers[socket.id].anims.stop()
                 this.frontendPlayers[socket.id].destroy();
@@ -171,7 +170,7 @@ class Room extends Phaser.Scene {
             socket.emit('updateReadyState', { playerId: socket.id, isReady, roomId: this.roomId });
         });
 
-        this.readyPlayersText = this.add.text(700, 300, `Ready Players: ${this.readyPlayersCount}`, { fontSize: '32px', fill: '#fff' }).setScale(2)
+        this.readyPlayersText = this.add.text(700, 300, `Ready Players: 0`, { fontSize: '32px', fill: '#fff' }).setScale(2)
 
         // this.objects = this.physics.add.staticGroup();
         // this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')

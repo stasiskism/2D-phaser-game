@@ -7,6 +7,7 @@ class Multiplayer extends Phaser.Scene {
     playerHealth = {}
     weaponDetails = {}
     playerUsername = {}
+    gameStop = false
 
     constructor() {
         super({ key: 'Multiplayer' });
@@ -110,10 +111,8 @@ class Multiplayer extends Phaser.Scene {
 
         this.input.on('pointerdown', (pointer) => {
             this.input.mouse.requestPointerLock();
-            console.log(this.weaponDetails[socket.id])
             if (!this.weaponDetails[socket.id]) return
             const firerate = this.weaponDetails[socket.id].fire_rate
-            console.log(firerate)
             if (pointer.leftButtonDown() && canShoot) {
 
                 this.startShooting(firerate);
@@ -182,6 +181,14 @@ class Multiplayer extends Phaser.Scene {
                 // Mark player as alive
                 alivePlayers[id] = true;
             }
+
+            const alivePlayerCount = Object.keys(alivePlayers).length;
+            if (alivePlayerCount === 1) {
+                this.gameStop = true
+                const id = Object.keys(alivePlayers)[0]
+                this.gameWon(backendPlayers[id].username)
+                socket.off('updatePlayers')
+            }
         
             // Remove players that are not present in the backend data
             for (const id in this.frontendPlayers) {
@@ -205,7 +212,7 @@ class Multiplayer extends Phaser.Scene {
 
     //KAZKA REIKIA SUTVARKYTI, KAD PIRMA KULKA ISSAUTU ISKART, O NE PO FIRERATO, BET IR NETURETU BUTI GALIMA SPAMMINTI, KAD APEITI FIRERATE
     startShooting(firerate) {    
-        if (!this.frontendPlayers[socket.id]) return;
+        if (!this.frontendPlayers[socket.id] || !this.crosshair) return;
         const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
         socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
         this.shootingInterval = setInterval(() => {
@@ -298,17 +305,19 @@ class Multiplayer extends Phaser.Scene {
 
     removePlayer(id) {
   
-        if (id === socket.id) {
+        if (!this.gameStop) {
             socket.removeAllListeners()
             this.scene.stop('Multiplayer')
             this.scene.start('respawn', {multiplayerId: this.multiplayerId, frontendPlayers: this.frontendPlayers, frontendProjectiles: this.frontendProjectiles, frontendWeapons: this.frontendWeapons, playerHealt: this.playerHealth})
-
+        }
+        if (id === socket.id ) {
             this.playerAmmo.destroy()
         }
         this.frontendPlayers[id].anims.stop()
         this.frontendPlayers[id].destroy();
         this.frontendWeapons[id].destroy();
         this.playerHealth[id].destroy()
+        this.playerUsername[id].destroy()
         delete this.frontendPlayers[id];
         const divToDelete = this.document.querySelector(`div[data-id="${id}"]`)
                     divToDelete.parentNode.removeChild(divToDelete)
@@ -442,6 +451,30 @@ class Multiplayer extends Phaser.Scene {
             reticle.x = this.frontendPlayers[socket.id].x + (reticle.x - this.frontendPlayers[socket.id].x) / scale;
             reticle.y = this.frontendPlayers[socket.id].y + (reticle.y - this.frontendPlayers[socket.id].y) / scale;
         }
+    }
+
+    gameWon(username) {
+        this.leaderboard.destroy()
+        this.cameras.main.centerOn(this.cameras.main.width / 2, this.cameras.main.height / 2);
+        const winningText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            `${username} has won the game!`,
+            { fontFamily: 'Arial', fontSize: 48, color: '#ffffff' }
+        );
+
+        winningText.setOrigin(0.5);
+        for (const id in this.frontendPlayers) {
+            this.removePlayer(id);
+        }
+
+        this.time.delayedCall(5000, () => {
+            socket.emit('leaveRoom', this.multiplayerId)
+            socket.emit('gameWon', this.multiplayerId)
+            socket.removeAllListeners()
+            this.scene.stop()
+            this.scene.start('lobby');
+        });
     }
 }
 
