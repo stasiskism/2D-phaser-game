@@ -165,7 +165,7 @@ io.on('connection', (socket) => {
                             const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload FROM weapons WHERE weapon_id = $1', [weaponId]);
                             const weapons = weaponDetailsResult.rows[0];
                             weaponDetails[playerId] = weapons
-                            io.emit('weapon', weaponDetails) // NEVEIKE KAI PADARYTA TO.(ROOMID), BET KAI PRIDEJAU CONSOLE LOGA 128 EILUTEJ PRIE JOIN ROOM, TADA SUVEIKE
+                            io.emit('weapon', weaponDetails) // NEEMITINA JEIGU PLAYERIS YRA TABBED OUT, KAI ZAIDIMAS PRASIDEDA NEISIJUNGES BROWSERIO
                             delete readyPlayers[roomId][playerId]
                         }
                     }

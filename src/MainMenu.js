@@ -304,7 +304,6 @@ class MainMenu extends Phaser.Scene {
 
         // Update leaderboard with fetched data
         data.forEach((player, index) => {
-          console.log(player)
           const playerDiv = document.createElement('div');
           playerDiv.textContent = `${index + 1}. ${player.user_name}: ${player.high_score}`;
           playerDiv.style.fontFamily = 'Arial';

@@ -8,6 +8,7 @@ class Spectator extends Phaser.Scene {
     playerAmmo = {}
     currentPlayerIndex = 0
     playerIds = []
+    gameStop = false
 
     constructor() {
         super({ key: 'spectator'});
@@ -141,6 +142,14 @@ class Spectator extends Phaser.Scene {
                 }
                 // Mark player as alive
                 alivePlayers[id] = true;
+            }
+
+            const alivePlayerCount = Object.keys(alivePlayers).length;
+            if (alivePlayerCount === 1) {
+                this.gameStop = true
+                const id = Object.keys(alivePlayers)[0]
+                this.gameWon(backendPlayers[id].username)
+                socket.off('updatePlayers')
             }
         
             // Remove players that are not present in the backend data
@@ -307,10 +316,33 @@ class Spectator extends Phaser.Scene {
     }
 
     clickQuitButton() {
+        socket.emit('leaveRoom', this.multiplayerId)
         this.scene.start('mainMenu')
         this.scene.stop('spectator')
         this.scene.stop()
         socket.removeAllListeners()
+    }
+
+    gameWon(username) {
+        socket.removeAllListeners()
+        this.cameras.main.centerOn(this.cameras.main.width / 2, this.cameras.main.height / 2);
+        const winningText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            `${username} has won the game!`,
+            { fontFamily: 'Arial', fontSize: 48, color: '#ffffff' }
+        );
+
+        winningText.setOrigin(0.5);
+        for (const id in this.frontendPlayers) {
+            this.removePlayer(id);
+        }
+
+        this.time.delayedCall(5000, () => {
+            socket.emit('leaveRoom', this.multiplayerId)
+            this.scene.stop()
+            this.scene.start('lobby');
+        });
     }
 }
 

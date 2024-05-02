@@ -37,24 +37,32 @@ class Lobby extends Phaser.Scene {
                 if (!rooms[id]) {
                     this.createdSprites[id].destroy();
                     delete this.createdSprites[id];
+                    this.distance -= 40
                 }
             }
         });
     }
     
     update() {
-        
     }
 
    createRoom() {
-    const roomName = window.prompt('Enter the name of the room:');
+    let roomName
+    do {
+        roomName = window.prompt('Enter the name of the room:');
+        if (roomName === null) {
+            break; 
+        }
+    } while (!roomName || !roomName.trim());
     //REIKIA PADARYTI KAD KUREJAS GALETU PASIRINKTI MAX PLAYER SKAICIU
-    socket.emit('createRoom', roomName);
+    if (roomName != null) {
+        socket.emit('createRoom', roomName);
 
-    socket.once('roomCreated', (roomId) => {
-        this.scene.start('room', {roomId: roomId });
-        this.scene.stop()
-    });
+        socket.once('roomCreated', (roomId) => {
+            this.scene.start('room', {roomId: roomId });
+            this.scene.stop()
+        });
+    }
 }
 
     joinRoom(roomId) {
