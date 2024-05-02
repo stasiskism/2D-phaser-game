@@ -147,6 +147,13 @@ class Singleplayer extends Phaser.Scene {
     this.updateCrosshairPosition();
     this.updateBullet()
     this.detectCollision()
+
+    this.enemies.forEach(enemy => {
+      const angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+      const velocityX = Math.cos(angleToPlayer) * 350;
+      const velocityY = Math.sin(angleToPlayer) * 350;
+      enemy.setVelocity(velocityX, velocityY);
+  });
   }
 
 updatePlayerMovement() {
