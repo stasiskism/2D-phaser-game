@@ -99,6 +99,7 @@ class Register extends Phaser.Scene {
 
     loadLogin() {
         this.scene.start('login')
+        this.scene.stop()
     }
 
     sendData(username, password) {
@@ -108,6 +109,7 @@ class Register extends Phaser.Scene {
             if (response.success) {
                 alert('Registration successful');
                 this.scene.start('login');
+                this.scene.stop()
             } else {
                 alert('Registration failed');
             }

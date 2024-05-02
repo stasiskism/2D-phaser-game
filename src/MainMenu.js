@@ -270,14 +270,17 @@ class MainMenu extends Phaser.Scene {
       if (object === this.singleplayerObject) {
 
         this.scene.start('Singleplayer');
+        this.scene.stop()
       } else if (object === this.multiplayerObject) {
 
         this.scene.start('lobby');
+        this.scene.stop()
       } else if (object === this.marketplaceObject) {
 
       }
         else if (object === this.tutorialObject) {
           this.scene.start('tutorial')
+          this.scene.stop()
         }
     }
   }

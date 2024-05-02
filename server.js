@@ -373,6 +373,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('gameWon', async (multiplayerId, username) => {
+        if (!multiplayerId || !username) return
         for (const playerId in backendPlayers) {
             if (backendPlayers[playerId].multiplayerId === multiplayerId) {
                 delete backendPlayers[playerId];
@@ -385,7 +386,7 @@ io.on('connection', (socket) => {
             }
         }
         const client = await sql.connect()
-        await client.query(`UPDATE user_profile SET coins = coins + 10 WHERE user_name = $1`, [username])
+        await client.query(`UPDATE user_profile SET coins = coins + 10, xp = xp + 20 WHERE user_name = $1`, [username])
         client.release()
 
         delete readyPlayers[multiplayerId];
@@ -477,7 +478,7 @@ setInterval(async () => {
                     delete backendPlayers[playerId]
                     if (backendPlayers[backendProjectiles[id].playerId]) {
                         const client = await sql.connect()
-                        await client.query(`UPDATE user_profile SET coins = coins + 1 WHERE user_name = $1`, [backendPlayers[backendProjectiles[id].playerId].username])
+                        await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [backendPlayers[backendProjectiles[id].playerId].username])
                         client.release()
                         backendPlayers[backendProjectiles[id].playerId].score++
                     }

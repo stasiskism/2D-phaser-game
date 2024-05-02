@@ -114,7 +114,7 @@ class Multiplayer extends Phaser.Scene {
             if (!this.weaponDetails[socket.id]) return
             const firerate = this.weaponDetails[socket.id].fire_rate
             if (pointer.leftButtonDown() && canShoot) {
-
+                console.log('SAUNA KULKA')
                 this.startShooting(firerate);
                 canShoot = false;
                 setTimeout(() => {
@@ -233,6 +233,7 @@ class Multiplayer extends Phaser.Scene {
             this.frontendPlayers[id].destroy();
             this.frontendWeapons[id].destroy();
             this.playerHealth[id].destroy();
+            this.playerUsername[id].destroy()
             if (id === socket.id) {
                 this.playerAmmo.destroy()
             }
@@ -259,6 +260,7 @@ class Multiplayer extends Phaser.Scene {
                     this.frontendPlayers[playerId].destroy();
                     this.frontendWeapons[playerId].destroy();
                     this.playerHealth[playerId].destroy()
+                    this.playerUsername[playerId].destroy()
                 }
                 // Create frontend sprites for other players
                 this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
@@ -468,9 +470,10 @@ class Multiplayer extends Phaser.Scene {
             this.removePlayer(id);
         }
 
+        socket.emit('gameWon', this.multiplayerId, username)
+
         this.time.delayedCall(5000, () => {
             socket.emit('leaveRoom', this.multiplayerId)
-            socket.emit('gameWon', this.multiplayerId, username)
             socket.removeAllListeners()
             this.scene.stop()
             this.scene.start('lobby');
