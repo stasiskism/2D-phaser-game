@@ -60,15 +60,15 @@ class Multiplayer extends Phaser.Scene {
     create() {
         this.setupScene();
         this.setupInputEvents();
-        this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
-        <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
-            <div style="margin-bottom: 8px">Leaderboard</div>
-            <div id="playerLabels"></div>
-        </div>
-        `);
+        // this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
+        // <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
+        //     <div style="margin-bottom: 8px">Leaderboard</div>
+        //     <div id="playerLabels"></div>
+        // </div>
+        // `);
 
-        this.leaderboard.setPosition(100, 100).setScrollFactor(0);
-        this.document = this.leaderboard.node.querySelector(`#playerLabels`)
+        // this.leaderboard.setPosition(100, 100).setScrollFactor(0);
+        // this.document = this.leaderboard.node.querySelector(`#playerLabels`)
 
         
     }
@@ -248,8 +248,8 @@ class Multiplayer extends Phaser.Scene {
 
         }
         // Add label for the player
-        const newPlayerLabel = `<div data-id="${id}" data-score="${playerData.score}"</div>`;
-        this.document.innerHTML += newPlayerLabel;
+        // const newPlayerLabel = `<div data-id="${id}" data-score="${playerData.score}"</div>`;
+        // this.document.innerHTML += newPlayerLabel;
     
         // Setup other players
         for (const playerId in this.frontendPlayers) {
@@ -265,7 +265,7 @@ class Multiplayer extends Phaser.Scene {
                 // Create frontend sprites for other players
                 this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
                 this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 80, otherPlayerData.y, 'shotgun').setScale(3);
-                const otherPlayerLabel = `<div data-id="${playerId}" data-score="${otherPlayerData.score}"</div>`;
+                // const otherPlayerLabel = `<div data-id="${playerId}" data-score="${otherPlayerData.score}"</div>`;
                 this.document.innerHTML += otherPlayerLabel;
                 this.playerHealth[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
                 this.playerUsername[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 50, otherPlayerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
@@ -274,11 +274,11 @@ class Multiplayer extends Phaser.Scene {
     }
 
     updatePlayerPosition(id, backendPlayer) {
-        const playerLabel = this.document.querySelector(`div[data-id="${id}"]`)
-                    if (playerLabel) {
-                        playerLabel.innerHTML = `${backendPlayer.username}: ${backendPlayer.score}`
-                        playerLabel.setAttribute('data-score', backendPlayer.score)
-                    }
+        // const playerLabel = this.document.querySelector(`div[data-id="${id}"]`)
+        //             if (playerLabel) {
+        //                 playerLabel.innerHTML = `${backendPlayer.username}: ${backendPlayer.score}`
+        //                 playerLabel.setAttribute('data-score', backendPlayer.score)
+        //             }
         this.frontendPlayers[id].x = backendPlayer.x;
         this.frontendPlayers[id].y = backendPlayer.y;
         this.playerHealth[id].setPosition(backendPlayer.x, backendPlayer.y + 55)
@@ -321,8 +321,8 @@ class Multiplayer extends Phaser.Scene {
         this.playerHealth[id].destroy()
         this.playerUsername[id].destroy()
         delete this.frontendPlayers[id];
-        const divToDelete = this.document.querySelector(`div[data-id="${id}"]`)
-                    divToDelete.parentNode.removeChild(divToDelete)
+        // const divToDelete = this.document.querySelector(`div[data-id="${id}"]`)
+        //             divToDelete.parentNode.removeChild(divToDelete)
     }
 
     setupProjectile(playerId, id, backendProjectile) {
@@ -456,7 +456,7 @@ class Multiplayer extends Phaser.Scene {
     }
 
     gameWon(username) {
-        this.leaderboard.destroy()
+        // this.leaderboard.destroy()
         this.cameras.main.centerOn(this.cameras.main.width / 2, this.cameras.main.height / 2);
         const winningText = this.add.text(
             this.cameras.main.width / 2,

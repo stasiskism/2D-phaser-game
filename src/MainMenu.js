@@ -47,7 +47,8 @@ class MainMenu extends Phaser.Scene {
   }
 
   create() {
-
+    this.fetchLeaderboardData()
+    
     let centerX = this.cameras.main.width / 2;
     let centerY = this.cameras.main.height / 2;
 
@@ -194,11 +195,19 @@ class MainMenu extends Phaser.Scene {
     this.popupText.setVisible(false);
 
     this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
+
+    this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
+        <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
+            <div style="margin-bottom: 8px">Leaderboard</div>
+            <div id="playerLabels"></div>
+        </div>
+        `);
+
+        this.leaderboard.setPosition(100, 100).setScrollFactor(0);
+        this.document = this.leaderboard.node.querySelector(`#playerLabels`)
   }
 
   update() {
-
-    console.log('Player Position:', this.player.x, this.player.y);
 
     const cursors = this.input.keyboard.createCursorKeys();
     const wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -284,6 +293,31 @@ class MainMenu extends Phaser.Scene {
         }
     }
   }
+
+  fetchLeaderboardData() {
+    // Fetch top 10 players from the server
+    fetch('/leaderboard')
+      .then(response => response.json())
+      .then(data => {
+        // Clear existing leaderboard data
+        this.document.innerHTML = '';
+
+        // Update leaderboard with fetched data
+        data.forEach((player, index) => {
+          console.log(player)
+          const playerDiv = document.createElement('div');
+          playerDiv.textContent = `${index + 1}. ${player.user_name}: ${player.high_score}`;
+          playerDiv.style.fontFamily = 'Arial';
+          playerDiv.style.fontSize = '24px';
+          playerDiv.style.color = '#ffffff';
+          playerDiv.style.marginBottom = '8px';
+          this.document.appendChild(playerDiv);
+        });
+      })
+      .catch(error => console.error('Error fetching leaderboard data:', error));
+  }
+
+
 }
 
 export default MainMenu;

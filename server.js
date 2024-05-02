@@ -372,6 +372,13 @@ io.on('connection', (socket) => {
         
     })
 
+    socket.on('singleplayer', async (id, score) => {
+        const username = playerUsername[id]
+        const client = await sql.connect()
+        await client.query(`UPDATE user_profile SET high_score = GREATEST(high_score, $1) WHERE user_name = $2`, [score, username])
+        client.release()
+    })
+
     socket.on('gameWon', async (multiplayerId, username) => {
         if (!multiplayerId || !username) return
         for (const playerId in backendPlayers) {
@@ -457,6 +464,20 @@ function reload(reloadTime, bullets, id) {
         reloading = false
     }, reloadTime) //RELOAD TIME CHANGE BASED ON WEAPON
 }
+
+app.get('/leaderboard', async (req, res) => {
+    try {
+        const client = await sql.connect()
+        const result = await client.query(`SELECT user_name, high_score FROM user_profile WHERE high_score IS NOT NULL AND high_score > 0 ORDER BY high_score desc limit 10;`)
+        const data = result.rows
+        client.release()
+        res.json(data)
+    }
+    catch (error) {
+        console.error('Error fetching leaderboard data:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
 
 setInterval(async () => {
     for (const id in backendProjectiles) {
