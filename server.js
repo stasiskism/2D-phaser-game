@@ -372,7 +372,7 @@ io.on('connection', (socket) => {
         
     })
 
-    socket.on('gameWon', (multiplayerId) => {
+    socket.on('gameWon', async (multiplayerId, username) => {
         for (const playerId in backendPlayers) {
             if (backendPlayers[playerId].multiplayerId === multiplayerId) {
                 delete backendPlayers[playerId];
@@ -384,6 +384,9 @@ io.on('connection', (socket) => {
                 delete backendProjectiles[id];
             }
         }
+        const client = await sql.connect()
+        await client.query(`UPDATE user_profile SET coins = coins + 10 WHERE user_name = $1`, [username])
+        client.release()
 
         delete readyPlayers[multiplayerId];
     
@@ -454,7 +457,7 @@ function reload(reloadTime, bullets, id) {
     }, reloadTime) //RELOAD TIME CHANGE BASED ON WEAPON
 }
 
-setInterval(() => {
+setInterval(async () => {
     for (const id in backendProjectiles) {
         backendProjectiles[id].x += backendProjectiles[id].velocity.x
         backendProjectiles[id].y += backendProjectiles[id].velocity.y
@@ -473,6 +476,9 @@ setInterval(() => {
                 if (backendPlayers[playerId].health <= 0) {
                     delete backendPlayers[playerId]
                     if (backendPlayers[backendProjectiles[id].playerId]) {
+                        const client = await sql.connect()
+                        await client.query(`UPDATE user_profile SET coins = coins + 1 WHERE user_name = $1`, [backendPlayers[backendProjectiles[id].playerId].username])
+                        client.release()
                         backendPlayers[backendProjectiles[id].playerId].score++
                     }
                 }

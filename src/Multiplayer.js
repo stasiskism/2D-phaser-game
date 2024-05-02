@@ -470,7 +470,7 @@ class Multiplayer extends Phaser.Scene {
 
         this.time.delayedCall(5000, () => {
             socket.emit('leaveRoom', this.multiplayerId)
-            socket.emit('gameWon', this.multiplayerId)
+            socket.emit('gameWon', this.multiplayerId, username)
             socket.removeAllListeners()
             this.scene.stop()
             this.scene.start('lobby');
