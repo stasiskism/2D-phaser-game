@@ -4,6 +4,7 @@ class Multiplayer extends Phaser.Scene {
     frontendPlayers = {};
     frontendWeapons = {};
     frontendProjectiles = {};
+    frontendGrenades = {}
     playerHealth = {}
     weaponDetails = {}
     playerUsername = {}
@@ -53,6 +54,8 @@ class Multiplayer extends Phaser.Scene {
             this.load.image('crosshair', 'assets/crosshair008.png')
             this.load.image('shotgun', 'assets/Weapons/tile001.png')
             this.load.image('fullscreen', 'assets/full-screen.png')
+            this.load.image('smokeGrenade', 'assets/smokeGrenade.png')
+            this.load.spritesheet('smoke', 'assets/smoke.png', { frameWidth: 32, frameHeight: 32, endFrame: 33 });
             this.graphics = this.add.graphics()
             
     }
@@ -82,6 +85,34 @@ class Multiplayer extends Phaser.Scene {
         this.graphics.lineStyle(10, 0xff0000);
         this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
 
+        const smoke = [
+            { key: 'smoke', frame: 1, duration: 200 },
+            { key: 'smoke', frame: 2, duration: 200 },
+            { key: 'smoke', frame: 4, duration: 200 },
+            { key: 'smoke', frame: 8, duration: 500 },
+            { key: 'smoke', frame: 12, duration: 500 },
+            { key: 'smoke', frame: 13, duration: 2000 },
+            { key: 'smoke', frame: 14, duration: 2000 },
+            { key: 'smoke', frame: 15, duration: 2000 },
+            { key: 'smoke', frame: 16, duration: 3000 },
+            { key: 'smoke', frame: 17, duration: 2000 },
+            { key: 'smoke', frame: 18, duration: 1000 },
+            { key: 'smoke', frame: 20, duration: 500 },
+            { key: 'smoke', frame: 22, duration: 500 }, 
+            { key: 'smoke', frame: 26, duration: 200 },
+            { key: 'smoke', frame: 30, duration: 200 },
+            { key: 'smoke', frame: 32, duration: 200 },
+        ];
+
+        const config = {
+            key: 'smokeExplode',
+            frames: smoke,
+            frameRate: 20,
+            repeat: 0,
+        };
+
+        this.anims.create(config);
+        this.anims.get('smokeExplode').totalDuration = 4000
     }
 
 
@@ -98,12 +129,11 @@ class Multiplayer extends Phaser.Scene {
         this.input.mouse.requestPointerLock();
 
         this.input.on('pointerdown', (pointer) => {
-            console.log('sauna', this.weaponDetails[socket.id]) //BUNA UNDEFINED PLAYERIUI KURIS NEISIJUNGIA TABO ISKART
+        //BUNA UNDEFINED PLAYERIUI KURIS NEISIJUNGIA TABO ISKART
             this.input.mouse.requestPointerLock();
             if (!this.weaponDetails[socket.id]) return
             const firerate = this.weaponDetails[socket.id].fire_rate
             if (pointer.leftButtonDown() && canShoot) {
-                console.log('SAUNA KULKA')
                 this.startShooting(firerate);
                 canShoot = false;
                 setTimeout(() => {
@@ -125,6 +155,12 @@ class Multiplayer extends Phaser.Scene {
                 canReload = true;
             }, reloadTime);
         });
+
+        this.input.keyboard.on('keydown-G', () => {
+            if (!this.frontendPlayers[socket.id] || !this.crosshair) return;
+            const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
+            socket.emit('throw', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
+        })
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -189,15 +225,23 @@ class Multiplayer extends Phaser.Scene {
         
         });
 
-        socket.on('updateProjectiles', backendProjectiles => {
+        socket.on('updateProjectiles', (backendProjectiles, backendGrenades) => {
             for (const id in backendProjectiles) {
                 if (!this.frontendProjectiles[id]) this.setupProjectile(backendProjectiles[id].playerId, id, backendProjectiles[id]);
                 else this.updateProjectilePosition(id, backendProjectiles[id]);
             }
+            for (const id in backendGrenades) {
+                if (!this.frontendGrenades[id]) this.setupGrenade(backendGrenades[id].playerId, id, backendGrenades[id])
+                else this.updateGrenadePosition(id, backendGrenades[id])
+            }
             for (const id in this.frontendProjectiles) {
                 if (!backendProjectiles[id]) this.removeProjectile(id);
             }
+            for (const id in this.frontendGrenades) {
+                if (!backendGrenades[id]) this.removeGrenade(id)
+            }
         });
+
     }
 
     startShooting(firerate) {
@@ -329,6 +373,48 @@ class Multiplayer extends Phaser.Scene {
         delete this.frontendProjectiles[id];
     }
 
+    setupGrenade(playerId, id, backendGrenade) {
+        const grenade = this.physics.add.sprite(backendGrenade.x, backendGrenade.y, 'smokeGrenade').setScale(4)
+        const direction = Phaser.Math.Angle.Between(
+            this.frontendPlayers[playerId].x,
+            this.frontendPlayers[playerId].y,
+            this.crosshair.x,
+            this.crosshair.y
+        );
+        grenade.setRotation(direction)
+        this.frontendGrenades[id] = grenade
+    }
+
+    updateGrenades(backendGrenades) {
+        for (const id in backendGrenades) {
+            const backendGrenade = backendGrenades[id]
+            if (!this.frontendGrenades[id]) {
+                this.setupGrenade(backendGrenade.playerId, id, backendGrenade)
+            } else {
+                this.updateGrenadePosition(id, backendGrenade)
+            }
+        }
+        for (const id in this.frontendGrenades) {
+            if (!backendGrenades[id]) {
+                this.removeGrenade(id);
+            }
+        }
+    }
+
+    updateGrenadePosition(id, backendGrenade) {
+        const grenade = this.frontendGrenades[id]
+        grenade.x += backendGrenade.velocity.x 
+        grenade.y += backendGrenade.velocity.y 
+        if (backendGrenade.velocity.x === 0 && backendGrenade.velocity.y === 0) {
+            this.grenadeExplode(grenade.x, grenade.y, id)
+        }
+    }
+
+    removeGrenade(id) {
+        this.frontendGrenades[id].destroy()
+        delete this.frontendGrenades[id]
+    }
+
     update() {
         this.updatePlayerMovement();
         this.updateCameraPosition();
@@ -396,10 +482,11 @@ class Multiplayer extends Phaser.Scene {
 
     updateCrosshairPosition() {
         if (!this.frontendPlayers[socket.id]) return;
+        const radius = this.weaponDetails[socket.id].radius
         const player = this.frontendPlayers[socket.id];
         this.crosshair.body.velocity.x = player.body.velocity.x;
         this.crosshair.body.velocity.y = player.body.velocity.y;
-        this.constrainReticle(this.crosshair, 550);
+        this.constrainReticle(this.crosshair, radius); 
     }
 
     constrainReticle(reticle, radius) {
@@ -437,6 +524,15 @@ class Multiplayer extends Phaser.Scene {
             this.scene.start('lobby');
         });
     }
+
+    grenadeExplode(x, y, id) {
+        const smoke = this.add.sprite(x, y, 'smoke').setScale(12)
+        smoke.play('smokeExplode')
+        smoke.on('animationcomplete', () => {
+            smoke.destroy(); 
+        });
+    }
+
 }
 
 export default Multiplayer;
