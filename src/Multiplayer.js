@@ -5,6 +5,7 @@ class Multiplayer extends Phaser.Scene {
     frontendWeapons = {};
     frontendProjectiles = {};
     frontendGrenades = {}
+    frontendSmoke = {}
     playerHealth = {}
     weaponDetails = {}
     playerUsername = {}
@@ -101,7 +102,7 @@ class Multiplayer extends Phaser.Scene {
             { key: 'smoke', frame: 22, duration: 500 }, 
             { key: 'smoke', frame: 26, duration: 200 },
             { key: 'smoke', frame: 30, duration: 200 },
-            { key: 'smoke', frame: 32, duration: 200 },
+            { key: 'smoke', frame: 31, duration: 200 },
         ];
 
         const config = {
@@ -112,7 +113,6 @@ class Multiplayer extends Phaser.Scene {
         };
 
         this.anims.create(config);
-        this.anims.get('smokeExplode').totalDuration = 4000
     }
 
 
@@ -208,13 +208,13 @@ class Multiplayer extends Phaser.Scene {
                 alivePlayers[id] = true;
             }
 
-            const alivePlayerCount = Object.keys(alivePlayers).length;
-            if (alivePlayerCount === 1) {
-                this.gameStop = true
-                const id = Object.keys(alivePlayers)[0]
-                this.gameWon(backendPlayers[id].username)
-                socket.off('updatePlayers')
-            }
+            // const alivePlayerCount = Object.keys(alivePlayers).length;
+            // if (alivePlayerCount === 1) {
+            //     this.gameStop = true
+            //     const id = Object.keys(alivePlayers)[0]
+            //     this.gameWon(backendPlayers[id].username)
+            //     socket.off('updatePlayers')
+            // }
         
             // Remove players that are not present in the backend data
             for (const id in this.frontendPlayers) {
@@ -346,22 +346,6 @@ class Multiplayer extends Phaser.Scene {
         this.frontendProjectiles[id] = projectile;
     }
 
-    updateProjectiles(backendProjectiles) {
-        for (const id in backendProjectiles) {
-            const backendProjectile = backendProjectiles[id];
-            if (!this.frontendProjectiles[id]) {
-                this.setupProjectile(backendProjectile.playerId, id, backendProjectile);
-            } else {
-                this.updateProjectilePosition(id, backendProjectile);
-            }
-        }
-        for (const id in this.frontendProjectiles) {
-            if (!backendProjectiles[id]) {
-                this.removeProjectile(id);
-            }
-        }
-    }
-
     updateProjectilePosition(id, backendProjectile) {
         const projectile = this.frontendProjectiles[id];
         projectile.x += backendProjectile.velocity.x * 1; // Adjust the multiplier based on the desired speed
@@ -385,22 +369,6 @@ class Multiplayer extends Phaser.Scene {
         this.frontendGrenades[id] = grenade
     }
 
-    updateGrenades(backendGrenades) {
-        for (const id in backendGrenades) {
-            const backendGrenade = backendGrenades[id]
-            if (!this.frontendGrenades[id]) {
-                this.setupGrenade(backendGrenade.playerId, id, backendGrenade)
-            } else {
-                this.updateGrenadePosition(id, backendGrenade)
-            }
-        }
-        for (const id in this.frontendGrenades) {
-            if (!backendGrenades[id]) {
-                this.removeGrenade(id);
-            }
-        }
-    }
-
     updateGrenadePosition(id, backendGrenade) {
         const grenade = this.frontendGrenades[id]
         grenade.x += backendGrenade.velocity.x 
@@ -419,6 +387,7 @@ class Multiplayer extends Phaser.Scene {
         this.updatePlayerMovement();
         this.updateCameraPosition();
         this.updateCrosshairPosition();
+        this.updatePlayerVisibility()
     }
 
     updatePlayerMovement() {
@@ -526,11 +495,15 @@ class Multiplayer extends Phaser.Scene {
     }
 
     grenadeExplode(x, y, id) {
-        const smoke = this.add.sprite(x, y, 'smoke').setScale(12)
-        smoke.play('smokeExplode')
-        smoke.on('animationcomplete', () => {
-            smoke.destroy(); 
-        });
+    const smoke = this.add.sprite(x, y, 'smoke').setScale(12);
+    this.frontendSmoke[id] = smoke
+
+    smoke.play('smokeExplode');
+    //removint granatos sprite
+    smoke.on('animationcomplete', () => {
+        smoke.destroy(); 
+        delete this.frontendSmoke[id]
+    });
     }
 
 }
