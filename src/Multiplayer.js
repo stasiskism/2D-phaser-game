@@ -184,7 +184,6 @@ class Multiplayer extends Phaser.Scene {
         });
 
         socket.on('weapon', (weaponDetails) => { //NEGAUNA JEIGU PLAYERIS YRA TABBED OUTINES
-            console.log(socket.id)
             for (const id in weaponDetails) {
                 if (id === socket.id) {
                     this.weaponDetails[id] = weaponDetails[id]
@@ -322,6 +321,7 @@ class Multiplayer extends Phaser.Scene {
             this.scene.stop('Multiplayer')
             this.scene.start('respawn', {multiplayerId: this.multiplayerId, frontendPlayers: this.frontendPlayers, frontendProjectiles: this.frontendProjectiles, frontendWeapons: this.frontendWeapons, playerHealt: this.playerHealth})
             this.playerAmmo.destroy()
+            delete this.weaponDetails[id]
         }
         if (id === socket.id ) {
             this.playerAmmo.destroy()
@@ -387,7 +387,6 @@ class Multiplayer extends Phaser.Scene {
         this.updatePlayerMovement();
         this.updateCameraPosition();
         this.updateCrosshairPosition();
-        this.updatePlayerVisibility()
     }
 
     updatePlayerMovement() {
@@ -451,17 +450,14 @@ class Multiplayer extends Phaser.Scene {
 
     updateCrosshairPosition() {
         if (!this.frontendPlayers[socket.id]) return;
-        const radius = this.weaponDetails[socket.id].radius
+        const crosshairRadius = this.weaponDetails[socket.id].radius
         const player = this.frontendPlayers[socket.id];
         this.crosshair.body.velocity.x = player.body.velocity.x;
         this.crosshair.body.velocity.y = player.body.velocity.y;
-        this.constrainReticle(this.crosshair, radius); 
+        this.constrainReticle(this.crosshair, crosshairRadius); 
     }
 
     constrainReticle(reticle, radius) {
-        const distX = reticle.x - this.frontendPlayers[socket.id].x;
-        const distY = reticle.y - this.frontendPlayers[socket.id].y;
-
         const distBetween = Phaser.Math.Distance.Between(this.frontendPlayers[socket.id].x, this.frontendPlayers[socket.id].y, reticle.x, reticle.y);
         if (distBetween > radius) {
             const scale = distBetween / radius;

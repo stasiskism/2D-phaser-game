@@ -47,19 +47,9 @@ const rooms = {}
 const readyPlayers = {}
 let countdownInterval
 const weaponDetails = {}
-let reloading = false
+const reloadingStatus = {}
 const backendGrenades = {}
 
-const smokeDetails = {
-    speed: { min: -20, max: 20 },
-        angle: { min: 0, max: 360 },
-        scale: { start: 1, end: 0 },
-        lifespan: 2000,
-        blendMode: 'ADD',
-        frequency: 50,
-        maxParticles: 100,
-        alpha: { start: 1, end: 0 }
-}
 
 
 
@@ -158,8 +148,8 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('updateReadyPlayers', calculateReadyPlayers(readyPlayers[roomId]))
     })
 
-    socket.on('startCountdown', async (roomId) => {
-        if (roomId && !rooms[roomId].countdownStarted) {
+    socket.on('startCountdown', (roomId) => {
+        if (rooms[roomId] && !rooms[roomId].countdownStarted) {
             let countdownTime = 1
             rooms[roomId].countdownStarted = true;
             
@@ -169,22 +159,8 @@ io.on('connection', (socket) => {
                     clearInterval(countdownInterval);
                     io.to(roomId).emit('countdownEnd');
                     rooms[roomId].countdownStarted = false;
-                    const client = await sql.connect()
-                    for (const playerId in readyPlayers[roomId]) {
-                        if (readyPlayers[roomId][playerId]) {
-                            const username = playerUsername[playerId]
-                            const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
-                            const weaponId = weaponIdResult.rows[0].weapon;
-                            const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload, radius FROM weapons WHERE weapon_id = $1', [weaponId]);
-                            const weapons = weaponDetailsResult.rows[0];
-                            weaponDetails[playerId] = weapons
-                            io.emit('weapon', weaponDetails) // NEEMITINA JEIGU PLAYERIS YRA TABBED OUT, KAI ZAIDIMAS PRASIDEDA NEISIJUNGES BROWSERIO
-                            delete readyPlayers[roomId][playerId]
-                            io.emit('smokeDetails', smokeDetails)
-                        }
-                    }
+                    delete readyPlayers[roomId]
                     startGame(roomId)
-                    client.release();
                 } else {
                     io.to(roomId).emit('updateCountdown', countdownTime);
                 }
@@ -208,7 +184,8 @@ io.on('connection', (socket) => {
 
     socket.on('shoot', (frontendPlayer, crosshair, direction, multiplayerId) => {
 
-        if (backendPlayers[socket.id] && !reloading) {
+        if (backendPlayers[socket.id] && !reloadingStatus[socket.id]) {
+            
             if (backendPlayers[socket.id].bullets > 0) {
                 backendPlayers[socket.id].bullets--
                 projectileId++
@@ -270,7 +247,6 @@ io.on('connection', (socket) => {
             }
 
             const distance = Math.hypot(crosshair.x - frontendPlayer.x, crosshair.y - frontendPlayer.y)
-            console.log(distance)
             backendGrenades[grenadeId] = {
                 x: frontendPlayer.x,
                 y: frontendPlayer.y,
@@ -383,6 +359,7 @@ io.on('connection', (socket) => {
         }
     }
         delete backendPlayers[socket.id]
+        delete weaponDetails[socket.id]
         // Inform other clients that this player has disconnected
         for (const roomId in rooms) {
             io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
@@ -493,14 +470,21 @@ function filterGrenadesByMultiplayerId(multiplayerId) {
     return grenadesInSession
 }
 
-function startGame(multiplayerId) {
+async function startGame(multiplayerId) {
         if (rooms[multiplayerId] && rooms[multiplayerId].players) {
         let playersInRoom = {}
         rooms[multiplayerId].gameStarted = true
         playersInRoom = rooms[multiplayerId].players
-        playersInRoom.forEach((player) => {
+        const client = await sql.connect()
+        playersInRoom.forEach(async (player) => {
             const id = player.id
-            const username = playerUsername[id];
+            const username = 'asd' //playerUsername[id];
+            const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
+            const weaponId = weaponIdResult.rows[0].weapon;
+            const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload, radius FROM weapons WHERE weapon_id = $1', [weaponId]);
+            const weapons = weaponDetailsResult.rows[0];
+            weaponDetails[id] = weapons
+            io.to(multiplayerId).emit('weapon', weaponDetails)
             const bullets = weaponDetails[id].ammo
             backendPlayers[id] = { 
                 id,
@@ -517,12 +501,12 @@ function startGame(multiplayerId) {
     }
 }
 function reload(reloadTime, bullets, id) {
-    reloading = true
+    reloadingStatus[id] = true
     const reloadInterval = setInterval(() => {
         if (!backendPlayers[id]) return
         backendPlayers[id].bullets = bullets //CHANGE BASED ON WEAPON
         clearInterval(reloadInterval)
-        reloading = false
+        reloadingStatus[id] = false
     }, reloadTime) //RELOAD TIME CHANGE BASED ON WEAPON
 }
 
