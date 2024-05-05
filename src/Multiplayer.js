@@ -56,6 +56,9 @@ class Multiplayer extends Phaser.Scene {
             this.load.image('shotgun', 'assets/Weapons/tile001.png')
             this.load.image('fullscreen', 'assets/full-screen.png')
             this.load.image('smokeGrenade', 'assets/smokeGrenade.png')
+            this.load.spritesheet('singleShot', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[SINGLE_SHOT] Assault_rifle_V1.00.png', { frameWidth: 128, frameHeight: 48 });
+            this.load.spritesheet('reload', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[RELOAD] Assault_rifle_V1.00 - Reload.png', { frameWidth: 96, frameHeight: 64 });
+            this.load.spritesheet('emptying', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[EMPTYING] Assault_rifle_V1.00.png', { frameWidth: 96, frameHeight: 64 });
             this.load.spritesheet('smoke', 'assets/smoke.png', { frameWidth: 32, frameHeight: 32, endFrame: 33 });
             this.graphics = this.add.graphics()
             
@@ -64,8 +67,32 @@ class Multiplayer extends Phaser.Scene {
     create() {
         this.setupScene();
         this.setupInputEvents();
+        this.gunAnimation();
     }
+    gunAnimation(){
+        this.anims.create({
+            key: 'singleShot',
+            frames: this.anims.generateFrameNumbers('singleShot', { start: 0, end: 10 }),
+            frameRate: 60,
+            repeat: 0 // Play once
+        });
 
+        // Define animations for reload
+        this.anims.create({
+            key: 'reloads',
+            frames: this.anims.generateFrameNumbers('reload', { start: 0, end: 10 }),
+            frameRate: 10,
+            repeat: 0 // Play once
+        });
+
+        // Define animations for emptying
+        this.anims.create({
+            key: 'emptying',
+            frames: this.anims.generateFrameNumbers('emptying', { start: 2, end: 12 }),
+            frameRate: 10,
+            repeat: 0 // Play once
+        });
+    }
     setupScene() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
@@ -148,6 +175,7 @@ class Multiplayer extends Phaser.Scene {
 
         this.input.keyboard.on('keydown-R', () => {
             if (!this.weaponDetails[socket.id] || !canReload) return;
+            this.frontendWeapons[socket.id].anims.play('reloads', true);
             const reloadTime = this.weaponDetails[socket.id].reload;
             canReload = false;
             socket.emit('reload', socket.id);
@@ -245,6 +273,7 @@ class Multiplayer extends Phaser.Scene {
 
     startShooting(firerate) {
         if (!this.frontendPlayers[socket.id] || !this.crosshair) return;
+        this.frontendWeapons[socket.id].anims.play('singleShot', true);
         const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
         socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
         this.shootingInterval = setInterval(() => {
@@ -271,8 +300,8 @@ class Multiplayer extends Phaser.Scene {
             }
         }
         // Setup the player
-        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
-        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(6);
+        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 50, playerData.y, 'singleShot').setScale(2);
         this.playerHealth[id] = this.add.text(playerData.x, playerData.y + 55, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         this.playerUsername[id] = this.add.text(playerData.x, playerData.y - 50, playerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         if (id === socket.id) {
@@ -292,8 +321,8 @@ class Multiplayer extends Phaser.Scene {
                     this.playerUsername[playerId].destroy()
                 }
                 // Create frontend sprites for other players
-                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
-                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 80, otherPlayerData.y, 'shotgun').setScale(3);
+                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(6);
+                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 50, otherPlayerData.y, 'singleShot').setScale(2);
                 this.playerHealth[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
                 this.playerUsername[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 50, otherPlayerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             }
