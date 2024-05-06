@@ -22,13 +22,23 @@ class Singleplayer extends Phaser.Scene {
     this.setupScene();
     this.setupAnimations();
     this.setupInputEvents();
-    this.setupPlayer()
+    this.setupPlayer();
+    this.gunAnimation();
     this.time.delayedCall(500, this.spawnEnemies, [], this);
     this.score = 0;
     this.intervalID
     this.enemies = []
     this.bullets = []
 
+  }
+
+  gunAnimation(){
+    this.anims.create({
+        key: 'singleShot',
+        frames: this.anims.generateFrameNumbers('singleShot', { start: 0, end: 10 }),
+        frameRate: 60,
+        repeat: 0 // Play once
+    });
   }
 
   setupScene() {
@@ -106,8 +116,8 @@ class Singleplayer extends Phaser.Scene {
     this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'WwalkDown2')
     this.player.setScale(4);
     this.player.setCollideWorldBounds(true);
-    this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'shotgun');
-    this.weapon.setScale(4);
+    this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'singleShot');
+    this.weapon.setScale(2);
   }
 
   update () {
@@ -250,7 +260,7 @@ detectCollision() {
 fireBullet(pointer) {
   const direction = Math.atan((this.crosshair.x - this.player.x) / (this.crosshair.y - this.player.y));
         if (!pointer.leftButtonDown()) return;
-
+        this.weapon.anims.play('singleShot', true);
         // Create a projectile
         const bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(4);
         bullet.setRotation(direction);
