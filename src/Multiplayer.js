@@ -10,6 +10,7 @@ class Multiplayer extends Phaser.Scene {
     weaponDetails = {}
     playerUsername = {}
     gameStop = false
+    darkOverlay = {}
 
     constructor() {
         super({ key: 'Multiplayer' });
@@ -26,6 +27,7 @@ class Multiplayer extends Phaser.Scene {
 
     loadImages() {
         this.graphics = this.add.graphics()
+        
     }
 
     create() {
@@ -224,6 +226,7 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
+
     }
 
     startShooting(firerate) {
@@ -373,6 +376,7 @@ class Multiplayer extends Phaser.Scene {
         this.updatePlayerMovement();
         this.updateCameraPosition();
         this.updateCrosshairPosition();
+        this.isInSmoke()
     }
 
     updatePlayerMovement() {
@@ -477,7 +481,7 @@ class Multiplayer extends Phaser.Scene {
     }
 
     grenadeExplode(x, y, id) {
-    const smoke = this.add.sprite(x, y, 'smoke').setScale(12);
+    const smoke = this.add.sprite(x, y, 'smoke').setScale(14);
     this.frontendSmoke[id] = smoke
 
     smoke.play('smokeExplode');
@@ -488,6 +492,43 @@ class Multiplayer extends Phaser.Scene {
     });
     }
 
+    isInSmoke() {
+        for (const id in this.frontendPlayers) {
+            let isIntersecting = false;
+            const player = this.frontendPlayers[id];
+            // Check if player is undefined or doesn't contain valid data
+            if (!player || typeof player.getBounds !== 'function') continue;
+    
+            for (const smokeId in this.frontendSmoke) {
+                const smoke = this.frontendSmoke[smokeId];
+                const smokeBounds = smoke.getBounds();
+                const smallerBounds = new Phaser.Geom.Rectangle(
+                    smokeBounds.x + 25, 
+                    smokeBounds.y + 20,  
+                    smokeBounds.width - 120,  
+                    smokeBounds.height - 120  
+                );
+                if (Phaser.Geom.Intersects.RectangleToRectangle(player.getBounds(), smallerBounds)) {
+                    isIntersecting = true;
+                    break;
+                }
+            }
+    
+            if (isIntersecting && id === socket.id) {
+                if (!this.darkOverlay[id]) {
+                    console.log('creating dark overlay');
+                    this.darkOverlay[id] = this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x808080);
+                    this.darkOverlay[id].setOrigin(0);
+                    this.darkOverlay[id].setAlpha(1); // Adjust the alpha value to control darkness level
+                }
+            } else {
+                if (this.darkOverlay[id]) {
+                    this.darkOverlay[id].destroy();
+                    this.darkOverlay[id] = null;
+                }
+            }
+        }
+    }
 }
 
 export default Multiplayer;
