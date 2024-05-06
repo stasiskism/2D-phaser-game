@@ -7,9 +7,7 @@ class Lobby extends Phaser.Scene {
 
     }
     preload() {
-        this.load.image('menu', 'assets/menuPhoto.jpg');
-        this.load.image('create', 'assets/create.png')
-        this.load.image('join', 'assets/join.png')
+
     }
     create() {
         const centerX = this.cameras.main.width / 2;
@@ -21,6 +19,13 @@ class Lobby extends Phaser.Scene {
         this.distance = -100
         this.setupInputEvents()
         this.createdSprites = {}
+        this.exitButton = this.add.sprite(100, 60, 'exit').setScale(0.2)
+        this.exitButton.setInteractive({ useHandCursor: true })
+        this.exitButton.on('pointerdown', () => {
+            socket.removeAllListeners()
+            this.scene.start('mainMenu')
+            this.scene.stop()
+        })
     }
 
     setupInputEvents() {

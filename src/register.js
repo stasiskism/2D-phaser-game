@@ -8,13 +8,13 @@ class Register extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('menu', 'assets/menuPhoto.jpg');
+
     }
 
     create() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
-        this.vaizdasImage = this.add.sprite(centerX, centerY, 'menu');
+        this.vaizdasImage = this.add.sprite(centerX, centerY, 'background');
 
         const register = this.add.dom(centerX, centerY).createFromHTML(`
             <style>

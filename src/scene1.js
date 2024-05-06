@@ -11,6 +11,9 @@ class Scene1 extends Phaser.Scene {
 
     preload () {
         this.load.image('vaizdas', 'assets/INTRO.png')
+        this.load.image('background', 'assets/ginklas.png')
+        this.load.image('login', 'assets/login.PNG')
+        this.load.image('register', 'assets/register.PNG')
     }
 
     create (data) {
@@ -22,7 +25,7 @@ class Scene1 extends Phaser.Scene {
     }
 
     update (time, delta) {
-        if (time > 5000){
+        if (time > 1000){
             this.scene.stop()
             this.scene.start('authenticate')
         }

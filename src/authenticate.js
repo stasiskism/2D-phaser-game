@@ -6,10 +6,6 @@ class Authenticate extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#ffffff')
     }
     preload() {
-        this.load.image('background', 'assets/ginklas.png')
-        this.load.image('login', 'assets/login.PNG')
-        this.load.image('register', 'assets/register.PNG')
-
     }
     create() {
         const centerX = this.cameras.main.width / 2;
