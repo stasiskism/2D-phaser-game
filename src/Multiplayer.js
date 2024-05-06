@@ -304,7 +304,6 @@ class Multiplayer extends Phaser.Scene {
     }
 
     removePlayer(id) {
-  
         if (id === socket.id && !this.gameStop) {
             socket.removeAllListeners()
             this.scene.stop('Multiplayer')
@@ -457,6 +456,10 @@ class Multiplayer extends Phaser.Scene {
     }
 
     gameWon(username) {
+        delete this.frontendGrenades
+        delete this.frontendSmoke
+        delete this.frontendProjectiles
+        delete this.darkOverlay
         socket.removeAllListeners()
         this.cameras.main.centerOn(this.cameras.main.width / 2, this.cameras.main.height / 2);
         const winningText = this.add.text(
@@ -513,6 +516,7 @@ class Multiplayer extends Phaser.Scene {
                     break;
                 }
             }
+            console.log(this.darkOverlay)
     
             if (isIntersecting && id === socket.id) {
                 if (!this.darkOverlay[id]) {

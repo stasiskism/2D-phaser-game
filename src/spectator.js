@@ -197,6 +197,7 @@ class Spectator extends Phaser.Scene {
     }
 
     setupProjectile(playerId, id, backendProjectile) {
+        if (!this.frontendPlayers[playerId]) return
         const projectile = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet').setScale(4);
 
         const direction = Phaser.Math.Angle.Between(

@@ -42,9 +42,11 @@ class Respawn extends Phaser.Scene {
     }
 
     clickQuitButton() {
+        socket.emit('leaveRoom', this.multiplayerId)
         this.scene.start('mainMenu')
         this.scene.stop('multiplayer')
         this.scene.stop()
+        socket.removeAllListeners()
     }
 }
 

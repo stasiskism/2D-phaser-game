@@ -21,7 +21,7 @@ const sql = new Pool({
     user: 'postgres',
     host: '193.219.42.55',
     database: 'postgres',
-    password: '2dcs',
+    password: '123456789qwertyuiop',
     port: 14066
 })
 
@@ -175,6 +175,8 @@ io.on('connection', (socket) => {
                                 delete readyPlayers[roomId][playerId];
                             }
                         }
+                        delete readyPlayers[roomId]
+                        console.log(readyPlayers)
                         startGame(roomId);
                         client.release();
                     } catch (error) {
@@ -392,6 +394,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('leaveRoom', (roomId) => {
+        console.log('turetu leavint')
         for (const id in rooms) {
             if (id === roomId) {
                 const room = rooms[roomId];
@@ -405,6 +408,7 @@ io.on('connection', (socket) => {
                     if (room.players.length === 0) {
                         console.log('Deleting room:', roomId);
                         delete rooms[roomId];
+                        delete readyPlayers[roomId]
                     } else {
                         // Update room players for remaining clients
                         io.to(roomId).emit('updateRoomPlayers', room.players);
@@ -564,13 +568,12 @@ setInterval(async () => {
                 const damage = weaponDetails[backendProjectiles[id].playerId].damage
                 backendPlayers[playerId].health -= damage
                 if (backendPlayers[playerId].health <= 0) {
-                    delete backendPlayers[playerId]
                     if (backendPlayers[backendProjectiles[id].playerId]) {
                         const client = await sql.connect()
                         await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [backendPlayers[backendProjectiles[id].playerId].username])
                         client.release()
-                        backendPlayers[backendProjectiles[id].playerId].score++
                     }
+                    delete backendPlayers[playerId]
                 }
                 delete backendProjectiles[id]
                 break
