@@ -1,16 +1,17 @@
 /* global Phaser, socket */
 
 class Multiplayer extends Phaser.Scene {
-    frontendPlayers = {};
-    frontendWeapons = {};
-    frontendProjectiles = {};
+    frontendPlayers = {}
+    frontendWeapons = {}
+    frontendProjectiles = {}
     frontendGrenades = {}
     frontendSmoke = {}
     playerHealth = {}
     weaponDetails = {}
     playerUsername = {}
-    gameStop = false
     darkOverlay = {}
+    empty = false
+    gameStop = false
 
     constructor() {
         super({ key: 'Multiplayer' });
@@ -27,7 +28,6 @@ class Multiplayer extends Phaser.Scene {
 
     loadImages() {
         this.graphics = this.add.graphics()
-        
     }
 
     create() {
@@ -47,7 +47,7 @@ class Multiplayer extends Phaser.Scene {
         this.anims.create({
             key: 'reloads',
             frames: this.anims.generateFrameNumbers('reload', { start: 0, end: 10 }),
-            frameRate: 10,
+            frameRate: 13,
             repeat: 0 // Play once
         });
 
@@ -55,7 +55,14 @@ class Multiplayer extends Phaser.Scene {
         this.anims.create({
             key: 'emptying',
             frames: this.anims.generateFrameNumbers('emptying', { start: 2, end: 12 }),
-            frameRate: 10,
+            frameRate: 60,
+            repeat: 0 // Play once
+        });
+
+        this.anims.create({
+            key: 'fullautos',
+            frames: this.anims.generateFrameNumbers('fullauto', { start: 2, end: 12 }),
+            frameRate: 60,
             repeat: 0 // Play once
         });
     }
@@ -141,11 +148,14 @@ class Multiplayer extends Phaser.Scene {
         this.input.keyboard.on('keydown-R', () => {
             if (!this.weaponDetails || !canReload) return;
             this.frontendWeapons[socket.id].anims.play('reloads', true);
+            canShoot = false;
             const reloadTime = this.weaponDetails.reload;
             canReload = false;
             socket.emit('reload', socket.id);
             setTimeout(() => {
+                
                 canReload = true;
+                canShoot = true;
             }, reloadTime);
         });
 
@@ -226,7 +236,6 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
-
     }
 
     startShooting(firerate) {
@@ -237,6 +246,7 @@ class Multiplayer extends Phaser.Scene {
         this.shootingInterval = setInterval(() => {
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
+            this.frontendWeapons[socket.id].anims.play('singleShot', true);
         }, firerate); // fire rate based on weapon
 
     }
@@ -259,8 +269,8 @@ class Multiplayer extends Phaser.Scene {
             }
         }
         // Setup the player
-        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
-        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(5);
+        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'singleShot').setScale(2);
         this.playerHealth[id] = this.add.text(playerData.x, playerData.y + 55, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         this.playerUsername[id] = this.add.text(playerData.x, playerData.y - 50, playerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         if (id === socket.id) {
@@ -281,8 +291,8 @@ class Multiplayer extends Phaser.Scene {
                     this.playerUsername[playerId].destroy()
                 }
                 // Create frontend sprites for other players
-                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
-                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 80, otherPlayerData.y, 'shotgun').setScale(3);
+                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(5);
+                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 80, otherPlayerData.y, 'singleShot').setScale(2);
                 this.playerHealth[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
                 this.playerUsername[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 50, otherPlayerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             }
@@ -376,7 +386,7 @@ class Multiplayer extends Phaser.Scene {
         this.updatePlayerMovement();
         this.updateCameraPosition();
         this.updateCrosshairPosition();
-        this.isInSmoke()
+        this.isInSmoke();
     }
 
     updatePlayerMovement() {
@@ -422,7 +432,7 @@ class Multiplayer extends Phaser.Scene {
         if (player && weapon) {
             const angleToPointer = Phaser.Math.Angle.Between(player.x, player.y, this.crosshair.x, this.crosshair.y);
             weapon.setRotation(angleToPointer);
-            const orbitDistance = 70;
+            const orbitDistance = 110;
             const weaponX = player.x + Math.cos(angleToPointer) * orbitDistance;
             const weaponY = player.y + Math.sin(angleToPointer) * orbitDistance;
             weapon.setPosition(weaponX, weaponY);
@@ -491,7 +501,6 @@ class Multiplayer extends Phaser.Scene {
         delete this.frontendSmoke[id]
     });
     }
-
     isInSmoke() {
         for (const id in this.frontendPlayers) {
             let isIntersecting = false;
@@ -529,6 +538,7 @@ class Multiplayer extends Phaser.Scene {
             }
         }
     }
+
 }
 
 export default Multiplayer;
