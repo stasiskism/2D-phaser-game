@@ -10,11 +10,6 @@ class Room extends Phaser.Scene {
         this.roomId = data.roomId
     }
     preload() {
-        this.load.image('smokeGrenade', 'assets/smokeGrenade.png')
-        this.load.spritesheet('singleShot', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[SINGLE_SHOT] Assault_rifle_V1.00.png', { frameWidth: 128, frameHeight: 48 });
-        this.load.spritesheet('reload', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[RELOAD] Assault_rifle_V1.00 - Reload.png', { frameWidth: 96, frameHeight: 64 });
-        this.load.spritesheet('emptying', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[EMPTYING] Assault_rifle_V1.00.png', { frameWidth: 96, frameHeight: 64 });
-        this.load.spritesheet('smoke', 'assets/smoke.png', { frameWidth: 32, frameHeight: 32, endFrame: 33 });
         this.graphics = this.add.graphics()
     }
     create() {

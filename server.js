@@ -240,7 +240,6 @@ io.on('connection', (socket) => {
                 if (!weaponDetails[socket.id]) return
                 const reloadTime = weaponDetails[socket.id].reload
                 const bullets = weaponDetails[socket.id].ammo
-                reload(reloadTime, bullets, socket.id)
             }
 
         }
