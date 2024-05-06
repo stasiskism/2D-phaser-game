@@ -21,7 +21,7 @@ const sql = new Pool({
     user: 'postgres',
     host: '193.219.42.55',
     database: 'postgres',
-    password: '2dcs',
+    password: '123456789qwertyuiop',
     port: 14066
 })
 
@@ -238,7 +238,6 @@ io.on('connection', (socket) => {
                 if (!weaponDetails[socket.id]) return
                 const reloadTime = weaponDetails[socket.id].reload
                 const bullets = weaponDetails[socket.id].ammo
-                reload(reloadTime, bullets, socket.id)
             }
 
         }
