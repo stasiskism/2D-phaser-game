@@ -148,8 +148,8 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('updateReadyPlayers', calculateReadyPlayers(readyPlayers[roomId]))
     })
 
-    socket.on('startCountdown', (roomId) => {
-        if (rooms[roomId] && !rooms[roomId].countdownStarted) {
+    socket.on('startCountdown', async (roomId) => {
+        if (roomId && !rooms[roomId].countdownStarted) {
             let countdownTime = 1
             rooms[roomId].countdownStarted = true;
             
@@ -159,14 +159,33 @@ io.on('connection', (socket) => {
                     clearInterval(countdownInterval);
                     io.to(roomId).emit('countdownEnd');
                     rooms[roomId].countdownStarted = false;
-                    delete readyPlayers[roomId]
-                    startGame(roomId)
+    
+                    try {
+                        const client = await sql.connect();
+    
+                        // Collect weapon details for all players
+                        for (const playerId in readyPlayers[roomId]) {
+                            if (readyPlayers[roomId][playerId]) {
+                                const username = playerUsername[playerId];
+                                const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
+                                const weaponId = weaponIdResult.rows[0].weapon;
+                                const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload, radius FROM weapons WHERE weapon_id = $1', [weaponId]);
+                                const weapons = weaponDetailsResult.rows[0];
+                                weaponDetails[playerId] = weapons;
+                                delete readyPlayers[roomId][playerId];
+                            }
+                        }
+                        startGame(roomId);
+                        client.release();
+                    } catch (error) {
+                        console.error('Error in getting weapon details:', error);
+                    }
                 } else {
-                    io.to(roomId).emit('updateCountdown', countdownTime);
+                   io.to(roomId).emit('updateCountdown', countdownTime);
                 }
             }, 1000);
         }
-    })
+    });
 
 
     socket.on('playerAnimationChange', (AnimData) => {
@@ -261,6 +280,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('reload', (id) => {
+        if (!weaponDetails[id]) return
         const reloadTime = weaponDetails[id].reload
         const bullets = weaponDetails[id].ammo
         reload(reloadTime, bullets, id)
@@ -470,36 +490,39 @@ function filterGrenadesByMultiplayerId(multiplayerId) {
     return grenadesInSession
 }
 
-async function startGame(multiplayerId) {
-        if (rooms[multiplayerId] && rooms[multiplayerId].players) {
-        let playersInRoom = {}
-        rooms[multiplayerId].gameStarted = true
-        playersInRoom = rooms[multiplayerId].players
-        const client = await sql.connect()
-        playersInRoom.forEach(async (player) => {
-            const id = player.id
-            const username = 'asd' //playerUsername[id];
-            const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
-            const weaponId = weaponIdResult.rows[0].weapon;
-            const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload, radius FROM weapons WHERE weapon_id = $1', [weaponId]);
-            const weapons = weaponDetailsResult.rows[0];
-            weaponDetails[id] = weapons
-            io.to(multiplayerId).emit('weapon', weaponDetails)
-            const bullets = weaponDetails[id].ammo
-            backendPlayers[id] = { 
-                id,
-                multiplayerId,
-                x: 1920 * Math.random(),
-                y: 1080 * Math.random(),
-                score: 0,
-                username,
-                health: 100,
-                bullets,
-                grenades: 2
-            };
-        });
-    }
+function startGame(multiplayerId) {
+    if (rooms[multiplayerId] && rooms[multiplayerId].players) {
+    let playersInRoom = {}
+    rooms[multiplayerId].gameStarted = true
+    playersInRoom = rooms[multiplayerId].players
+    playersInRoom.forEach((player) => {
+        const id = player.id
+        const username = playerUsername[id];
+        const damage = weaponDetails[id].damage
+        const bullets = weaponDetails[id].ammo
+        const firerate = weaponDetails[id].fire_rate
+        const reload = weaponDetails[id].reload
+        const radius = weaponDetails[id].radius
+
+        backendPlayers[id] = { 
+            id,
+            multiplayerId,
+            x: 1920 * Math.random(),
+            y: 1080 * Math.random(),
+            score: 0,
+            username,
+            health: 100,
+            bullets,
+            damage,
+            firerate,
+            reload,
+            radius,
+            grenades: 2
+        };
+    });
 }
+}
+
 function reload(reloadTime, bullets, id) {
     reloadingStatus[id] = true
     const reloadInterval = setInterval(() => {

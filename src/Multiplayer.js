@@ -156,10 +156,9 @@ class Multiplayer extends Phaser.Scene {
         this.input.mouse.requestPointerLock();
 
         this.input.on('pointerdown', (pointer) => {
-        //BUNA UNDEFINED PLAYERIUI KURIS NEISIJUNGIA TABO ISKART
             this.input.mouse.requestPointerLock();
-            if (!this.weaponDetails[socket.id]) return
-            const firerate = this.weaponDetails[socket.id].fire_rate
+            if (!this.weaponDetails) return
+            const firerate = this.weaponDetails.fire_rate
             if (pointer.leftButtonDown() && canShoot) {
                 this.startShooting(firerate);
                 canShoot = false;
@@ -174,9 +173,9 @@ class Multiplayer extends Phaser.Scene {
         let canReload = true
 
         this.input.keyboard.on('keydown-R', () => {
-            if (!this.weaponDetails[socket.id] || !canReload) return;
+            if (!this.weaponDetails || !canReload) return;
             this.frontendWeapons[socket.id].anims.play('reloads', true);
-            const reloadTime = this.weaponDetails[socket.id].reload;
+            const reloadTime = this.weaponDetails.reload;
             canReload = false;
             socket.emit('reload', socket.id);
             setTimeout(() => {
@@ -210,14 +209,6 @@ class Multiplayer extends Phaser.Scene {
                 this.frontendWeapons[playerId].setPosition(x, y).setRotation(rotation);
             }
         });
-
-        socket.on('weapon', (weaponDetails) => { //NEGAUNA JEIGU PLAYERIS YRA TABBED OUTINES
-            for (const id in weaponDetails) {
-                if (id === socket.id) {
-                    this.weaponDetails[id] = weaponDetails[id]
-                }
-            }
-        })
 
         socket.on('updatePlayers', backendPlayers => {
             const alivePlayers = {}; // To keep track of alive players
@@ -295,18 +286,20 @@ class Multiplayer extends Phaser.Scene {
             this.frontendWeapons[id].destroy();
             this.playerHealth[id].destroy();
             this.playerUsername[id].destroy()
+            this.weaponDetails.destroy()
             if (id === socket.id) {
                 this.playerAmmo.destroy()
             }
         }
         // Setup the player
-        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(6);
-        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 50, playerData.y, 'singleShot').setScale(2);
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
+        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
         this.playerHealth[id] = this.add.text(playerData.x, playerData.y + 55, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         this.playerUsername[id] = this.add.text(playerData.x, playerData.y - 50, playerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         if (id === socket.id) {
             this.playerAmmo = this.add.text(playerData.x, playerData.y + 750, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
-
+            this.weaponDetails = { damage: playerData.damage, fire_rate: playerData.firerate, ammo: playerData.bullets, reload: playerData.reload, radius: playerData.radius}
+            console.log(this.weaponDetails)
         }
 
         // Setup other players
@@ -321,8 +314,8 @@ class Multiplayer extends Phaser.Scene {
                     this.playerUsername[playerId].destroy()
                 }
                 // Create frontend sprites for other players
-                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(6);
-                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 50, otherPlayerData.y, 'singleShot').setScale(2);
+                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
+                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x + 80, otherPlayerData.y, 'shotgun').setScale(3);
                 this.playerHealth[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
                 this.playerUsername[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 50, otherPlayerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             }
@@ -350,7 +343,7 @@ class Multiplayer extends Phaser.Scene {
             this.scene.stop('Multiplayer')
             this.scene.start('respawn', {multiplayerId: this.multiplayerId, frontendPlayers: this.frontendPlayers, frontendProjectiles: this.frontendProjectiles, frontendWeapons: this.frontendWeapons, playerHealt: this.playerHealth})
             this.playerAmmo.destroy()
-            delete this.weaponDetails[id]
+            delete this.weaponDetails
         }
         if (id === socket.id ) {
             this.playerAmmo.destroy()
@@ -479,7 +472,7 @@ class Multiplayer extends Phaser.Scene {
 
     updateCrosshairPosition() {
         if (!this.frontendPlayers[socket.id]) return;
-        const crosshairRadius = this.weaponDetails[socket.id].radius
+        const crosshairRadius = this.weaponDetails.radius
         const player = this.frontendPlayers[socket.id];
         this.crosshair.body.velocity.x = player.body.velocity.x;
         this.crosshair.body.velocity.y = player.body.velocity.y;
