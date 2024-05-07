@@ -57,6 +57,9 @@ class Scene1 extends Phaser.Scene {
         this.load.tilemapTiledJSON('map', 'assets/maps.json');
         this.load.image('wasd', 'assets/wasd.png')
         this.load.image('tutorial', 'assets/tutorials.png')
+        this.load.image('R', 'assets/R-Key.png')
+        this.load.image('G', 'assets/G-Key.png')
+        this.load.image('left-click', 'assets/left-click.png')
     }
 
     create (data) {

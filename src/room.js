@@ -106,6 +106,12 @@ class Room extends Phaser.Scene {
         const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
         this.add.sprite(430, 430, 'wasd').setScale(0.2)
         this.add.text(375, 350, 'Movement').setScale(1.5)
+        this.add.image(450, 520, 'R').setScale(1.5)
+        this.add.text(385, 480, 'Reload').setScale(1.5)
+        this.add.image(450, 590, 'G').setScale(1.5)
+        this.add.text(350, 540, 'Smoke grenade').setScale(1.5)
+        this.add.image(420, 680, 'left-click').setScale(0.2)
+        this.add.text(385, 610, 'Shoot').setScale(1.5)
         this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
         this.fullscreenButton.setInteractive({ useHandCursor: true })
         this.fullscreenButton.on('pointerdown', () => {
