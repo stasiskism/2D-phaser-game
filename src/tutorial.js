@@ -16,12 +16,8 @@ class Tutorial extends Phaser.Scene {
     }
 
     preload() {
-        this.loadImages();
     }
 
-    loadImages() {
-
-    }
 
     create() {
         this.setupScene();

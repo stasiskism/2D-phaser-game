@@ -8,6 +8,7 @@ class MainMenu extends Phaser.Scene {
     this.popupText = null;
     this.singleplayerObject = null;
     this.multiplayerObject = null;
+    this.login = true
   }
 
   preload() {
@@ -250,7 +251,7 @@ class MainMenu extends Phaser.Scene {
     if (this.eKey.isDown && distance < 50) {
       if (object === this.singleplayerObject) {
 
-        this.scene.start('Singleplayer');
+        this.scene.start('Singleplayer', {login});
         this.scene.stop()
       } else if (object === this.multiplayerObject) {
 

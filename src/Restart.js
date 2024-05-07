@@ -8,6 +8,7 @@ class Restart extends Phaser.Scene {
     init (data) {
         this.cameras.main.setBackgroundColor('#ffffff')
         this.score = data.score
+        this.login = data.login
     }
 
     preload () {
@@ -40,9 +41,13 @@ class Restart extends Phaser.Scene {
     }
 
     clickQuitButton() {
-        this.scene.start('mainMenu')
-        this.scene.stop('multiplayer')
-        this.scene.stop()
+        if (this.login) {
+            this.scene.start('mainMenu')
+            this.scene.stop()
+        } else {
+            this.scene.start('authenticate')
+            this.scene.stop()
+        }
     }
 }
 

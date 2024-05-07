@@ -11,6 +11,7 @@ class Singleplayer extends Phaser.Scene {
 
   init (data) {
     this.cameras.main.setBackgroundColor('#000000');
+    this.login = data.login
   }
 
   preload () {
@@ -234,7 +235,7 @@ detectCollision() {
         // Player dies, end game. Change distance for more accurate collision.
         if (distance < 50) {
             clearInterval(this.intervalID);
-            this.scene.start('Restart', { score: this.score });
+            this.scene.start('Restart', { score: this.score, login: this.login });
             this.scene.stop();
         }
 
