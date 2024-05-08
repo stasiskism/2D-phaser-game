@@ -234,9 +234,14 @@ detectCollision() {
         const distance = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
         // Player dies, end game. Change distance for more accurate collision.
         if (distance < 50) {
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
             clearInterval(this.intervalID);
             this.scene.start('Restart', { score: this.score, login: this.login });
             this.scene.stop();
+
         }
 
         // Player bullet and enemy collision
