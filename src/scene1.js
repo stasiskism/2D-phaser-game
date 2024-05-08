@@ -54,6 +54,7 @@ class Scene1 extends Phaser.Scene {
         this.load.spritesheet('reload', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[RELOAD] Assault_rifle_V1.00 - Reload.png', { frameWidth: 96, frameHeight: 64 });
         this.load.spritesheet('emptying', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[EMPTYING] Assault_rifle_V1.00.png', { frameWidth: 96, frameHeight: 64 });
         this.load.spritesheet('smoke', 'assets/smoke.png', { frameWidth: 32, frameHeight: 32, endFrame: 33 });
+        this.load.spritesheet('enemiess', 'assets/Bowllingguychibi-Run.png', { frameWidth: 64, frameHeight: 64 });
         this.load.tilemapTiledJSON('map', 'assets/maps.json');
         this.load.image('wasd', 'assets/wasd.png')
         this.load.image('tutorial', 'assets/tutorials.png')

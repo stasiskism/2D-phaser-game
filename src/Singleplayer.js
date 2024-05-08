@@ -31,6 +31,13 @@ class Singleplayer extends Phaser.Scene {
     this.enemies = []
     this.bullets = []
 
+    this.anims.create({
+      key: 'enemiess', // Animation key
+      frames: this.anims.generateFrameNumbers('enemiess', { start: 0, end: 7 /* total number of frames - 1 */ }),
+      frameRate: 30 /* frame rate */,
+      repeat: -1 // Repeat indefinitely
+  });
+
   }
 
   gunAnimation(){
@@ -311,7 +318,8 @@ updateBullet() {
           { x: Phaser.Math.Between(0, 1920), y: 1080 } // Bottom border
       ];
       const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
-      const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemy');
+      const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemiess');
+      enemy.anims.play('enemiess', true);
       enemy.setScale(0.1)
       enemy.setCollideWorldBounds(false)
       const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x)
