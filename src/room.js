@@ -16,7 +16,6 @@ class Room extends Phaser.Scene {
     create() {
         this.setupScene()
         this.setupInputEvents()
-        this.setupAnimations()
     }
 
     setupInputEvents() {
@@ -179,26 +178,6 @@ class Room extends Phaser.Scene {
         //this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
     }
 
-    setupAnimations() {
-        const animations = [
-            { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
-            { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
-            { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
-            { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
-            { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
-            { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
-            { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
-            { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
-            { key: 'idle', frames: ['WwalkDown2'] }
-        ];
-        animations.forEach(anim => this.anims.create({
-            key: anim.key,
-            frames: anim.frames.map(frame => ({ key: frame })),
-            frameRate: 10,
-            repeat: -1
-        }));
-    }
-
     setupPlayer(id, playerData) {
         // Cleanup existing player sprites if they exist
         // if (this.frontendPlayers[id]) {
@@ -279,6 +258,7 @@ class Room extends Phaser.Scene {
         for (const playerId in this.readyPlayers) {
            count++
         }
+        //if (count === this.readyPlayersCount && count > 1) {
         if (count === this.readyPlayersCount) {
             this.readyButton.destroy()
             console.log('VISI PLAYERIAI READY')

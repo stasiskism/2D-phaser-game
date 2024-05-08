@@ -4,7 +4,7 @@ const {Server} = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {pingInterval: 2000, pingTimeout: 5000});
+const io = new Server(server, {pingInterval: 2000, pingTimeout: 7000});
 
 const bodyParser = require('body-parser')
 const { Pool } = require('pg');
@@ -479,7 +479,7 @@ io.on('connection', (socket) => {
         }
 
         if (backendPlayers[playerId]) {
-        backendPlayers[playerId].y += 1
+        backendPlayers[playerId].y += 2
         if (backendPlayers[playerId].y > 1080 + mapSize) {
             delete backendPlayers[playerId]
         }
@@ -556,7 +556,7 @@ function startGame(multiplayerId) {
             firerate,
             reload,
             radius,
-            grenades: 2
+            grenades: 1
         };
     });
 }

@@ -23,7 +23,6 @@ class MainMenu extends Phaser.Scene {
     this.fetchLeaderboardData()
     this.setupScene()
     this.setupInputEvents()
-    this.setupAnimations()
   }
 
   setupInputEvents() {
@@ -102,26 +101,6 @@ class MainMenu extends Phaser.Scene {
         this.leaderboard.setPosition(100, 100).setScrollFactor(0);
         this.document = this.leaderboard.node.querySelector(`#playerLabels`)
 
-  }
-
-  setupAnimations() {
-    const animations = [
-      { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
-      { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
-      { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
-      { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
-      { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
-      { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
-      { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
-      { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
-      { key: 'idle', frames: ['WwalkDown2'] }
-  ];
-  animations.forEach(anim => this.anims.create({
-      key: anim.key,
-      frames: anim.frames.map(frame => ({ key: frame })),
-      frameRate: 10,
-      repeat: -1
-  }));
   }
 
   update() {

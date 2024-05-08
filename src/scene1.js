@@ -64,7 +64,7 @@ class Scene1 extends Phaser.Scene {
         this.load.image('dead', 'assets/dead.jpg')
         this.load.image('wall', 'assets/wall.png')
         this.load.image('restartButton', 'assets/pngegg.png')
-        this.load.image('quitButton', 'assets/quit.png')
+        this.load.image('quitButton', 'assets/quit.PNG')
     }
 
     create (data) {
@@ -72,8 +72,29 @@ class Scene1 extends Phaser.Scene {
         const centerY = this.cameras.main.height / 2;
 
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'vaizdas');
+        this.setupAnimations()
 
     }
+
+    setupAnimations() {
+        const animations = [
+          { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
+          { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
+          { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
+          { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
+          { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
+          { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
+          { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
+          { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
+          { key: 'idle', frames: ['WwalkDown2'] }
+      ];
+      animations.forEach(anim => this.anims.create({
+          key: anim.key,
+          frames: anim.frames.map(frame => ({ key: frame })),
+          frameRate: 10,
+          repeat: -1
+      }));
+      }
 
     update (time, delta) {
         if (time > 1000){

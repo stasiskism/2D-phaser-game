@@ -21,7 +21,6 @@ class Singleplayer extends Phaser.Scene {
   create () {
 
     this.setupScene();
-    this.setupAnimations();
     this.setupInputEvents();
     this.setupPlayer();
     this.gunAnimation();
@@ -70,27 +69,6 @@ class Singleplayer extends Phaser.Scene {
 
     this.graphics.lineStyle(10, 0xff0000);
     this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
-
-  }
-
-  setupAnimations() {
-    const animations = [
-      { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
-      { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
-      { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
-      { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
-      { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
-      { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
-      { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
-      { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
-      { key: 'idle', frames: ['WwalkDown2'] }
-    ];
-    animations.forEach(anim => this.anims.create({
-      key: anim.key,
-      frames: anim.frames.map(frame => ({ key: frame })),
-      frameRate: 10,
-      repeat: -1
-    }));
 
   }
 
@@ -311,23 +289,23 @@ updateBullet() {
 
   spawnEnemies() {
     this.intervalID = setInterval(() => {
+    const numEnemies = Phaser.Math.Between(1, 4);
+    for(let i = 0; i < numEnemies; i++) {
       const spawnPoints = [
-          { x: 0, y: Phaser.Math.Between(0, 1080) },  // Left border
-          { x: 1920, y: Phaser.Math.Between(0, 1080) }, // Right border
-          { x: Phaser.Math.Between(0, 1920), y: 0 },   // Top border
-          { x: Phaser.Math.Between(0, 1920), y: 1080 } // Bottom border
+        { x: 0, y: Phaser.Math.Between(0, 1080) },  // Left border
+        { x: 1920, y: Phaser.Math.Between(0, 1080) }, // Right border
+        { x: Phaser.Math.Between(0, 1920), y: 0 },   // Top border
+        { x: Phaser.Math.Between(0, 1920), y: 1080 } // Bottom border
       ];
-      const numEnemies = Phaser.Math.Between(1, 4);
-      for(let i = 0; i < numEnemies; i++) {
-        const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
-        const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemiess');
-        enemy.anims.play('enemiess', true);
-        enemy.setScale(2)
-        enemy.setCollideWorldBounds(false)
-        const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x)
-        enemy.setVelocity(300 * Math.cos(angle), 300 * Math.sin(angle))
-        this.enemies.push(enemy)
-      }
+      const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
+      const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemiess');
+      enemy.anims.play('enemiess', true);
+      enemy.setScale(2)
+      enemy.setCollideWorldBounds(false)
+      const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x)
+      enemy.setVelocity(300 * Math.cos(angle), 300 * Math.sin(angle))
+      this.enemies.push(enemy)
+    }
     }, 1000)
   }
 
