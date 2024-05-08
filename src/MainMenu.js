@@ -21,7 +21,20 @@ class MainMenu extends Phaser.Scene {
 
   create() {
     this.fetchLeaderboardData()
-    
+    this.setupScene()
+    this.setupInputEvents()
+    this.setupAnimations()
+  }
+
+  setupInputEvents() {
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+  }
+
+  setupScene() {
     let centerX = this.cameras.main.width / 2;
     let centerY = this.cameras.main.height / 2;
 
@@ -35,106 +48,16 @@ class MainMenu extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3); // 'WwalkDown2' is the idle frame
 
-      this.anims.create({
-        key: 'WwalkUp',
-        frames: [
-            { key: 'WwalkUp1' },
-            { key: 'WwalkUp2' },
-            { key: 'WwalkUp3' }
-        ],
-        frameRate: 10,
-        repeat: -1
-    });
-
-    this.anims.create({
-      key: 'WwalkUpRight',
-      frames: [
-          { key: 'WwalkUpRight1' },
-          { key: 'WwalkUpRight2' },
-          { key: 'WwalkUpRight3' }
-      ],
-      frameRate: 10,
-      repeat: -1
-  });
-
-    this.anims.create({
-      key: 'WwalkRight',
-      frames: [
-          { key: 'WwalkRight1' },
-          { key: 'WwalkRight2' },
-          { key: 'WwalkRight3' }
-      ],
-      frameRate: 10,
-      repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkDownRight',
-    frames: [
-        { key: 'WwalkDownRight1' },
-        { key: 'WwalkDownRight2' },
-        { key: 'WwalkDownRight3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkDown',
-    frames: [
-        { key: 'WwalkDown1' },
-        { key: 'WwalkDown2' },
-        { key: 'WwalkDown3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkDownLeft',
-    frames: [
-        { key: 'WwalkDownLeft1' },
-        { key: 'WwalkDownLeft2' },
-        { key: 'WwalkDownLeft3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkLeft',
-    frames: [
-        { key: 'WwalkLeft1' },
-        { key: 'WwalkLeft2' },
-        { key: 'WwalkLeft3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkUpLeft',
-    frames: [
-        { key: 'WwalkUpLeft1' },
-        { key: 'WwalkUpLeft2' },
-        { key: 'WwalkUpLeft3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
-  this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
-  this.fullscreenButton.setInteractive({ useHandCursor: true })
-  this.fullscreenButton.on('pointerdown', () => {
+    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+    this.fullscreenButton.setInteractive({ useHandCursor: true })
+    this.fullscreenButton.on('pointerdown', () => {
       document.getElementById('phaser-example');
       if (this.scale.isFullscreen) {
           this.scale.stopFullscreen();
       } else {
           this.scale.startFullscreen();
       }
-  })
-
-
+    })
 
     this.objects = this.physics.add.staticGroup();
     this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
@@ -178,52 +101,70 @@ class MainMenu extends Phaser.Scene {
 
         this.leaderboard.setPosition(100, 100).setScrollFactor(0);
         this.document = this.leaderboard.node.querySelector(`#playerLabels`)
+
+  }
+
+  setupAnimations() {
+    const animations = [
+      { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
+      { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
+      { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
+      { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
+      { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
+      { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
+      { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
+      { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
+      { key: 'idle', frames: ['WwalkDown2'] }
+  ];
+  animations.forEach(anim => this.anims.create({
+      key: anim.key,
+      frames: anim.frames.map(frame => ({ key: frame })),
+      frameRate: 10,
+      repeat: -1
+  }));
   }
 
   update() {
-
-    const cursors = this.input.keyboard.createCursorKeys();
-    const wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    const aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    const sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    const dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-
-    // Reset player velocity
-    this.player.setVelocity(0);
-
-    // Horizontal movement
-    if (cursors.left.isDown || aKey.isDown) {
-        this.player.setVelocityX(-160);
-        this.player.anims.play('WwalkLeft', true);
-    } else if (cursors.right.isDown || dKey.isDown) {
-        this.player.setVelocityX(160);
-        this.player.anims.play('WwalkRight', true);
-    }
-
-    // Vertical movement
-    if (cursors.up.isDown || wKey.isDown) {
-        this.player.setVelocityY(-160);
-        this.player.anims.play('WwalkUp', true);
-    } else if (cursors.down.isDown || sKey.isDown) {
-        this.player.setVelocityY(160);
-        this.player.anims.play('WwalkDown', true);
-    }
-
-    // Normalize diagonal movement
-    if ((cursors.up.isDown || wKey.isDown) && (cursors.left.isDown || aKey.isDown)) {
-        this.player.body.velocity.normalize().scale(160);
-        this.player.anims.play('WwalkUpLeft', true);
-    } else if ((cursors.up.isDown || wKey.isDown) && (cursors.right.isDown || dKey.isDown)) {
-        this.player.body.velocity.normalize().scale(160);
-        this.player.anims.play('WwalkUpRight', true);
-    } else if ((cursors.down.isDown || sKey.isDown) && (cursors.left.isDown || aKey.isDown)) {
-        this.player.body.velocity.normalize().scale(160);
-        this.player.anims.play('WwalkDownLeft', true);
-    } else if ((cursors.down.isDown || sKey.isDown) && (cursors.right.isDown || dKey.isDown)) {
-        this.player.body.velocity.normalize().scale(160);
-        this.player.anims.play('WwalkDownRight', true);
-    }
+    this.updatePlayerMovement()
   }
+
+  updatePlayerMovement() {
+    if (!this.player) return;
+    const player = this.player
+    let moving = false;
+    let direction = '';
+
+    if (this.w.isDown) {
+        moving = true;
+        direction += 'Up';
+        player.y -= 2;
+    } else if (this.s.isDown) {
+        moving = true;
+        direction += 'Down';
+        player.y += 2;
+    }
+
+    if (this.a.isDown) {
+        moving = true;
+        direction += 'Left';
+        player.x -= 2;
+    } else if (this.d.isDown) {
+        moving = true;
+        direction += 'Right';
+        player.x += 2;
+    }
+
+    if (moving) {
+        if (player && player.anims) {
+            const animationName = `Wwalk${direction}`;
+            player.anims.play(animationName, true);
+        }
+    } else {
+        if (player && player.anims) {
+        player.anims.stop();
+        }
+    }
+}
 
   interactWithObject(player, object) {
     const distance = Phaser.Math.Distance.Between(player.x, player.y, object.x, object.y);

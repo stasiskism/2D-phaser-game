@@ -171,10 +171,10 @@ class Room extends Phaser.Scene {
         //     this.physics.add.collider(this.player, invisibleWall);
         // });
 
-        this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+        // this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
 
-        this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
-        this.popupText.setVisible(false);
+        // this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+        // this.popupText.setVisible(false);
 
         //this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
     }
