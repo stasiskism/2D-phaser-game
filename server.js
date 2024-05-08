@@ -82,47 +82,47 @@ io.on('connection', (socket) => {
     socket.on('login', async (data) => {
         const {username, password} = data
         try {
-                    const client = await sql.connect()
-                    const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
-                    if (result.rows.length === 0 || activeSessions[username]) {
-                        socket.emit('loginResponse', { success: false });
-                    } else {
-                        const firstLogin = result.rows[0].first_login
-                        if (firstLogin) {
-                            await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
-                            socket.emit('loginResponse', { success: true, firstLogin });
-                        }
-                        else {
-                        // Authentication successful
-                        socket.emit('loginResponse', { success: true });
-                        }
-                        playerUsername[socket.id] = username
-                        activeSessions[username] = socket.id
-                    }
-                    
-                    client.release();
-                } catch (error) {
-                    console.error('Error authenticating user:', error);
-                    socket.emit('loginResponse', { success: false });
+            const client = await sql.connect()
+            const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
+            if (result.rows.length === 0 || activeSessions[username]) {
+                socket.emit('loginResponse', { success: false });
+            } else {
+                const firstLogin = result.rows[0].first_login
+                if (firstLogin) {
+                    await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
+                    socket.emit('loginResponse', { success: true, firstLogin });
                 }
+                else {
+                // Authentication successful
+                socket.emit('loginResponse', { success: true });
+                }
+                playerUsername[socket.id] = username
+                activeSessions[username] = socket.id
+            }
+            
+            client.release();
+        } catch (error) {
+            console.error('Error authenticating user:', error);
+            socket.emit('loginResponse', { success: false });
+        }
     })
 
-    socket.on('createRoom', (roomName) => {
-        const roomId = Math.random().toString(36).substring(7)
-        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false}
-        console.log('Created roomId: ', roomId)
-        socket.emit('roomCreated', roomId)
-        io.emit('updateRooms', rooms)
-        
-    })
+    socket.on('createRoom', ({ roomName, maxPlayers }) => {
+        const roomId = Math.random().toString(36).substring(7);
+        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false, maxPlayers };
+        const mapSize = 250 * maxPlayers
+        console.log('Created roomId: ', roomId);
+        socket.emit('roomCreated', roomId, mapSize);
+        io.emit('updateRooms', rooms);
+    });
 
     socket.on('checkRoom', (roomId) => {
-        if (rooms[roomId] && rooms[roomId].players.length < 4 && !rooms[roomId].gameStarted) {
-            socket.emit('roomJoined', roomId)
+        if (rooms[roomId] && rooms[roomId].players.length < rooms[roomId].maxPlayers && !rooms[roomId].gameStarted) {
+            socket.emit('roomJoined', roomId);
         } else {
             socket.emit('roomJoinFailed', 'Room is full or does not exist');
         }
-    })
+    });
 
     socket.on('joinRoom', (roomId) => {
         if (rooms[roomId]) {
@@ -130,7 +130,6 @@ io.on('connection', (socket) => {
             rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
             console.log('room joined', roomId)
             socket.join(roomId);
-            //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
             if (!readyPlayers[roomId]) {
                 readyPlayers[roomId] = {}
@@ -289,28 +288,45 @@ io.on('connection', (socket) => {
 
     // Listen for player movement from this client
     socket.on('playerMove', (data) => {
+        const movementSpeed = 2
+        let mapSize = 250
         if (backendPlayers[socket.id]) {
+            const playerId = socket.id;
+            let roomId = null;
+            let maxPlayers = null
+            for (const id in rooms) {
+                if (rooms[id].players.find(player => player.id === playerId)) {
+                    roomId = id;
+                    maxPlayers = rooms[roomId].maxPlayers
+                    break;
+                }
+            } 
+            
+            if (maxPlayers) {
+                mapSize = 250 * maxPlayers
+            }
+            
             // Broadcast this player's movement to all other clients
             if (data === 'a') {
-                backendPlayers[socket.id].x -= 2
+                backendPlayers[socket.id].x -= movementSpeed
                 if (backendPlayers[socket.id].x < 0) {
                     delete backendPlayers[socket.id]
                 }
             } else if (data === 'd') {
-                backendPlayers[socket.id].x += 2
-                if (backendPlayers[socket.id].x > 1920) {
+                backendPlayers[socket.id].x += movementSpeed
+                if (backendPlayers[socket.id].x > 1920 + mapSize) {
                     delete backendPlayers[socket.id]
                 }
             }
 
             if (data === 'w') {
-                backendPlayers[socket.id].y -= 2
+                backendPlayers[socket.id].y -= movementSpeed
                 if (backendPlayers[socket.id].y < 0) {
                     delete backendPlayers[socket.id]
                 }
             } else if (data === 's') {
-                backendPlayers[socket.id].y += 2
-                if (backendPlayers[socket.id].y > 1080) {
+                backendPlayers[socket.id].y += movementSpeed
+                if (backendPlayers[socket.id].y > 1080 + mapSize) {
                     delete backendPlayers[socket.id]
                 }
             }
@@ -552,30 +568,50 @@ app.get('/leaderboard', async (req, res) => {
 
 setInterval(async () => {
     for (const id in backendProjectiles) {
-        backendProjectiles[id].x += backendProjectiles[id].velocity.x
-        backendProjectiles[id].y += backendProjectiles[id].velocity.y
+        backendProjectiles[id].x += backendProjectiles[id].velocity.x;
+        backendProjectiles[id].y += backendProjectiles[id].velocity.y;
 
-        if (backendProjectiles[id].x >= 1920 || backendProjectiles[id].x <= 0 || backendProjectiles[id].y >= 1080 || backendProjectiles[id].y <= 0) {
-            delete backendProjectiles[id]
-            continue
+        let mapSize = 250;
+
+        for (const roomId in rooms) {
+            const maxPlayers = rooms[roomId].maxPlayers;
+            if (maxPlayers) {
+                mapSize = maxPlayers * 250;
+                break;
+            }
+        }
+
+        if (
+            backendProjectiles[id].x >= 1920 + mapSize ||
+            backendProjectiles[id].x <= 0 ||
+            backendProjectiles[id].y >= 1080 + mapSize ||
+            backendProjectiles[id].y <= 0
+        ) {
+            delete backendProjectiles[id];
+            continue;
         }
 
         for (const playerId in backendPlayers) {
-            const backendPlayer = backendPlayers[playerId]
-            const distance = Math.hypot(backendProjectiles[id].x - backendPlayer.x, backendProjectiles[id].y - backendPlayer.y)
+            const backendPlayer = backendPlayers[playerId];
+            const distance = Math.hypot(
+                backendProjectiles[id].x - backendPlayer.x,
+                backendProjectiles[id].y - backendPlayer.y
+            );
             if (distance < 30 && backendProjectiles[id].playerId !== playerId) {
-                const damage = weaponDetails[backendProjectiles[id].playerId].damage
-                backendPlayers[playerId].health -= damage
+                const damage = weaponDetails[backendProjectiles[id].playerId].damage;
+                backendPlayers[playerId].health -= damage;
                 if (backendPlayers[playerId].health <= 0) {
                     if (backendPlayers[backendProjectiles[id].playerId]) {
-                        const client = await sql.connect()
-                        await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [backendPlayers[backendProjectiles[id].playerId].username])
-                        client.release()
+                        const client = await sql.connect();
+                        await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
+                            backendPlayers[backendProjectiles[id].playerId].username
+                        ]);
+                        client.release();
                     }
-                    delete backendPlayers[playerId]
+                    delete backendPlayers[playerId];
                 }
-                delete backendProjectiles[id]
-                break
+                delete backendProjectiles[id];
+                break;
             }
         }
     }

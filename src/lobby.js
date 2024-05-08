@@ -51,24 +51,29 @@ class Lobby extends Phaser.Scene {
     update() {
     }
 
-   createRoom() {
-    let roomName
-    do {
-        roomName = window.prompt('Enter the name of the room:');
-        if (roomName === null) {
-            break; 
+    createRoom() {
+        let roomName;
+        let maxPlayers;
+        do {
+            roomName = window.prompt('Enter the name of the room:');
+            if (roomName === null) {
+                break; 
+            }
+            maxPlayers = window.prompt('Enter the maximum number of players (2-4):');
+            if (maxPlayers === null) {
+                break; 
+            }
+        } while (!roomName || !roomName.trim() || !maxPlayers || isNaN(maxPlayers) || maxPlayers < 2 || maxPlayers > 4);
+    
+        if (roomName != null && maxPlayers != null) {
+            socket.emit('createRoom', { roomName, maxPlayers });
+    
+            socket.once('roomCreated', (roomId, mapSize) => {
+                this.scene.start('room', { roomId: roomId, mapSize });
+                this.scene.stop();
+            });
         }
-    } while (!roomName || !roomName.trim());
-    //REIKIA PADARYTI KAD KUREJAS GALETU PASIRINKTI MAX PLAYER SKAICIU
-    if (roomName != null) {
-        socket.emit('createRoom', roomName);
-
-        socket.once('roomCreated', (roomId) => {
-            this.scene.start('room', {roomId: roomId });
-            this.scene.stop()
-        });
     }
-}
 
     joinRoom(roomId) {
         socket.off('roomJoined');

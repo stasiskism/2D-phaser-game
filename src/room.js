@@ -8,6 +8,7 @@ class Room extends Phaser.Scene {
     }
     init(data) {
         this.roomId = data.roomId
+        this.mapSize = data.mapSize
     }
     preload() {
         this.graphics = this.add.graphics()
@@ -63,7 +64,7 @@ class Room extends Phaser.Scene {
 
         socket.on('countdownEnd', () => {
             //REIKIA PALEIST MULTIPLAYERI TIK SU PLAYERIAIS ESANCIAIS SITAM ROOM
-            this.scene.start('Multiplayer', {multiplayerId: this.roomId})
+            this.scene.start('Multiplayer', {multiplayerId: this.roomId, mapSize: this.mapSize})
             this.scene.stop()
             
             for (const id in this.frontendPlayers) {

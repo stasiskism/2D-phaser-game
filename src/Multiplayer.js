@@ -20,6 +20,7 @@ class Multiplayer extends Phaser.Scene {
     init(data) {
         this.cameras.main.setBackgroundColor('#000000');
         this.multiplayerId = data.multiplayerId
+        this.mapSize = data.mapSize
     }
 
     preload() {
@@ -84,7 +85,7 @@ class Multiplayer extends Phaser.Scene {
             }
         })
         this.graphics.lineStyle(10, 0xff0000);
-        this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+        this.graphics.strokeRect(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize);
 
         const smoke = [
             { key: 'smoke', frame: 1, duration: 200 },
@@ -276,7 +277,6 @@ class Multiplayer extends Phaser.Scene {
         if (id === socket.id) {
             this.playerAmmo = this.add.text(playerData.x, playerData.y + 750, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             this.weaponDetails = { damage: playerData.damage, fire_rate: playerData.firerate, ammo: playerData.bullets, reload: playerData.reload, radius: playerData.radius}
-            console.log(this.weaponDetails)
         }
 
         // Setup other players
@@ -525,7 +525,6 @@ class Multiplayer extends Phaser.Scene {
                     break;
                 }
             }
-            console.log(this.darkOverlay)
     
             if (isIntersecting && id === socket.id) {
                 if (!this.darkOverlay[id]) {

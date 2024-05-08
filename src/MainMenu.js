@@ -251,7 +251,7 @@ class MainMenu extends Phaser.Scene {
     if (this.eKey.isDown && distance < 50) {
       if (object === this.singleplayerObject) {
 
-        this.scene.start('Singleplayer', {login});
+        this.scene.start('Singleplayer', {login: this.login});
         this.scene.stop()
       } else if (object === this.multiplayerObject) {
 
