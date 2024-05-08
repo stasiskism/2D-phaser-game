@@ -644,10 +644,10 @@ setInterval(async () => {
                 if (backendPlayers[playerId].health <= 0) {
                     if (backendPlayers[backendProjectiles[id].playerId]) {
                         const client = await sql.connect();
-                        if (!backendPlayers[backendProjectiles[id].playerId].username) return
-                        await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
-                            backendPlayers[backendProjectiles[id].playerId].username
-                        ]);
+                        //if (!backendPlayers[backendProjectiles[id].playerId].username) return
+                        //await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
+                        //    backendPlayers[backendProjectiles[id].playerId].username
+                        //]);
                         client.release();
                     }
                     delete backendPlayers[playerId];

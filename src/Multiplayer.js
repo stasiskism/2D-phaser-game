@@ -510,10 +510,10 @@ class Multiplayer extends Phaser.Scene {
     }
 
     gameWon(username) {
-        delete this.frontendGrenades
-        delete this.frontendSmoke
-        delete this.frontendProjectiles
-        delete this.darkOverlay
+        //delete this.frontendGrenades
+        //delete this.frontendSmoke
+        //delete this.frontendProjectiles
+        //delete this.darkOverlay
         console.log(this.darkOverlay)
         socket.removeAllListeners()
         this.cameras.main.centerOn(this.cameras.main.width / 2, this.cameras.main.height / 2);
