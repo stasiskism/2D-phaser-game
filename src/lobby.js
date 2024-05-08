@@ -21,6 +21,10 @@ class Lobby extends Phaser.Scene {
         this.distance = 0
         this.setupInputEvents()
         this.createdSprites = {}
+        const SPbutton = this.add.text(1920 / 2, (1080 / 2) + 400, 'Singleplayer', { fill: '#0f0' })
+            .setInteractive()
+            .on('pointerdown', () => this.scene.start('Singleplayer'));
+        SPbutton.setInteractive();
     }
 
     setupInputEvents() {
@@ -42,6 +46,7 @@ class Lobby extends Phaser.Scene {
     }
     
     update() {
+
         
     }
 
