@@ -126,6 +126,7 @@ io.on('connection', (socket) => {
 
     socket.on('joinRoom', (roomId) => {
         if (rooms[roomId]) {
+            projectileId = 0
             const username = playerUsername[socket.id];
             rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
             console.log('room joined', roomId)
@@ -149,7 +150,7 @@ io.on('connection', (socket) => {
 
     socket.on('startCountdown', async (roomId) => {
         if (roomId && !rooms[roomId].countdownStarted) {
-            let countdownTime = 1
+            let countdownTime = 6
             rooms[roomId].countdownStarted = true;
             
             countdownInterval = setInterval(async () => {
@@ -175,7 +176,7 @@ io.on('connection', (socket) => {
                             }
                         }
                         delete readyPlayers[roomId]
-                        console.log(readyPlayers)
+                        //socket.emit('initFallingObjects', roomId)
                         startGame(roomId);
                         client.release();
                     } catch (error) {
@@ -409,7 +410,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('leaveRoom', (roomId) => {
-        console.log('turetu leavint')
         for (const id in rooms) {
             if (id === roomId) {
                 const room = rooms[roomId];
@@ -447,17 +447,8 @@ io.on('connection', (socket) => {
 
     socket.on('gameWon', async (multiplayerId, username) => {
         if (!multiplayerId || !username) return
-        for (const playerId in backendPlayers) {
-            if (backendPlayers[playerId].multiplayerId === multiplayerId) {
-                delete backendPlayers[playerId];
-            }
-        }
-    
-        for (const id in backendProjectiles) {
-            if (backendProjectiles[id].multiplayerId === multiplayerId) {
-                delete backendProjectiles[id];
-            }
-        }
+        delete filterPlayersByMultiplayerId(multiplayerId)
+        delete filterProjectilesByMultiplayerId(multiplayerId)
         const client = await sql.connect()
         await client.query(`UPDATE user_profile SET coins = coins + 10, xp = xp + 20 WHERE user_name = $1`, [username])
         client.release()
@@ -466,6 +457,25 @@ io.on('connection', (socket) => {
     
         delete rooms[multiplayerId];
     })
+
+    // socket.on('initFallingObjects', (roomId) => {
+    //     console.log('veikia INIT')
+    //     let mapSize = 250
+    //     if (rooms[multiplayerId].players.find(player => player.id === socket.id)) {
+    //         mapSize = rooms[multiplayerId].maxPlayers * 250
+    //     }
+    //     setInterval(() => {
+    //         const numObjects = Math.floor(Math.random() * (8 - 2) + 2)
+    //         fallingObjects = null
+    //         for (let i = 0; i < numObjects; i++) {
+    //             let startX = Math.floor(Math.random() * (1980 + mapSize))
+    //             let startY = -50
+    //             fallingObjects[i] = {x: startX, y: startY}
+    //         }
+    //         io.to(roomId).emit('updateFallingObjects', fallingObjects)
+
+    //     }, getRandomInt(4000, 5000))
+    // })
 
     socket.on('detect', (multiplayerId, playerId) => {
         let mapSize = 250
@@ -484,7 +494,6 @@ io.on('connection', (socket) => {
             delete backendPlayers[playerId]
         }
     }
-
     })
 
 });
@@ -534,7 +543,17 @@ function startGame(multiplayerId) {
     let playersInRoom = {}
     rooms[multiplayerId].gameStarted = true
     playersInRoom = rooms[multiplayerId].players
-    playersInRoom.forEach((player) => {
+    const corners = [
+        { x: 50, y: 50 },
+        { x: 1870, y: 50 },
+        { x: 50, y: 1030 },
+        { x: 1870, y: 1030 }
+    ];
+    for (let i = corners.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [corners[i], corners[j]] = [corners[j], corners[i]];
+    }
+    playersInRoom.forEach((player, index) => {
         const id = player.id
         const username = playerUsername[id];
         const damage = weaponDetails[id].damage
@@ -542,12 +561,13 @@ function startGame(multiplayerId) {
         const firerate = weaponDetails[id].fire_rate
         const reload = weaponDetails[id].reload
         const radius = weaponDetails[id].radius
+        const corner = corners[index]
 
         backendPlayers[id] = { 
             id,
             multiplayerId,
-            x: 1920 * Math.random(),
-            y: 1080 * Math.random(),
+            x: corner.x,
+            y: corner.y,
             score: 0,
             username,
             health: 100,
@@ -612,6 +632,7 @@ setInterval(async () => {
         }
 
         for (const playerId in backendPlayers) {
+            if (!playerId) return
             const backendPlayer = backendPlayers[playerId];
             const distance = Math.hypot(
                 backendProjectiles[id].x - backendPlayer.x,
@@ -623,6 +644,7 @@ setInterval(async () => {
                 if (backendPlayers[playerId].health <= 0) {
                     if (backendPlayers[backendProjectiles[id].playerId]) {
                         const client = await sql.connect();
+                        if (!backendPlayers[backendProjectiles[id].playerId].username) return
                         await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
                             backendPlayers[backendProjectiles[id].playerId].username
                         ]);

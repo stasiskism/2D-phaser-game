@@ -22,13 +22,10 @@ class Multiplayer extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#000000');
         this.multiplayerId = data.multiplayerId
         this.mapSize = data.mapSize
+        console.log('mapSize', this.mapSize)
     }
 
     preload() {
-        this.loadImages();
-    }
-
-    loadImages() {
         this.graphics = this.add.graphics()
     }
 
@@ -36,34 +33,34 @@ class Multiplayer extends Phaser.Scene {
         this.setupScene();
         this.setupInputEvents();
         this.gunAnimation();
-        this.generateFallingObjects();
+        //this.generateFallingObjects();
     }
 
-    generateFallingObjects() {
-        // Define the interval for generating falling objects
-        this.time.addEvent({
-            delay: Phaser.Math.Between(4000, 5000), // Random delay between 1 to 3 seconds
-            callback: () => {
-                const numObjects = Phaser.Math.Between(2, 8); // Random number of objects between 2 to 4
-                const spaceBetween = Phaser.Math.Between(50, 150); // Random space between objects
+    // generateFallingObjects() {
+    //     // Define the interval for generating falling objects
+    //     this.time.addEvent({
+    //         delay: Phaser.Math.Between(4000, 5000), // Random delay between 1 to 3 seconds
+    //         callback: () => {
+    //             const numObjects = Phaser.Math.Between(2, 8); // Random number of objects between 2 to 4
+    //             const spaceBetween = Phaser.Math.Between(50, 150); // Random space between objects
 
-                let startX = Phaser.Math.Between(0, this.cameras.main.width); // Random starting X position
-                let startY = -50; // Start from above the screen
+    //             let startX = Phaser.Math.Between(0, this.cameras.main.width); // Random starting X position
+    //             let startY = -50; // Start from above the screen
 
-                for (let i = 0; i < numObjects; i++) {
+    //             for (let i = 0; i < numObjects; i++) {
 
-                    const object = this.physics.add.image(
-                        startX = Phaser.Math.Between(0, this.cameras.main.width),
-                        startY,
-                        'wall' // Replace 'object_key' with the key of your falling object image
-                    ).setScale(2);
-                    this.fallingObjects.push(object);
-                    startY -= Phaser.Math.Between(25, 75) + Phaser.Math.Between(25, 75); // Move the startY position for the next object
-                }
-            },
-            loop: true // Repeat the event indefinitely
-        });
-    }
+    //                 const object = this.physics.add.image(
+    //                     startX = Phaser.Math.Between(0, this.cameras.main.width),
+    //                     startY,
+    //                     'wall' // Replace 'object_key' with the key of your falling object image
+    //                 ).setScale(2);
+    //                 this.fallingObjects.push(object);
+    //                 startY -= Phaser.Math.Between(25, 75) + Phaser.Math.Between(25, 75); // Move the startY position for the next object
+    //             }
+    //         },
+    //         loop: true // Repeat the event indefinitely
+    //     });
+    // }
 
     gunAnimation(){
         this.anims.create({
@@ -232,13 +229,13 @@ class Multiplayer extends Phaser.Scene {
                 alivePlayers[id] = true;
             }
 
-            // const alivePlayerCount = Object.keys(alivePlayers).length;
-            // if (alivePlayerCount === 1) {
-            //     this.gameStop = true
-            //     const id = Object.keys(alivePlayers)[0]
-            //     this.gameWon(backendPlayers[id].username)
-            //     socket.off('updatePlayers')
-            // }
+            const alivePlayerCount = Object.keys(alivePlayers).length;
+            if (alivePlayerCount === 1) {
+                this.gameStop = true
+                const id = Object.keys(alivePlayers)[0]
+                this.gameWon(backendPlayers[id].username)
+                socket.off('updatePlayers')
+            }
         
             // Remove players that are not present in the backend data
             for (const id in this.frontendPlayers) {
@@ -251,6 +248,7 @@ class Multiplayer extends Phaser.Scene {
 
         socket.on('updateProjectiles', (backendProjectiles, backendGrenades) => {
             for (const id in backendProjectiles) {
+                console.log('cia', this.frontendProjectiles[id])
                 if (!this.frontendProjectiles[id]) this.setupProjectile(backendProjectiles[id].playerId, id, backendProjectiles[id]);
                 else this.updateProjectilePosition(id, backendProjectiles[id]);
             }
@@ -265,6 +263,18 @@ class Multiplayer extends Phaser.Scene {
                 if (!backendGrenades[id]) this.removeGrenade(id)
             }
         });
+
+        socket.on('updateFallingObjects', (fallingObjects) => {
+            console.log('asd')
+            for (const i in fallingObjects) {
+                const object = this.physics.add.image(
+                    fallingObjects[i].x,
+                    fallingObjects[i].y,
+                    'wall' 
+                ).setScale(2);
+                this.fallingObjects.push(object);
+            }
+        })
 
     }
 
@@ -504,6 +514,7 @@ class Multiplayer extends Phaser.Scene {
         delete this.frontendSmoke
         delete this.frontendProjectiles
         delete this.darkOverlay
+        console.log(this.darkOverlay)
         socket.removeAllListeners()
         this.cameras.main.centerOn(this.cameras.main.width / 2, this.cameras.main.height / 2);
         const winningText = this.add.text(
@@ -547,6 +558,7 @@ class Multiplayer extends Phaser.Scene {
     
             for (const smokeId in this.frontendSmoke) {
                 const smoke = this.frontendSmoke[smokeId];
+                if (!smoke) continue
                 const smokeBounds = smoke.getBounds();
                 const smallerBounds = new Phaser.Geom.Rectangle(
                     smokeBounds.x + 25, 
@@ -559,7 +571,7 @@ class Multiplayer extends Phaser.Scene {
                     break;
                 }
             }
-    
+            if (!socket.id) return
             if (isIntersecting && id === socket.id) {
                 if (!this.darkOverlay[id]) {
                     console.log('creating dark overlay');
@@ -568,16 +580,15 @@ class Multiplayer extends Phaser.Scene {
                     this.darkOverlay[id].setAlpha(1); // Adjust the alpha value to control darkness level
                 }
             } else {
-                if (this.darkOverlay[id]) {
-                    this.darkOverlay[id].destroy();
-                    this.darkOverlay[id] = null;
-                }
+                if (!this.darkOverlay[id]) return
+                this.darkOverlay[id].destroy();
+                delete this.darkOverlay[id]
             }
         }
     }
 
     onObject() {
-        if (this.fallingObjects) {
+        if (this.fallingObjects && this.frontendPlayers[socket.id]) {
             this.fallingObjects.forEach(object => {
                 object.y += 2;
                 if (object.y > this.cameras.main.height + this.mapSize) {

@@ -167,7 +167,7 @@ class Room extends Phaser.Scene {
         //     const invisibleWall = this.physics.add.sprite(wall.x + wall.width / 2, wall.y + wall.height / 2, 'invisible-wall').setVisible(false).setSize(wall.width, wall.height);
         //     invisibleWall.body.setAllowGravity(false);
         //     invisibleWall.body.setImmovable(true);
-        //     this.physics.add.collider(this.player, invisibleWall);
+        //     this.physics.add.collider(this.frontendPlayers[socket.id], invisibleWall);
         // });
 
         // this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
@@ -258,12 +258,12 @@ class Room extends Phaser.Scene {
         for (const playerId in this.readyPlayers) {
            count++
         }
-        //if (count === this.readyPlayersCount && count > 1) {
-        if (count === this.readyPlayersCount) {
+        if (count === this.readyPlayersCount && count > 1) {
             this.readyButton.destroy()
             console.log('VISI PLAYERIAI READY')
             this.countdownText = this.add.text(800, 200, '', { fontSize: '64px', fill: '#fff' });
             this.countdownText.setOrigin(0.5);
+            this.mapSize = count * 250
             socket.emit('startCountdown', this.roomId)
         }
     }
