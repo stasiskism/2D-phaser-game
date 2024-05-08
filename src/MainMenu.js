@@ -161,7 +161,7 @@ class MainMenu extends Phaser.Scene {
         }
     } else {
         if (player && player.anims) {
-        player.anims.stop();
+          player.anims.play('idle', true);
         }
     }
 }
