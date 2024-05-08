@@ -317,14 +317,17 @@ updateBullet() {
           { x: Phaser.Math.Between(0, 1920), y: 0 },   // Top border
           { x: Phaser.Math.Between(0, 1920), y: 1080 } // Bottom border
       ];
-      const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
-      const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemiess');
-      enemy.anims.play('enemiess', true);
-      enemy.setScale(2)
-      enemy.setCollideWorldBounds(false)
-      const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x)
-      enemy.setVelocity(300 * Math.cos(angle), 300 * Math.sin(angle))
-      this.enemies.push(enemy)
+      const numEnemies = Phaser.Math.Between(1, 4);
+      for(let i = 0; i < numEnemies; i++) {
+        const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
+        const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemiess');
+        enemy.anims.play('enemiess', true);
+        enemy.setScale(2)
+        enemy.setCollideWorldBounds(false)
+        const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x)
+        enemy.setVelocity(300 * Math.cos(angle), 300 * Math.sin(angle))
+        this.enemies.push(enemy)
+      }
     }, 1000)
   }
 
