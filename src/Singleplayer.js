@@ -45,6 +45,7 @@ class Singleplayer extends Phaser.Scene {
       this.load.image('shotgun', 'assets/Weapons/tile001.png')
       this.load.image('crosshair', 'assets/crosshair008.png');
       this.load.image('fullscreen', 'assets/full-screen.png')
+      this.load.image('wall', 'assets/wall.png');
       this.graphics = this.add.graphics()
     }
 
@@ -54,12 +55,28 @@ class Singleplayer extends Phaser.Scene {
     this.setupAnimations();
     this.setupInputEvents();
     this.setupPlayer()
+    this.generateMap();
     this.time.delayedCall(500, this.spawnEnemies, [], this);
     this.score = 0;
     this.intervalID
     this.enemies = []
     this.bullets = []
 
+  }
+  generateMap(){
+    const mapWidth = 40;
+    const mapHeight = 30;
+    const tileSize = 32;
+    const walls = this.physics.add.staticGroup();
+
+    for (let y = 0; y < mapHeight; y++) {
+        for (let x = 0; x < mapWidth; x++) {
+            if (Phaser.Math.Between(0, 4) === 0) {
+                const wall = walls.create(x * tileSize, y * tileSize, 'wall');
+                wall.setOrigin(0);
+            }
+        }
+    }
   }
 
   setupScene() {
@@ -137,6 +154,7 @@ class Singleplayer extends Phaser.Scene {
     this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'WwalkDown2')
     this.player.setScale(4);
     this.player.setCollideWorldBounds(true);
+    this.physics.add.collider(this.player, walls);
     this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'shotgun');
     this.weapon.setScale(4);
   }
