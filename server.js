@@ -467,6 +467,26 @@ io.on('connection', (socket) => {
         delete rooms[multiplayerId];
     })
 
+    socket.on('detect', (multiplayerId, playerId) => {
+        let mapSize = 250
+        let maxPlayers = null
+        if (rooms[multiplayerId].players.find(player => player.id === playerId)) {
+            maxPlayers = rooms[multiplayerId].maxPlayers * 250
+        }
+
+        if (maxPlayers) {
+            mapSize = maxPlayers
+        }
+
+        if (backendPlayers[playerId]) {
+        backendPlayers[playerId].y += 1
+        if (backendPlayers[playerId].y > 1080 + mapSize) {
+            delete backendPlayers[playerId]
+        }
+    }
+
+    })
+
 });
 
 function calculateReadyPlayers(readyPlayers) {

@@ -15,6 +15,7 @@ class Multiplayer extends Phaser.Scene {
 
     constructor() {
         super({ key: 'Multiplayer' });
+        this.fallingObjects = [];
     }
 
     init(data) {
@@ -35,6 +36,33 @@ class Multiplayer extends Phaser.Scene {
         this.setupScene();
         this.setupInputEvents();
         this.gunAnimation();
+        this.generateFallingObjects();
+    }
+
+    generateFallingObjects() {
+        // Define the interval for generating falling objects
+        this.time.addEvent({
+            delay: Phaser.Math.Between(4000, 5000), // Random delay between 1 to 3 seconds
+            callback: () => {
+                const numObjects = Phaser.Math.Between(2, 8); // Random number of objects between 2 to 4
+                const spaceBetween = Phaser.Math.Between(50, 150); // Random space between objects
+
+                let startX = Phaser.Math.Between(0, this.cameras.main.width); // Random starting X position
+                let startY = -50; // Start from above the screen
+
+                for (let i = 0; i < numObjects; i++) {
+
+                    const object = this.physics.add.image(
+                        startX = Phaser.Math.Between(0, this.cameras.main.width),
+                        startY,
+                        'wall' // Replace 'object_key' with the key of your falling object image
+                    ).setScale(2);
+                    this.fallingObjects.push(object);
+                    startY -= Phaser.Math.Between(25, 75) + Phaser.Math.Between(25, 75); // Move the startY position for the next object
+                }
+            },
+            loop: true // Repeat the event indefinitely
+        });
     }
     gunAnimation(){
         this.anims.create({
@@ -386,6 +414,22 @@ class Multiplayer extends Phaser.Scene {
         this.updateCameraPosition();
         this.updateCrosshairPosition();
         this.isInSmoke();
+        this.fallingObjects.forEach(object => {
+            object.y += 1; // Adjust the speed of falling objects
+            if (object.y > this.cameras.main.height + this.mapSize) {
+                // Remove object when it reaches the bottom of the screen
+                this.removeFallingObject(object);
+            } else if (this.physics.overlap(this.frontendPlayers[socket.id], object)) {
+                // Handle collision with the player here
+                // For example, you can push the player or decrease their health
+                socket.emit('detect', this.multiplayerId, socket.id)
+
+            }
+        });
+    }
+    removeFallingObject(object) {
+        object.destroy();
+        this.fallingObjects = this.fallingObjects.filter(obj => obj !== object);
     }
 
     updatePlayerMovement() {
