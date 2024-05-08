@@ -320,7 +320,7 @@ updateBullet() {
       const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
       const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemiess');
       enemy.anims.play('enemiess', true);
-      enemy.setScale(0.1)
+      enemy.setScale(2)
       enemy.setCollideWorldBounds(false)
       const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x)
       enemy.setVelocity(300 * Math.cos(angle), 300 * Math.sin(angle))
