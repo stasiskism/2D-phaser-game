@@ -2,7 +2,6 @@
 <h2> Team structure </h2>
 </b><ul>
 
-  <li>Joris Namajūnas</li>
   <li>Mantas Stasiškis</li>
   <li>Tautvydas Lukoševičius</li>
 
