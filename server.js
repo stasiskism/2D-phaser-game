@@ -150,7 +150,7 @@ io.on('connection', (socket) => {
 
     socket.on('startCountdown', async (roomId) => {
         if (roomId && !rooms[roomId].countdownStarted) {
-            let countdownTime = 6
+            let countdownTime = 1
             rooms[roomId].countdownStarted = true;
             
             countdownInterval = setInterval(async () => {
@@ -494,6 +494,10 @@ io.on('connection', (socket) => {
             delete backendPlayers[playerId]
         }
     }
+    })
+
+    socket.on('sendMessage', ({roomId, message}) => {
+        io.to(roomId).emit('receiveMessage', message)
     })
 
 });

@@ -1,6 +1,8 @@
 class Room extends Phaser.Scene {
     frontendPlayers = {};
     readyPlayers = {}
+    playerUsername = {}
+    chatHistory = []
     readyPlayersCount = 0
     countdownTime = 0
     constructor() {
@@ -12,6 +14,7 @@ class Room extends Phaser.Scene {
     }
     preload() {
         this.graphics = this.add.graphics()
+        
     }
     create() {
         this.setupScene()
@@ -87,6 +90,12 @@ class Room extends Phaser.Scene {
                 this.readyPlayersText.setText(`Ready Players: ${this.readyPlayersCount}`);
             }
             this.checkAllPlayersReady();
+
+            if (this.readyPlayers[socket.id]) {
+                const username = this.playerUsername[socket.id]
+                const message = `${username} is ready!`
+                socket.emit('sendMessage', {roomId: this.roomId, message})
+            }
         })
 
         socket.on('updateCountdown', (countdownTime) => {
@@ -94,6 +103,11 @@ class Room extends Phaser.Scene {
             if (this.countdownText) {
                 this.countdownText.setText(`Game starts in: ${this.countdownTime}`);
             }
+        })
+
+        socket.on('receiveMessage', (message) => {
+            this.chatHistory.push(message);
+            this.chatDisplay.setText(this.chatHistory.slice(-15).join('\n'));
         })
 
     }
@@ -176,6 +190,48 @@ class Room extends Phaser.Scene {
         // this.popupText.setVisible(false);
 
         //this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
+
+        this.chatDisplay = this.add.text(1300, 500, '', { 
+            fontSize: '20px', 
+            fill: '#ffffff',
+            backgroundColor: '#333333',
+            padding: { x: 10, y: 10 },
+            wordWrap: { width: 380, useAdvancedWrap: true }
+        }).setInteractive().setDepth(1);
+        this.chatDisplay.setFixedSize(600, 500);
+        
+        const chatInputHTML = `
+            <div style="position: fixed; bottom: 10px; left: 10px;">
+                <input type="text" id="chatInput" style="width: 300px; padding: 10px; font-size: 16px;" placeholder="Type your message...">
+            </div>
+        `;
+
+        this.chatInput = this.add.dom(1300, 1000).createFromHTML(chatInputHTML);
+        const chatInputElement = document.getElementById('chatInput')
+        chatInputElement.addEventListener('keydown', (event) => {
+            if (chatInputElement.contains(document.activeElement)) {
+                this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+                this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+                this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+                this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+                this.input.keyboard.enabled = false
+            } 
+            if (event.key === 'Enter') {
+                event.preventDefault()
+                const text = chatInputElement.value.trim()
+                if (text === '') return
+                const username = this.playerUsername[socket.id]
+                const message = `${username}: ${text}`
+                chatInputElement.value = ''
+                this.input.keyboard.enabled = true
+                socket.emit('sendMessage', {roomId: this.roomId, message})
+            } else if (event.key === 'Escape') {
+                chatInputElement.value = '';
+                chatInputElement.blur();
+            } else if (event.key === ' ') {
+                chatInputElement.value += ' '
+            }
+        })
     }
 
     setupPlayer(id, playerData) {
@@ -186,6 +242,7 @@ class Room extends Phaser.Scene {
         // Setup the respawned player
         //CIA ERRORAI KAI STARTINAM MULTIPLAYER GAME
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
+        this.playerUsername[id] = playerData.username
         //console.log(this.frontendPlayers[id])
     
         // Setup other players
@@ -258,7 +315,7 @@ class Room extends Phaser.Scene {
         for (const playerId in this.readyPlayers) {
            count++
         }
-        if (count === this.readyPlayersCount && count > 1) {
+        if (count === this.readyPlayersCount && count >= 1) {
             this.readyButton.destroy()
             console.log('VISI PLAYERIAI READY')
             this.countdownText = this.add.text(800, 200, '', { fontSize: '64px', fill: '#fff' });
