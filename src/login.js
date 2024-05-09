@@ -6,12 +6,11 @@ class Login extends Phaser.Scene {
         //this.cameras.main.setBackgroundColor('#ffffff')
     }
     preload() {
-
     }
     create() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
-        this.add.sprite(centerX, centerY, 'menu');
+        this.add.sprite(centerX, centerY, 'background');
         const login = this.add.dom(centerX, centerY).createFromHTML(`
         <style>
     #login {
@@ -76,6 +75,7 @@ class Login extends Phaser.Scene {
 
     loadRegister() {
         this.scene.start('register')
+        this.scene.stop()
     }
 
     sendData(username, password) {
@@ -87,10 +87,11 @@ class Login extends Phaser.Scene {
                 if (response.firstLogin) {
                     alert('Login successful');
                     this.scene.start('tutorial')
+                    this.scene.stop()
                 } else {
-                    console.log('asd')
                     alert('Login successful');
                     this.scene.start('mainMenu');
+                    this.scene.stop()
                 }
             } else {
                 alert('Login failed');

@@ -4,7 +4,7 @@ const {Server} = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {pingInterval: 2000, pingTimeout: 5000});
+const io = new Server(server, {pingInterval: 2000, pingTimeout: 7000});
 
 const bodyParser = require('body-parser')
 const { Pool } = require('pg');
@@ -21,8 +21,8 @@ const sql = new Pool({
     user: 'postgres',
     host: '193.219.42.55',
     database: 'postgres',
-    password: '2dcs',
-    port: 14066
+    password: 'newteam',
+    port: 8182
 })
 
 sql.on('connect', () => {
@@ -40,11 +40,16 @@ sql.on('error', (err) => {
 const backendPlayers = {}
 const backendProjectiles = {}
 let projectileId = 0
+let grenadeId = 0
 const playerUsername = {}
 const activeSessions = {}
 const rooms = {}
 const readyPlayers = {}
 let countdownInterval
+const weaponDetails = {}
+const reloadingStatus = {}
+const backendGrenades = {}
+
 
 
 
@@ -55,9 +60,6 @@ io.on('connection', (socket) => {
     for (const roomId in rooms) {
         io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
     }
-    // Inform other clients about the new player
-    //io.emit('updatePlayers', backendPlayers);
-
 
     socket.on('register', async (data) => {
         const { username, password } = data;
@@ -80,62 +82,61 @@ io.on('connection', (socket) => {
     socket.on('login', async (data) => {
         const {username, password} = data
         try {
-                    const client = await sql.connect()
-                    const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
-                    if (result.rows.length === 0 || activeSessions[username]) {
-                        socket.emit('loginResponse', { success: false });
-                    } else {
-                        const firstLogin = result.rows[0].first_login
-                        if (firstLogin) {
-                            await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
-                            socket.emit('loginResponse', { success: true, firstLogin });
-                        }
-                        else {
-                        // Authentication successful
-                        socket.emit('loginResponse', { success: true });
-                        }
-                        playerUsername[socket.id] = username
-                        activeSessions[username] = socket.id
-                    }
-                    
-                    client.release();
-                } catch (error) {
-                    console.error('Error authenticating user:', error);
-                    socket.emit('loginResponse', { success: false });
+            const client = await sql.connect()
+            const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
+            if (result.rows.length === 0 || activeSessions[username]) {
+                socket.emit('loginResponse', { success: false });
+            } else {
+                const firstLogin = result.rows[0].first_login
+                if (firstLogin) {
+                    await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
+                    socket.emit('loginResponse', { success: true, firstLogin });
                 }
-    })
-
-    socket.on('createRoom', (roomName) => {
-        const roomId = Math.random().toString(36).substring(7)
-        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false}
-        console.log('Created roomId: ', roomId)
-        socket.emit('roomCreated', roomId)
-        io.emit('updateRooms', rooms)
-        
-    })
-
-    socket.on('checkRoom', (roomId) => {
-        if (rooms[roomId] && rooms[roomId].players.length < 4 && !rooms[roomId].gameStarted) {
-            socket.emit('roomJoined', roomId)
-        } else {
-            socket.emit('roomJoinFailed', 'Room is full or does not exist');
+                else {
+                // Authentication successful
+                socket.emit('loginResponse', { success: true });
+                }
+                playerUsername[socket.id] = username
+                activeSessions[username] = socket.id
+            }
+            
+            client.release();
+        } catch (error) {
+            console.error('Error authenticating user:', error);
+            socket.emit('loginResponse', { success: false });
         }
     })
 
+    socket.on('createRoom', ({ roomName, maxPlayers }) => {
+        const roomId = Math.random().toString(36).substring(7);
+        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false, maxPlayers };
+        const mapSize = 250 * maxPlayers
+        console.log('Created roomId: ', roomId);
+        socket.emit('roomCreated', roomId, mapSize);
+        io.emit('updateRooms', rooms);
+    });
+
+    socket.on('checkRoom', (roomId) => {
+        if (rooms[roomId] && rooms[roomId].players.length < rooms[roomId].maxPlayers && !rooms[roomId].gameStarted) {
+            socket.emit('roomJoined', roomId);
+        } else {
+            socket.emit('roomJoinFailed', 'Room is full or does not exist');
+        }
+    });
+
     socket.on('joinRoom', (roomId) => {
         if (rooms[roomId]) {
+            projectileId = 0
             const username = playerUsername[socket.id];
             rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
+            console.log('room joined', roomId)
             socket.join(roomId);
-            console.log('KAI JOININA ROOMA roomId: ', roomId)
-            //THIS IS CALLED BECAUSE THE FIRST PLAYER WHICH IS PUSHED NOT DEFINED
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
             if (!readyPlayers[roomId]) {
                 readyPlayers[roomId] = {}
             }
             readyPlayers[roomId][socket.id] = false
             io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
-            console.log('KAI JOININA', rooms[roomId].players)
         } else {
             socket.emit('roomJoinFailed', 'Room is full or does not exist');
         }
@@ -147,29 +148,46 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('updateReadyPlayers', calculateReadyPlayers(readyPlayers[roomId]))
     })
 
-    socket.on('startCountdown', (roomId) => {
+    socket.on('startCountdown', async (roomId) => {
         if (roomId && !rooms[roomId].countdownStarted) {
-            let countdownTime = 5
+            let countdownTime = 6
             rooms[roomId].countdownStarted = true;
             
-            countdownInterval = setInterval(() => {
+            countdownInterval = setInterval(async () => {
                 countdownTime--;
                 if (countdownTime === 0) {
                     clearInterval(countdownInterval);
                     io.to(roomId).emit('countdownEnd');
                     rooms[roomId].countdownStarted = false;
-                    for (const playerId in readyPlayers[roomId]) {
-                        if (readyPlayers[roomId][playerId]) {
-                            delete readyPlayers[roomId][playerId]
+    
+                    try {
+                        const client = await sql.connect();
+    
+                        // Collect weapon details for all players
+                        for (const playerId in readyPlayers[roomId]) {
+                            if (readyPlayers[roomId][playerId]) {
+                                const username = playerUsername[playerId];
+                                const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
+                                const weaponId = weaponIdResult.rows[0].weapon;
+                                const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload, radius FROM weapons WHERE weapon_id = $1', [weaponId]);
+                                const weapons = weaponDetailsResult.rows[0];
+                                weaponDetails[playerId] = weapons;
+                                delete readyPlayers[roomId][playerId];
+                            }
                         }
+                        delete readyPlayers[roomId]
+                        //socket.emit('initFallingObjects', roomId)
+                        startGame(roomId);
+                        client.release();
+                    } catch (error) {
+                        console.error('Error in getting weapon details:', error);
                     }
-                    startGame(roomId)
                 } else {
-                    io.to(roomId).emit('updateCountdown', countdownTime);
+                   io.to(roomId).emit('updateCountdown', countdownTime);
                 }
             }, 1000);
         }
-    })
+    });
 
 
     socket.on('playerAnimationChange', (AnimData) => {
@@ -187,62 +205,129 @@ io.on('connection', (socket) => {
 
     socket.on('shoot', (frontendPlayer, crosshair, direction, multiplayerId) => {
 
-        if (backendPlayers[socket.id] && backendPlayers[socket.id].bullets > 0) {
-            console.log(backendPlayers[socket.id].bullets)
-            backendPlayers[socket.id].bullets--
-            projectileId++
-            let x, y
-            //Calculate X and y velocity of bullet to move it from shooter to target
-            if (crosshair.y >= frontendPlayer.y)
-            {
-                x = 30 * Math.sin(direction);
-                y = 30 * Math.cos(direction);
+        if (backendPlayers[socket.id] && !reloadingStatus[socket.id]) {
+            
+            if (backendPlayers[socket.id].bullets > 0) {
+                backendPlayers[socket.id].bullets--
+                projectileId++
+                let x, y
+                //Calculate X and y velocity of bullet to move it from shooter to target
+                if (crosshair.y >= frontendPlayer.y)
+                {
+                    x = 30 * Math.sin(direction);
+                    y = 30 * Math.cos(direction);
+                }
+                else
+                {
+                    x = -30 * Math.sin(direction);
+                    y = -30 * Math.cos(direction);
+                }
+
+                const velocity = {
+                    x,
+                    y
+                }
+
+                backendProjectiles[projectileId] = {
+                    x: frontendPlayer.x,
+                    y: frontendPlayer.y,
+                    velocity,
+                    playerId: socket.id,
+                    multiplayerId,
+                }
+            } 
+            if (backendPlayers[socket.id].bullets === 0) {
+                if (!weaponDetails[socket.id]) return
+                const reloadTime = weaponDetails[socket.id].reload
+                const bullets = weaponDetails[socket.id].ammo
             }
-            else
-            {
-                x = -30 * Math.sin(direction);
-                y = -30 * Math.cos(direction);
-            }
+
+        }
+    })
+
+    socket.on('throw', (frontendPlayer, crosshair, direction, multiplayerId) => {
+        //GRANATA TURI SUSTOTI KUR CROSSHAIRAS, IR TADA SPROGTI
+        if (backendPlayers[socket.id] && backendPlayers[socket.id].grenades > 0) {
+            grenadeId++
+            backendPlayers[socket.id].grenades--
+            const distanceX = crosshair.x - frontendPlayer.x;
+            const distanceY = crosshair.y - frontendPlayer.y;
+            
+            const x = distanceX / 30
+            const y = distanceY / 30           
 
             const velocity = {
                 x,
                 y
             }
 
-            backendProjectiles[projectileId] = {
+            const target = {
+                x: crosshair.x,
+                y: crosshair.y
+            }
+
+            const distance = Math.hypot(crosshair.x - frontendPlayer.x, crosshair.y - frontendPlayer.y)
+            backendGrenades[grenadeId] = {
                 x: frontendPlayer.x,
                 y: frontendPlayer.y,
                 velocity,
                 playerId: socket.id,
-                multiplayerId
+                multiplayerId,
+                target
             }
-        }
+
+
+        } 
+    })
+
+    socket.on('reload', (id) => {
+        if (!weaponDetails[id]) return
+        const reloadTime = weaponDetails[id].reload
+        const bullets = weaponDetails[id].ammo
+        reload(reloadTime, bullets, id)
     })
 
     // Listen for player movement from this client
     socket.on('playerMove', (data) => {
+        const movementSpeed = 2
+        let mapSize = 250
         if (backendPlayers[socket.id]) {
+            const playerId = socket.id;
+            let roomId = null;
+            let maxPlayers = null
+            for (const id in rooms) {
+                if (rooms[id].players.find(player => player.id === playerId)) {
+                    roomId = id;
+                    maxPlayers = rooms[roomId].maxPlayers
+                    break;
+                }
+            } 
+            
+            if (maxPlayers) {
+                mapSize = 250 * maxPlayers
+            }
+            
             // Broadcast this player's movement to all other clients
             if (data === 'a') {
-                backendPlayers[socket.id].x -= 2
+                backendPlayers[socket.id].x -= movementSpeed
                 if (backendPlayers[socket.id].x < 0) {
                     delete backendPlayers[socket.id]
                 }
             } else if (data === 'd') {
-                backendPlayers[socket.id].x += 2
-                if (backendPlayers[socket.id].x > 1920) {
+                backendPlayers[socket.id].x += movementSpeed
+                if (backendPlayers[socket.id].x > 1920 + mapSize) {
                     delete backendPlayers[socket.id]
                 }
             }
 
             if (data === 'w') {
-                backendPlayers[socket.id].y -= 2
+                backendPlayers[socket.id].y -= movementSpeed
                 if (backendPlayers[socket.id].y < 0) {
                     delete backendPlayers[socket.id]
                 }
             } else if (data === 's') {
-                backendPlayers[socket.id].y += 2
-                if (backendPlayers[socket.id].y > 1080) {
+                backendPlayers[socket.id].y += movementSpeed
+                if (backendPlayers[socket.id].y > 1080 + mapSize) {
                     delete backendPlayers[socket.id]
                 }
             }
@@ -312,6 +397,7 @@ io.on('connection', (socket) => {
         }
     }
         delete backendPlayers[socket.id]
+        delete weaponDetails[socket.id]
         // Inform other clients that this player has disconnected
         for (const roomId in rooms) {
             io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
@@ -337,6 +423,7 @@ io.on('connection', (socket) => {
                     if (room.players.length === 0) {
                         console.log('Deleting room:', roomId);
                         delete rooms[roomId];
+                        delete readyPlayers[roomId]
                     } else {
                         // Update room players for remaining clients
                         io.to(roomId).emit('updateRoomPlayers', room.players);
@@ -349,6 +436,64 @@ io.on('connection', (socket) => {
             }
         }
         
+    })
+
+    socket.on('singleplayer', async (id, score) => {
+        const username = playerUsername[id]
+        const client = await sql.connect()
+        await client.query(`UPDATE user_profile SET high_score = GREATEST(high_score, $1) WHERE user_name = $2`, [score, username])
+        client.release()
+    })
+
+    socket.on('gameWon', async (multiplayerId, username) => {
+        if (!multiplayerId || !username) return
+        delete filterPlayersByMultiplayerId(multiplayerId)
+        delete filterProjectilesByMultiplayerId(multiplayerId)
+        const client = await sql.connect()
+        await client.query(`UPDATE user_profile SET coins = coins + 10, xp = xp + 20 WHERE user_name = $1`, [username])
+        client.release()
+
+        delete readyPlayers[multiplayerId];
+    
+        delete rooms[multiplayerId];
+    })
+
+    // socket.on('initFallingObjects', (roomId) => {
+    //     console.log('veikia INIT')
+    //     let mapSize = 250
+    //     if (rooms[multiplayerId].players.find(player => player.id === socket.id)) {
+    //         mapSize = rooms[multiplayerId].maxPlayers * 250
+    //     }
+    //     setInterval(() => {
+    //         const numObjects = Math.floor(Math.random() * (8 - 2) + 2)
+    //         fallingObjects = null
+    //         for (let i = 0; i < numObjects; i++) {
+    //             let startX = Math.floor(Math.random() * (1980 + mapSize))
+    //             let startY = -50
+    //             fallingObjects[i] = {x: startX, y: startY}
+    //         }
+    //         io.to(roomId).emit('updateFallingObjects', fallingObjects)
+
+    //     }, getRandomInt(4000, 5000))
+    // })
+
+    socket.on('detect', (multiplayerId, playerId) => {
+        let mapSize = 250
+        let maxPlayers = null
+        if (rooms[multiplayerId].players.find(player => player.id === playerId)) {
+            maxPlayers = rooms[multiplayerId].maxPlayers * 250
+        }
+
+        if (maxPlayers) {
+            mapSize = maxPlayers
+        }
+
+        if (backendPlayers[playerId]) {
+        backendPlayers[playerId].y += 2
+        if (backendPlayers[playerId].y > 1080 + mapSize) {
+            delete backendPlayers[playerId]
+        }
+    }
     })
 
 });
@@ -370,7 +515,6 @@ function filterPlayersByMultiplayerId(multiplayerId) {
             playersInSession[playerId] = backendPlayers[playerId]
         }
     }
-    //console.log(playersInSession)
     return playersInSession
 }
 
@@ -381,82 +525,159 @@ function filterProjectilesByMultiplayerId(multiplayerId) {
             projectilesInSession[id] = backendProjectiles[id]
         }
     }
-    //console.log('projectiles', projectilesInSession)
     return projectilesInSession
 }
 
-function startGame(multiplayerId) {
-        if (rooms[multiplayerId] && rooms[multiplayerId].players) {
-        let playersInRoom = {}
-        rooms[multiplayerId].gameStarted = true
-        playersInRoom = rooms[multiplayerId].players
-        playersInRoom.forEach((player) => {
-            const id = player.id
-            const username = playerUsername[id];
-
-            backendPlayers[id] = { 
-                id,
-                multiplayerId,
-                x: 1920 * Math.random(),
-                y: 1080 * Math.random(),
-                score: 0,
-                username,
-                health: 100,
-                bullets: 10, //NEED TO GET BULLET COUNT FROM DATABASE
-            };
-        });
+function filterGrenadesByMultiplayerId(multiplayerId) {
+    let grenadesInSession = {}
+    for (const id in backendGrenades) {
+        if (backendGrenades[id].multiplayerId === multiplayerId) {
+            grenadesInSession[id] = backendGrenades[id]
+        }
     }
+    return grenadesInSession
 }
 
-setInterval(() => {
-    //HOSTUI INFINITE KULKOS
-    for (const playerId in backendPlayers) {
-        if (backendPlayers[playerId].bullets === 0) {
-            backendPlayers[playerId].bullets = 10 //CHANGE BASED ON WEAPON
-            io.emit('reloaded', playerId)
-        }
+function startGame(multiplayerId) {
+    if (rooms[multiplayerId] && rooms[multiplayerId].players) {
+    let playersInRoom = {}
+    rooms[multiplayerId].gameStarted = true
+    playersInRoom = rooms[multiplayerId].players
+    const corners = [
+        { x: 50, y: 50 },
+        { x: 1870, y: 50 },
+        { x: 50, y: 1030 },
+        { x: 1870, y: 1030 }
+    ];
+    for (let i = corners.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [corners[i], corners[j]] = [corners[j], corners[i]];
     }
-}, 3000) //RELOAD TIME CHANGE BASED ON WEAPON
+    playersInRoom.forEach((player, index) => {
+        const id = player.id
+        const username = playerUsername[id];
+        const damage = weaponDetails[id].damage
+        const bullets = weaponDetails[id].ammo
+        const firerate = weaponDetails[id].fire_rate
+        const reload = weaponDetails[id].reload
+        const radius = weaponDetails[id].radius
+        const corner = corners[index]
 
-setInterval(() => {
+        backendPlayers[id] = { 
+            id,
+            multiplayerId,
+            x: corner.x,
+            y: corner.y,
+            score: 0,
+            username,
+            health: 100,
+            bullets,
+            damage,
+            firerate,
+            reload,
+            radius,
+            grenades: 1
+        };
+    });
+}
+}
+
+function reload(reloadTime, bullets, id) {
+    reloadingStatus[id] = true
+    const reloadInterval = setInterval(() => {
+        if (!backendPlayers[id]) return
+        backendPlayers[id].bullets = bullets //CHANGE BASED ON WEAPON
+        clearInterval(reloadInterval)
+        reloadingStatus[id] = false
+    }, reloadTime) //RELOAD TIME CHANGE BASED ON WEAPON
+}
+
+app.get('/leaderboard', async (req, res) => {
+    try {
+        const client = await sql.connect()
+        const result = await client.query(`SELECT user_name, high_score FROM user_profile WHERE high_score IS NOT NULL AND high_score > 0 ORDER BY high_score desc limit 10;`)
+        const data = result.rows
+        client.release()
+        res.json(data)
+    }
+    catch (error) {
+        console.error('Error fetching leaderboard data:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+setInterval(async () => {
     for (const id in backendProjectiles) {
-        backendProjectiles[id].x += backendProjectiles[id].velocity.x
-        backendProjectiles[id].y += backendProjectiles[id].velocity.y
+        backendProjectiles[id].x += backendProjectiles[id].velocity.x;
+        backendProjectiles[id].y += backendProjectiles[id].velocity.y;
 
-        if (backendProjectiles[id].x >= 1920 || backendProjectiles[id].x <= 0 || backendProjectiles[id].y >= 1080 || backendProjectiles[id].y <= 0) {
-            delete backendProjectiles[id]
-            continue
+        let mapSize = 250;
+
+        for (const roomId in rooms) {
+            const maxPlayers = rooms[roomId].maxPlayers;
+            if (maxPlayers) {
+                mapSize = maxPlayers * 250;
+                break;
+            }
         }
-        //console.log(backendProjectiles)
+
+        if (
+            backendProjectiles[id].x >= 1920 + mapSize ||
+            backendProjectiles[id].x <= 0 ||
+            backendProjectiles[id].y >= 1080 + mapSize ||
+            backendProjectiles[id].y <= 0
+        ) {
+            delete backendProjectiles[id];
+            continue;
+        }
 
         for (const playerId in backendPlayers) {
-            const backendPlayer = backendPlayers[playerId]
-            const distance = Math.hypot(backendProjectiles[id].x - backendPlayer.x, backendProjectiles[id].y - backendPlayer.y)
+            if (!playerId) return
+            const backendPlayer = backendPlayers[playerId];
+            const distance = Math.hypot(
+                backendProjectiles[id].x - backendPlayer.x,
+                backendProjectiles[id].y - backendPlayer.y
+            );
             if (distance < 30 && backendProjectiles[id].playerId !== playerId) {
-
-                //console.log(distance)
-                //delete backendPlayers[playerId]
-
-                //change according to the weapon
-                backendPlayers[playerId].health -= 20
-                console.log(backendPlayers[playerId].health)
+                const damage = weaponDetails[backendProjectiles[id].playerId].damage;
+                backendPlayers[playerId].health -= damage;
                 if (backendPlayers[playerId].health <= 0) {
-                    delete backendPlayers[playerId]
                     if (backendPlayers[backendProjectiles[id].playerId]) {
-                        backendPlayers[backendProjectiles[id].playerId].score++
+                        const client = await sql.connect();
+                        //if (!backendPlayers[backendProjectiles[id].playerId].username) return
+                        //await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
+                        //    backendPlayers[backendProjectiles[id].playerId].username
+                        //]);
+                        client.release();
                     }
+                    delete backendPlayers[playerId];
                 }
-                //RESPAWNINTAM PLAYERIUI PROJECTILE NESIDELETINA
-                delete backendProjectiles[id]
-                break
+                delete backendProjectiles[id];
+                break;
             }
         }
     }
+
+    for (const id in backendGrenades) {
+        backendGrenades[id].x += backendGrenades[id].velocity.x
+        backendGrenades[id].y += backendGrenades[id].velocity.y
+        const radius = 10 // iki granatos kad sustotu
+        const distanceX = backendGrenades[id].target.x - backendGrenades[id].x;
+        const distanceY = backendGrenades[id].target.y - backendGrenades[id].y;
+        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+        if (distance <= radius) {
+            backendGrenades[id].velocity = { x: 0, y: 0 };
+            setTimeout(() => {
+                delete backendGrenades[grenadeId];
+            }, 1000);
+        }
+    }
+
     for (const roomId in rooms) {
-        //console.log('tikrinu roomus', roomId)
         const players = filterPlayersByMultiplayerId(roomId)
         const projectiles = filterProjectilesByMultiplayerId(roomId)
-        io.to(roomId).emit('updateProjectiles', projectiles)
+        const grenades = filterGrenadesByMultiplayerId(roomId)
+        io.to(roomId).emit('updateProjectiles', projectiles, grenades)
         io.to(roomId).emit('updatePlayers', players)
     }
     io.emit('updateRooms', rooms)

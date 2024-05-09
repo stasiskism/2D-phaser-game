@@ -11,55 +11,41 @@ class Singleplayer extends Phaser.Scene {
 
   init (data) {
     this.cameras.main.setBackgroundColor('#000000');
+    this.login = data.login
   }
 
   preload () {
-      this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png')
-      this.load.image('WwalkUp2', 'assets/8-dir-chars/WwalkUp2.png')
-      this.load.image('WwalkUp3', 'assets/8-dir-chars/WwalkUp3.png')
-      this.load.image('WwalkRight1', 'assets/8-dir-chars/WwalkRight1.png')
-      this.load.image('WwalkRight2', 'assets/8-dir-chars/WwalkRight2.png')
-      this.load.image('WwalkRight3', 'assets/8-dir-chars/WwalkRight3.png')
-      this.load.image('WwalkUpRight1', 'assets/8-dir-chars/WwalkUpRight1.png')
-      this.load.image('WwalkUpRight2', 'assets/8-dir-chars/WwalkUpRight2.png')
-      this.load.image('WwalkUpRight3', 'assets/8-dir-chars/WwalkUpRight3.png')
-      this.load.image('WwalkDownRight1', 'assets/8-dir-chars/WwalkDownRight1.png')
-      this.load.image('WwalkDownRight2', 'assets/8-dir-chars/WwalkDownRight2.png')
-      this.load.image('WwalkDownRight3', 'assets/8-dir-chars/WwalkDownRight3.png')
-      this.load.image('WwalkDown1', 'assets/8-dir-chars/WwalkDown1.png')
-      this.load.image('WwalkDown2', 'assets/8-dir-chars/WwalkDown2.png')
-      this.load.image('WwalkDown3', 'assets/8-dir-chars/WwalkDown3.png')
-      this.load.image('WwalkDownLeft1', 'assets/8-dir-chars/WwalkDownLeft1.png')
-      this.load.image('WwalkDownLeft2', 'assets/8-dir-chars/WwalkDownLeft2.png')
-      this.load.image('WwalkDownLeft3', 'assets/8-dir-chars/WwalkDownLeft3.png')
-      this.load.image('WwalkLeft1', 'assets/8-dir-chars/WwalkLeft1.png')
-      this.load.image('WwalkLeft2', 'assets/8-dir-chars/WwalkLeft2.png')
-      this.load.image('WwalkLeft3', 'assets/8-dir-chars/WwalkLeft3.png')
-      this.load.image('WwalkUpLeft1', 'assets/8-dir-chars/WwalkUpLeft1.png')
-      this.load.image('WwalkUpLeft2', 'assets/8-dir-chars/WwalkUpLeft2.png')
-      this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
-      this.load.image('mapas', 'assets/mapas.png')
-      this.load.image('player', 'assets/player_23.png')
-      this.load.image('bullet', 'assets/Bullets/bullet.png')
-      this.load.image('enemy', 'assets/enemy.png')
-      this.load.image('shotgun', 'assets/Weapons/tile001.png')
-      this.load.image('crosshair', 'assets/crosshair008.png');
-      this.load.image('fullscreen', 'assets/full-screen.png')
       this.graphics = this.add.graphics()
     }
 
   create () {
 
     this.setupScene();
-    this.setupAnimations();
     this.setupInputEvents();
-    this.setupPlayer()
+    this.setupPlayer();
+    this.gunAnimation();
     this.time.delayedCall(500, this.spawnEnemies, [], this);
     this.score = 0;
     this.intervalID
     this.enemies = []
     this.bullets = []
 
+    this.anims.create({
+      key: 'enemiess', // Animation key
+      frames: this.anims.generateFrameNumbers('enemiess', { start: 0, end: 7 /* total number of frames - 1 */ }),
+      frameRate: 30 /* frame rate */,
+      repeat: -1 // Repeat indefinitely
+  });
+
+  }
+
+  gunAnimation(){
+    this.anims.create({
+        key: 'singleShot',
+        frames: this.anims.generateFrameNumbers('singleShot', { start: 0, end: 10 }),
+        frameRate: 60,
+        repeat: 0 // Play once
+    });
   }
 
   setupScene() {
@@ -83,27 +69,6 @@ class Singleplayer extends Phaser.Scene {
 
     this.graphics.lineStyle(10, 0xff0000);
     this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
-
-  }
-
-  setupAnimations() {
-    const animations = [
-      { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
-      { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
-      { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
-      { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
-      { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
-      { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
-      { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
-      { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
-      { key: 'idle', frames: ['WwalkDown2'] }
-    ];
-    animations.forEach(anim => this.anims.create({
-      key: anim.key,
-      frames: anim.frames.map(frame => ({ key: frame })),
-      frameRate: 10,
-      repeat: -1
-    }));
 
   }
 
@@ -137,8 +102,8 @@ class Singleplayer extends Phaser.Scene {
     this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'WwalkDown2')
     this.player.setScale(4);
     this.player.setCollideWorldBounds(true);
-    this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'shotgun');
-    this.weapon.setScale(4);
+    this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'singleShot');
+    this.weapon.setScale(2);
   }
 
   update () {
@@ -147,6 +112,13 @@ class Singleplayer extends Phaser.Scene {
     this.updateCrosshairPosition();
     this.updateBullet()
     this.detectCollision()
+
+    this.enemies.forEach(enemy => {
+      const angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+      const velocityX = Math.cos(angleToPlayer) * 350;
+      const velocityY = Math.sin(angleToPlayer) * 350;
+      enemy.setVelocity(velocityX, velocityY);
+  });
   }
 
 updatePlayerMovement() {
@@ -247,9 +219,14 @@ detectCollision() {
         const distance = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
         // Player dies, end game. Change distance for more accurate collision.
         if (distance < 50) {
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
             clearInterval(this.intervalID);
-            this.scene.start('Restart', { score: this.score });
+            this.scene.start('Restart', { score: this.score, login: this.login });
             this.scene.stop();
+
         }
 
         // Player bullet and enemy collision
@@ -274,7 +251,7 @@ detectCollision() {
 fireBullet(pointer) {
   const direction = Math.atan((this.crosshair.x - this.player.x) / (this.crosshair.y - this.player.y));
         if (!pointer.leftButtonDown()) return;
-
+        this.weapon.anims.play('singleShot', true);
         // Create a projectile
         const bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(4);
         bullet.setRotation(direction);
@@ -312,19 +289,23 @@ updateBullet() {
 
   spawnEnemies() {
     this.intervalID = setInterval(() => {
+    const numEnemies = Phaser.Math.Between(1, 4);
+    for(let i = 0; i < numEnemies; i++) {
       const spawnPoints = [
-          { x: 0, y: Phaser.Math.Between(0, 1080) },  // Left border
-          { x: 1920, y: Phaser.Math.Between(0, 1080) }, // Right border
-          { x: Phaser.Math.Between(0, 1920), y: 0 },   // Top border
-          { x: Phaser.Math.Between(0, 1920), y: 1080 } // Bottom border
+        { x: 0, y: Phaser.Math.Between(0, 1080) },  // Left border
+        { x: 1920, y: Phaser.Math.Between(0, 1080) }, // Right border
+        { x: Phaser.Math.Between(0, 1920), y: 0 },   // Top border
+        { x: Phaser.Math.Between(0, 1920), y: 1080 } // Bottom border
       ];
       const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
-      const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemy');
-      enemy.setScale(0.1)
+      const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemiess');
+      enemy.anims.play('enemiess', true);
+      enemy.setScale(2)
       enemy.setCollideWorldBounds(false)
       const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x)
       enemy.setVelocity(300 * Math.cos(angle), 300 * Math.sin(angle))
       this.enemies.push(enemy)
+    }
     }, 1000)
   }
 

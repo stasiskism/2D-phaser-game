@@ -8,13 +8,13 @@ class Register extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('menu', 'assets/menuPhoto.jpg');
+
     }
 
     create() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
-        this.vaizdasImage = this.add.sprite(centerX, centerY, 'menu');
+        this.vaizdasImage = this.add.sprite(centerX, centerY, 'background');
 
         const register = this.add.dom(centerX, centerY).createFromHTML(`
             <style>
@@ -99,6 +99,7 @@ class Register extends Phaser.Scene {
 
     loadLogin() {
         this.scene.start('login')
+        this.scene.stop()
     }
 
     sendData(username, password) {
@@ -108,6 +109,7 @@ class Register extends Phaser.Scene {
             if (response.success) {
                 alert('Registration successful');
                 this.scene.start('login');
+                this.scene.stop()
             } else {
                 alert('Registration failed');
             }

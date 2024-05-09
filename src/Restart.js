@@ -8,6 +8,7 @@ class Restart extends Phaser.Scene {
     init (data) {
         this.cameras.main.setBackgroundColor('#ffffff')
         this.score = data.score
+        this.login = data.login
     }
 
     preload () {
@@ -17,12 +18,12 @@ class Restart extends Phaser.Scene {
     }
 
     create () {
-      console.log(this.score)
+        socket.emit('singleplayer', socket.id, this.score)
       const centerX = this.cameras.main.width / 2;
       const centerY = this.cameras.main.height / 2;
       this.restart = this.add.sprite(centerX, centerY, 'dead');
       this.restartButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'restartButton')
-      //this.scoreText = this.add.text(16, 16, 'Score: ' + this.score, { fontSize: '32px', fill: '#ffffff' });
+      this.scoreText = this.add.text(centerX, centerY - 200, 'Score: ' + this.score, { fontSize: '32px', fill: '#ffffff' }).setOrigin(0.5).setScale(2);
       this.restartButton.setInteractive({ useHandCursor: true })
       this.restartButton.on('pointerdown', () => this.clickRestartButton())
       this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) - 400, 'quitButton')
@@ -40,9 +41,13 @@ class Restart extends Phaser.Scene {
     }
 
     clickQuitButton() {
-        this.scene.start('mainMenu')
-        this.scene.stop('multiplayer')
-        this.scene.stop()
+        if (this.login) {
+            this.scene.start('mainMenu')
+            this.scene.stop()
+        } else {
+            this.scene.start('authenticate')
+            this.scene.stop()
+        }
     }
 }
 
