@@ -22,7 +22,6 @@ class Multiplayer extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#000000');
         this.multiplayerId = data.multiplayerId
         this.mapSize = data.mapSize
-        console.log('mapSize', this.mapSize)
     }
 
     preload() {
@@ -248,7 +247,6 @@ class Multiplayer extends Phaser.Scene {
 
         socket.on('updateProjectiles', (backendProjectiles, backendGrenades) => {
             for (const id in backendProjectiles) {
-                console.log('cia', this.frontendProjectiles[id])
                 if (!this.frontendProjectiles[id]) this.setupProjectile(backendProjectiles[id].playerId, id, backendProjectiles[id]);
                 else this.updateProjectilePosition(id, backendProjectiles[id]);
             }
@@ -510,11 +508,6 @@ class Multiplayer extends Phaser.Scene {
     }
 
     gameWon(username) {
-        //delete this.frontendGrenades
-        //delete this.frontendSmoke
-        //delete this.frontendProjectiles
-        //delete this.darkOverlay
-        console.log(this.darkOverlay)
         socket.removeAllListeners()
         this.cameras.main.centerOn(this.cameras.main.width / 2, this.cameras.main.height / 2);
         const winningText = this.add.text(
@@ -527,6 +520,18 @@ class Multiplayer extends Phaser.Scene {
         winningText.setOrigin(0.5);
         for (const id in this.frontendPlayers) {
             this.removePlayer(id);
+        }
+        for (const id in this.frontendGrenades) {
+            this.removeGrenade(id)
+        }
+        for (const id in this.frontendSmoke) {
+            delete this.frontendSmoke[id]
+        }
+        for (const id in this.frontendProjectiles) {
+            this.removeProjectile(id)
+        }
+        for (const id in this.darkOverlay) {
+            delete this.darkOverlay[id]
         }
 
         socket.emit('gameWon', this.multiplayerId, username)
@@ -575,7 +580,7 @@ class Multiplayer extends Phaser.Scene {
             if (isIntersecting && id === socket.id) {
                 if (!this.darkOverlay[id]) {
                     console.log('creating dark overlay');
-                    this.darkOverlay[id] = this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x808080);
+                    this.darkOverlay[id] = this.add.rectangle(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize, 0x808080);
                     this.darkOverlay[id].setOrigin(0);
                     this.darkOverlay[id].setAlpha(1); // Adjust the alpha value to control darkness level
                 }
