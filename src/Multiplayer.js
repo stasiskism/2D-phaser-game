@@ -36,31 +36,31 @@ class Multiplayer extends Phaser.Scene {
         //this.generateFallingObjects();
     }
 
-    // generateFallingObjects() {
-    //     // Define the interval for generating falling objects
-    //     this.time.addEvent({
-    //         delay: Phaser.Math.Between(4000, 5000), // Random delay between 1 to 3 seconds
-    //         callback: () => {
-    //             const numObjects = Phaser.Math.Between(2, 8); // Random number of objects between 2 to 4
-    //             const spaceBetween = Phaser.Math.Between(50, 150); // Random space between objects
+     generateFallingObjects() {
+         // Define the interval for generating falling objects
+         this.time.addEvent({
+             delay: Phaser.Math.Between(4000, 5000), // Random delay between 1 to 3 seconds
+             callback: () => {
+                 const numObjects = Phaser.Math.Between(2, 8); // Random number of objects between 2 to 4
+                 const spaceBetween = Phaser.Math.Between(50, 150); // Random space between objects
 
-    //             let startX = Phaser.Math.Between(0, this.cameras.main.width); // Random starting X position
-    //             let startY = -50; // Start from above the screen
+                 let startX = Phaser.Math.Between(0, this.cameras.main.width); // Random starting X position
+                 let startY = -50; // Start from above the screen
 
-    //             for (let i = 0; i < numObjects; i++) {
+                 for (let i = 0; i < numObjects; i++) {
 
-    //                 const object = this.physics.add.image(
-    //                     startX = Phaser.Math.Between(0, this.cameras.main.width),
-    //                     startY,
-    //                     'wall' // Replace 'object_key' with the key of your falling object image
-    //                 ).setScale(2);
-    //                 this.fallingObjects.push(object);
-    //                 startY -= Phaser.Math.Between(25, 75) + Phaser.Math.Between(25, 75); // Move the startY position for the next object
-    //             }
-    //         },
-    //         loop: true // Repeat the event indefinitely
-    //     });
-    // }
+                     const object = this.physics.add.image(
+                         startX = Phaser.Math.Between(0, this.cameras.main.width),
+                         startY,
+                         'wall' // Replace 'object_key' with the key of your falling object image
+                     ).setScale(2);
+                     this.fallingObjects.push(object);
+                     startY -= Phaser.Math.Between(25, 75) + Phaser.Math.Between(25, 75); // Move the startY position for the next object
+                 }
+             },
+             loop: true // Repeat the event indefinitely
+         });
+     }
 
     gunAnimation(){
         this.anims.create({
