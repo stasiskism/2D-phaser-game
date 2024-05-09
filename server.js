@@ -21,8 +21,8 @@ const sql = new Pool({
     user: 'postgres',
     host: '193.219.42.55',
     database: 'postgres',
-    password: '123456789qwertyuiop',
-    port: 14066
+    password: 'newteam',
+    port: 8182
 })
 
 sql.on('connect', () => {
