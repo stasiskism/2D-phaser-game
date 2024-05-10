@@ -24,9 +24,6 @@ class Spectator extends Phaser.Scene {
     }
 
     loadImages() {
-        this.load.image('quitButton', 'assets/quit.png')
-        this.load.image('nextButton', 'assets/arrow-right.png')
-        this.load.image('previousButton', 'assets/arrow-left.png')
         this.graphics = this.add.graphics()
     }
 

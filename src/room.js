@@ -5,6 +5,13 @@ class Room extends Phaser.Scene {
     chatHistory = []
     readyPlayersCount = 0
     countdownTime = 0
+    weaponId
+    weapons = {
+        1: 'Pistol',
+        2: 'Shotgun',
+        3: 'AR',
+        4: 'Sniper'
+    }
     constructor() {
         super({ key: 'room'});
     }
@@ -233,6 +240,33 @@ class Room extends Phaser.Scene {
                 chatInputElement.value += ' '
             }
         })
+
+        this.nextButton = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
+        this.nextButton.setPosition(this.centerX + 250, 1000).setScrollFactor(0).setDepth(1)
+        this.nextButton.setInteractive({useHandCursor: true})
+        this.nextButton.on('pointerdown', () => {
+            this.weaponId++;
+            if (this.weaponId > 4) {
+                this.weaponId = 1
+            }
+            this.setupWeapon(this.weaponId)
+            socket.emit('changeWeapon', this.weaponId)
+        });
+
+        this.add.text(this.centerX - 160, 900, 'Choose weapon:', { fontFamily: 'Arial', fontSize: 48, color: '#ffffff' });
+
+        this.previousButton = this.add.sprite(0, 0, 'previousButton').setScale(0.2)
+        this.previousButton.setPosition(this.centerX - 250, 1000).setScrollFactor(0).setDepth(1)
+        this.previousButton.setInteractive({useHandCursor: true})
+        this.previousButton.on('pointerdown', () => {
+            this.weaponId--;
+            if (this.weaponId < 1) {
+                this.weaponId = 4;
+            }
+            this.setupWeapon(this.weaponId)
+            socket.emit('changeWeapon', this.weaponId)
+        });
+
     }
 
     setupPlayer(id, playerData) {
@@ -244,6 +278,8 @@ class Room extends Phaser.Scene {
         //CIA ERRORAI KAI STARTINAM MULTIPLAYER GAME
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         this.playerUsername[id] = playerData.username
+        this.weaponId = playerData.weaponId
+        this.setupWeapon(this.weaponId)
         //console.log(this.frontendPlayers[id])
     
         // Setup other players
@@ -255,6 +291,19 @@ class Room extends Phaser.Scene {
                     this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
                 }
             }
+        }
+    }
+
+    setupWeapon(weaponId) {
+        if (this.displayWeapon) {
+            this.displayWeapon.destroy()
+        }
+        if (weaponId === 3) {
+            this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
+            this.displayWeapon.setPosition(this.centerX + 70, 1000).setScrollFactor(0).setDepth(1)
+        } else {
+            this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
+            this.displayWeapon.setPosition(this.centerX, 1000).setScrollFactor(0).setDepth(1)
         }
     }
     

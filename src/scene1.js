@@ -78,6 +78,8 @@ class Scene1 extends Phaser.Scene {
         this.load.image('wall', 'assets/wall.png')
         this.load.image('restartButton', 'assets/pngegg.png')
         this.load.image('quitButton', 'assets/quit.PNG')
+        this.load.image('nextButton', 'assets/arrow-right.png')
+        this.load.image('previousButton', 'assets/arrow-left.png')
     }
 
     create (data) {

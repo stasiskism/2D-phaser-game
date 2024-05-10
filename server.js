@@ -43,6 +43,7 @@ let projectileId = 0
 let grenadeId = 0
 const playerUsername = {}
 const activeSessions = {}
+const weaponIds = {}
 const rooms = {}
 const readyPlayers = {}
 let countdownInterval
@@ -81,6 +82,7 @@ io.on('connection', (socket) => {
 
     socket.on('login', async (data) => {
         const {username, password} = data
+        let weaponId
         try {
             const client = await sql.connect()
             const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
@@ -89,15 +91,20 @@ io.on('connection', (socket) => {
             } else {
                 const firstLogin = result.rows[0].first_login
                 if (firstLogin) {
+                    weaponResult = await client.query('SELECT weapon from user_profile WHERE user_name = $1', [username])
+                    weaponId = weaponResult.rows[0].weapon
                     await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
                     socket.emit('loginResponse', { success: true, firstLogin });
                 }
                 else {
+                weaponResult = await client.query('SELECT weapon from user_profile WHERE user_name = $1', [username])
+                weaponId = weaponResult.rows[0].weapon
                 // Authentication successful
                 socket.emit('loginResponse', { success: true });
                 }
                 playerUsername[socket.id] = username
                 activeSessions[username] = socket.id
+                weaponIds[socket.id] = weaponId
             }
             
             client.release();
@@ -128,7 +135,8 @@ io.on('connection', (socket) => {
         if (rooms[roomId]) {
             projectileId = 0
             const username = playerUsername[socket.id];
-            rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
+            const weaponId = weaponIds[socket.id]
+            rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username, weaponId });
             console.log('room joined', roomId)
             socket.join(roomId);
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
@@ -497,6 +505,19 @@ io.on('connection', (socket) => {
 
     socket.on('sendMessage', ({roomId, message}) => {
         io.to(roomId).emit('receiveMessage', message)
+    })
+
+    socket.on('changeWeapon', async (weaponId) => {
+        console.log(weaponId)
+        try {
+            const client = await sql.connect()
+            const username = playerUsername[socket.id]
+            console.log(username)
+            await client.query('UPDATE user_profile SET weapon = $1 WHERE user_name = $2;', [weaponId, username]);
+            client.release()
+        } catch (error) {
+            console.error('Error updating weaponId:', error);
+        }
     })
 
 });
