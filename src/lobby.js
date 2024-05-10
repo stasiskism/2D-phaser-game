@@ -9,6 +9,7 @@ class Lobby extends Phaser.Scene {
     preload() {
 
     }
+    
     create() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;

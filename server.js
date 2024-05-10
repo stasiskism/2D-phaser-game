@@ -169,7 +169,7 @@ io.on('connection', (socket) => {
                                 const username = playerUsername[playerId];
                                 const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
                                 const weaponId = weaponIdResult.rows[0].weapon;
-                                const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload, radius FROM weapons WHERE weapon_id = $1', [weaponId]);
+                                const weaponDetailsResult = await client.query('SELECT weapon_id, damage, fire_rate, ammo, reload, radius FROM weapons WHERE weapon_id = $1', [weaponId]);
                                 const weapons = weaponDetailsResult.rows[0];
                                 weaponDetails[playerId] = weapons;
                                 delete readyPlayers[roomId][playerId];
@@ -306,7 +306,6 @@ io.on('connection', (socket) => {
             if (maxPlayers) {
                 mapSize = 250 * maxPlayers
             }
-            
             // Broadcast this player's movement to all other clients
             if (data === 'a') {
                 backendPlayers[socket.id].x -= movementSpeed
@@ -560,6 +559,7 @@ function startGame(multiplayerId) {
     playersInRoom.forEach((player, index) => {
         const id = player.id
         const username = playerUsername[id];
+        const weaponId = weaponDetails[id].weapon_id
         const damage = weaponDetails[id].damage
         const bullets = weaponDetails[id].ammo
         const firerate = weaponDetails[id].fire_rate
@@ -580,7 +580,8 @@ function startGame(multiplayerId) {
             firerate,
             reload,
             radius,
-            grenades: 1
+            grenades: 1,
+            weaponId
         };
     });
 }
@@ -648,10 +649,10 @@ setInterval(async () => {
                 if (backendPlayers[playerId].health <= 0) {
                     if (backendPlayers[backendProjectiles[id].playerId]) {
                         const client = await sql.connect();
-                        //if (!backendPlayers[backendProjectiles[id].playerId].username) return
-                        //await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
-                        //    backendPlayers[backendProjectiles[id].playerId].username
-                        //]);
+                        if (!backendPlayers[backendProjectiles[id].playerId].username) return
+                        await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
+                           backendPlayers[backendProjectiles[id].playerId].username
+                        ]);
                         client.release();
                     }
                     delete backendPlayers[playerId];

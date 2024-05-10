@@ -50,9 +50,22 @@ class Scene1 extends Phaser.Scene {
         this.load.image('marketplace', 'assets/marketplace.png');
         this.load.image("tiles", 'assets/assetas.png')
         this.load.image('smokeGrenade', 'assets/smokeGrenade.png')
-        this.load.spritesheet('singleShot', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[SINGLE_SHOT] Assault_rifle_V1.00.png', { frameWidth: 128, frameHeight: 48 });
-        this.load.spritesheet('reload', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[RELOAD] Assault_rifle_V1.00 - Reload.png', { frameWidth: 96, frameHeight: 64 });
-        this.load.spritesheet('emptying', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[EMPTYING] Assault_rifle_V1.00.png', { frameWidth: 96, frameHeight: 64 });
+        this.load.image('AR', 'assets/V1.00/PNG/ar.png')
+        this.load.spritesheet('shootAR', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[SINGLE_SHOT] Assault_rifle_V1.00.png', { frameWidth: 128, frameHeight: 48 });
+        this.load.spritesheet('reloadAR', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[RELOAD] Assault_rifle_V1.00 - Reload.png', { frameWidth: 96, frameHeight: 64 });
+        this.load.spritesheet('emptyAR', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[EMPTYING] Assault_rifle_V1.00.png', { frameWidth: 96, frameHeight: 64 });
+        this.load.image('Pistol', 'assets/V1.00/PNG/pistol.png')
+        this.load.spritesheet('shootPistol', 'assets/v1.00/Sprite-sheets/Pistol_V1.00/Weapon/pistolShoot.png', {frameWidth: 28, frameHeight: 28})
+        this.load.spritesheet('reloadPistol', 'assets/v1.00/Sprite-sheets/Pistol_V1.00/Weapon/pistolReload.png', {frameWidth: 28, frameHeight: 28})
+        this.load.spritesheet('emptyPistol', 'assets/v1.00/Sprite-sheets/Pistol_V1.00/Weapon/pistolEmpty.png', {frameWidth: 28, frameHeight: 28})
+        this.load.image('Shotgun', 'assets/V1.00/PNG/shotgun.png')
+        this.load.spritesheet('shootShotgun', 'assets/v1.00/Sprite-sheets/Shotgun_V1.00/Weapon/shootShotgun.png', {frameWidth: 32, frameHeight: 32})
+        this.load.spritesheet('reloadShotgun', 'assets/v1.00/Sprite-sheets/Shotgun_V1.00/Weapon/shotgunReload.png', {frameWidth: 32, frameHeight: 32})
+        this.load.spritesheet('emptyShotgun', 'assets/v1.00/Sprite-sheets/Shotgun_V1.00/Weapon/shotgunEmpty.png', {frameWidth: 32, frameHeight: 32})
+        this.load.image('Sniper', 'assets/V1.00/PNG/sniper.png')
+        this.load.spritesheet('shootSniper', 'assets/v1.00/Sprite-sheets/sniper/WEAPON/sniperShoot.png', {frameWidth: 128, frameHeight: 64})
+        this.load.spritesheet('reloadSniper', 'assets/v1.00/Sprite-sheets/sniper/WEAPON/sniperReload.png', {frameWidth: 96, frameHeight: 64})
+        this.load.spritesheet('reloadSniperBullets', 'assets/v1.00/Sprite-sheets/sniper/FX/reloadSniper.png', {frameWidth: 96, frameHeight: 64})
         this.load.spritesheet('smoke', 'assets/smoke.png', { frameWidth: 32, frameHeight: 32, endFrame: 33 });
         this.load.spritesheet('enemiess', 'assets/Bowllingguychibi-Run.png', { frameWidth: 64, frameHeight: 64 });
         this.load.tilemapTiledJSON('map', 'assets/maps.json');

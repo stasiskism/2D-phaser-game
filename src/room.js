@@ -74,6 +74,7 @@ class Room extends Phaser.Scene {
                 this.frontendPlayers[id].destroy();
                 delete this.frontendPlayers[id];
             }
+            this.chatHistory = []
             socket.off('updateRoomPlayers')
         })
 
