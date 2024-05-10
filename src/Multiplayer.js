@@ -322,7 +322,7 @@ class Multiplayer extends Phaser.Scene {
         if (id === socket.id) {
             this.playerAmmo = this.add.text(playerData.x, playerData.y + 750, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             this.weaponDetails = { damage: playerData.damage, fire_rate: playerData.firerate, ammo: playerData.bullets, reload: playerData.reload, radius: playerData.radius}
-            this.weapon = 'Pistol'//this.animationKeys[playerData.weaponId].name
+            this.weapon = this.animationKeys[playerData.weaponId].name
             this.gunAnimation(this.animationKeys[playerData.weaponId]);
             this.frontendWeapons[id] = this.physics.add.sprite(playerData.x, playerData.y, '' + this.weapon).setScale(2);
         }
@@ -500,6 +500,7 @@ class Multiplayer extends Phaser.Scene {
                     orbitDistance = 110;
                     break;
             }
+            console.log(orbitDistance)
             const weaponX = player.x + Math.cos(angleToPointer) * orbitDistance;
             const weaponY = player.y + Math.sin(angleToPointer) * orbitDistance;
             weapon.setPosition(weaponX, weaponY);
