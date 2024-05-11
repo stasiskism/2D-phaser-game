@@ -38,35 +38,36 @@ class Multiplayer extends Phaser.Scene {
     create() {
         this.setupScene();
         this.setupInputEvents();
+        //socket.emit('initFallingObjects', this.multiplayerId)
         //this.gunAnimation()
         //this.generateFallingObjects();
     }
 
-     generateFallingObjects() {
-         // Define the interval for generating falling objects
-         this.time.addEvent({
-             delay: Phaser.Math.Between(4000, 5000), // Random delay between 1 to 3 seconds
-             callback: () => {
-                 const numObjects = Phaser.Math.Between(2, 8); // Random number of objects between 2 to 4
-                 const spaceBetween = Phaser.Math.Between(50, 150); // Random space between objects
+    //  generateFallingObjects() {
+    //      // Define the interval for generating falling objects
+    //      this.time.addEvent({
+    //          delay: Phaser.Math.Between(4000, 5000), // Random delay between 1 to 3 seconds
+    //          callback: () => {
+    //              const numObjects = Phaser.Math.Between(2, 8); // Random number of objects between 2 to 4
+    //              const spaceBetween = Phaser.Math.Between(50, 150); // Random space between objects
 
-                 let startX = Phaser.Math.Between(0, this.cameras.main.width); // Random starting X position
-                 let startY = -50; // Start from above the screen
+    //              let startX = Phaser.Math.Between(0, this.cameras.main.width); // Random starting X position
+    //              let startY = -50; // Start from above the screen
 
-                 for (let i = 0; i < numObjects; i++) {
+    //              for (let i = 0; i < numObjects; i++) {
 
-                     const object = this.physics.add.image(
-                         startX = Phaser.Math.Between(0, this.cameras.main.width),
-                         startY,
-                         'wall' // Replace 'object_key' with the key of your falling object image
-                     ).setScale(2);
-                     this.fallingObjects.push(object);
-                     startY -= Phaser.Math.Between(25, 75) + Phaser.Math.Between(25, 75); // Move the startY position for the next object
-                 }
-             },
-             loop: true // Repeat the event indefinitely
-         });
-     }
+    //                  const object = this.physics.add.image(
+    //                      startX = Phaser.Math.Between(0, this.cameras.main.width),
+    //                      startY,
+    //                      'wall' // Replace 'object_key' with the key of your falling object image
+    //                  ).setScale(2);
+    //                  this.fallingObjects.push(object);
+    //                  startY -= Phaser.Math.Between(25, 75) + Phaser.Math.Between(25, 75); // Move the startY position for the next object
+    //              }
+    //          },
+    //          loop: true // Repeat the event indefinitely
+    //      });
+    //  }
 
     gunAnimation(weaponId){
         if (!weaponId) return
@@ -271,7 +272,7 @@ class Multiplayer extends Phaser.Scene {
         });
 
         socket.on('updateFallingObjects', (fallingObjects) => {
-            console.log('asd')
+            console.log('UPDATINA FALLING OBJECTUS')
             for (const i in fallingObjects) {
                 const object = this.physics.add.image(
                     fallingObjects[i].x,
@@ -322,15 +323,16 @@ class Multiplayer extends Phaser.Scene {
         if (id === socket.id) {
             this.playerAmmo = this.add.text(playerData.x, playerData.y + 750, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             this.weaponDetails = { damage: playerData.damage, fire_rate: playerData.firerate, ammo: playerData.bullets, reload: playerData.reload, radius: playerData.radius}
-            this.weapon = this.animationKeys[playerData.weaponId].name
             this.gunAnimation(this.animationKeys[playerData.weaponId]);
-            this.frontendWeapons[id] = this.physics.add.sprite(playerData.x, playerData.y, '' + this.weapon).setScale(2);
         }
+        this.weapon[id] = this.animationKeys[playerData.weaponId].name
+        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x, playerData.y, '' + this.weapon[id]).setScale(2);
 
         // Setup other players
         for (const playerId in this.frontendPlayers) {
             if (playerId !== id) {
                 const otherPlayerData = this.frontendPlayers[playerId];
+                const weapon = this.weapon[playerId]
                 // Cleanup existing player sprites if they exist
                 if (this.frontendPlayers[playerId]) {
                     this.frontendPlayers[playerId].destroy();
@@ -338,7 +340,6 @@ class Multiplayer extends Phaser.Scene {
                     this.playerHealth[playerId].destroy()
                     this.playerUsername[playerId].destroy()
                 }
-                const weapon = otherPlayerData.weaponId
                 // Create frontend sprites for other players
                 this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(5);
                 this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, '' + weapon).setScale(2);
@@ -486,7 +487,7 @@ class Multiplayer extends Phaser.Scene {
             const angleToPointer = Phaser.Math.Angle.Between(player.x, player.y, this.crosshair.x, this.crosshair.y);
             weapon.setRotation(angleToPointer);
             let orbitDistance = 0
-            switch (this.weapon) {
+            switch (this.weapon[socket.id]) {
                 case 'Pistol':
                     orbitDistance = 50;
                     break;
@@ -500,7 +501,7 @@ class Multiplayer extends Phaser.Scene {
                     orbitDistance = 110;
                     break;
             }
-            console.log(orbitDistance)
+            console.log('orbit', orbitDistance)
             const weaponX = player.x + Math.cos(angleToPointer) * orbitDistance;
             const weaponY = player.y + Math.sin(angleToPointer) * orbitDistance;
             weapon.setPosition(weaponX, weaponY);

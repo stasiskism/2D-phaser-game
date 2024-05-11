@@ -184,7 +184,6 @@ io.on('connection', (socket) => {
                             }
                         }
                         delete readyPlayers[roomId]
-                        //socket.emit('initFallingObjects', roomId)
                         startGame(roomId);
                         client.release();
                     } catch (error) {
@@ -465,25 +464,6 @@ io.on('connection', (socket) => {
         delete rooms[multiplayerId];
     })
 
-    // socket.on('initFallingObjects', (roomId) => {
-    //     console.log('veikia INIT')
-    //     let mapSize = 250
-    //     if (rooms[multiplayerId].players.find(player => player.id === socket.id)) {
-    //         mapSize = rooms[multiplayerId].maxPlayers * 250
-    //     }
-    //     setInterval(() => {
-    //         const numObjects = Math.floor(Math.random() * (8 - 2) + 2)
-    //         fallingObjects = null
-    //         for (let i = 0; i < numObjects; i++) {
-    //             let startX = Math.floor(Math.random() * (1980 + mapSize))
-    //             let startY = -50
-    //             fallingObjects[i] = {x: startX, y: startY}
-    //         }
-    //         io.to(roomId).emit('updateFallingObjects', fallingObjects)
-
-    //     }, getRandomInt(4000, 5000))
-    // })
-
     socket.on('detect', (multiplayerId, playerId) => {
         let mapSize = 250
         let maxPlayers = null
@@ -497,6 +477,7 @@ io.on('connection', (socket) => {
 
         if (backendPlayers[playerId]) {
         backendPlayers[playerId].y += 2
+        console.log('mapSize', mapSize)
         if (backendPlayers[playerId].y > 1080 + mapSize) {
             delete backendPlayers[playerId]
         }
@@ -562,6 +543,23 @@ function filterGrenadesByMultiplayerId(multiplayerId) {
     return grenadesInSession
 }
 
+function initFallingObjects(roomId) {
+    console.log('veikia INIT')
+    let mapSize = 250
+    mapSize = rooms[roomId].maxPlayers * 250
+    let fallingObjects = {}
+    setInterval(() => {
+        const numObjects = Math.floor(Math.random() * (8 - 2) + 2)
+        for (let i = 0; i < numObjects; i++) {
+            let startX = Math.floor(Math.random() * (1980 + mapSize))
+            let startY = -50
+            fallingObjects[i] = {x: startX, y: startY}
+        }
+        io.to(roomId).emit('updateFallingObjects', fallingObjects)
+
+    }, Math.floor(Math.random() * (5000 - 4000) + 4000))
+}
+
 function startGame(multiplayerId) {
     if (rooms[multiplayerId] && rooms[multiplayerId].players) {
     let playersInRoom = {}
@@ -605,6 +603,7 @@ function startGame(multiplayerId) {
             weaponId
         };
     });
+    initFallingObjects(multiplayerId)
 }
 }
 
