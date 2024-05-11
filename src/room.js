@@ -231,9 +231,9 @@ class Room extends Phaser.Scene {
                 const username = this.playerUsername[socket.id]
                 const message = `${username}: ${text}`
                 chatInputElement.value = ''
-                this.input.keyboard.enabled = true
                 socket.emit('sendMessage', {roomId: this.roomId, message})
             } else if (event.key === 'Escape') {
+                this.input.keyboard.enabled = true
                 chatInputElement.value = '';
                 chatInputElement.blur();
             } else if (event.key === ' ') {
@@ -261,7 +261,7 @@ class Room extends Phaser.Scene {
         this.previousButton.on('pointerdown', () => {
             this.weaponId--;
             if (this.weaponId < 1) {
-                this.weaponId = 4;
+                this.weaponId = 4
             }
             this.setupWeapon(this.weaponId)
             socket.emit('changeWeapon', this.weaponId)
@@ -278,9 +278,10 @@ class Room extends Phaser.Scene {
         //CIA ERRORAI KAI STARTINAM MULTIPLAYER GAME
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
         this.playerUsername[id] = playerData.username
-        this.weaponId = playerData.weaponId
-        this.setupWeapon(this.weaponId)
-        //console.log(this.frontendPlayers[id])
+        if (id === socket.id) {
+            this.weaponId = playerData.weaponId
+            this.setupWeapon(this.weaponId)
+        }
     
         // Setup other players
         for (const playerId in this.frontendPlayers) {
