@@ -40,16 +40,15 @@ class Scene1 extends Phaser.Scene {
         this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
         this.load.image('mapas', 'assets/mapas.png')
         this.load.image('player', 'assets/player_23.png')
-        this.load.image('bullet', 'assets/Bullets/bullet.png')
+        this.load.image('bullet', 'assets/bullet.png')
         this.load.image('crosshair', 'assets/crosshair008.png')
-        this.load.image('shotgun', 'assets/Weapons/tile001.png')
-        this.load.image('enemy', 'assets/enemy.png')
         this.load.image('fullscreen', 'assets/full-screen.png')
         this.load.image('multiplayer', 'assets/multiplayer.png');
         this.load.image('singleplayer', 'assets/singleplayer.png');
         this.load.image('marketplace', 'assets/marketplace.png');
         this.load.image("tiles", 'assets/assetas.png')
         this.load.image('smokeGrenade', 'assets/smokeGrenade.png')
+        this.load.image('grenade', 'assets/grenade.png')
         this.load.image('AR', 'assets/V1.00/PNG/ar.png')
         this.load.spritesheet('shootAR', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[SINGLE_SHOT] Assault_rifle_V1.00.png', { frameWidth: 128, frameHeight: 48 });
         this.load.spritesheet('reloadAR', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[RELOAD] Assault_rifle_V1.00 - Reload.png', { frameWidth: 96, frameHeight: 64 });
@@ -67,6 +66,7 @@ class Scene1 extends Phaser.Scene {
         this.load.spritesheet('reloadSniper', 'assets/v1.00/Sprite-sheets/sniper/WEAPON/sniperReload.png', {frameWidth: 96, frameHeight: 64})
         this.load.spritesheet('reloadSniperBullets', 'assets/v1.00/Sprite-sheets/sniper/FX/reloadSniper.png', {frameWidth: 96, frameHeight: 64})
         this.load.spritesheet('smoke', 'assets/smoke.png', { frameWidth: 32, frameHeight: 32, endFrame: 33 });
+        this.load.spritesheet('explosion', 'assets/explosion.png', { frameWidth: 32, frameHeight: 32})
         this.load.spritesheet('enemiess', 'assets/Bowllingguychibi-Run.png', { frameWidth: 64, frameHeight: 64 });
         this.load.tilemapTiledJSON('map', 'assets/maps.json');
         this.load.image('wasd', 'assets/wasd.png')

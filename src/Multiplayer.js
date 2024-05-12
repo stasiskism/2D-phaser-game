@@ -6,6 +6,7 @@ class Multiplayer extends Phaser.Scene {
     frontendProjectiles = {}
     frontendGrenades = {}
     frontendSmoke = {}
+    frontendExplosion = {}
     playerHealth = {}
     weaponDetails = {}
     playerUsername = {}
@@ -19,6 +20,15 @@ class Multiplayer extends Phaser.Scene {
         3: {name: 'AR', start: 0, end: 11},
         4: {name: 'Sniper', start: 0, end: 11},
     }
+    grenades = {
+        1: 'smokeGrenade',
+        2: 'grenade'
+    }
+    explosions = {
+        1: 'smoke',
+        2: 'explosion'
+    }
+    playersAffected = {}
 
     constructor() {
         super({ key: 'Multiplayer' });
@@ -33,41 +43,15 @@ class Multiplayer extends Phaser.Scene {
 
     preload() {
         this.graphics = this.add.graphics()
+        for (let i = 3; i <= 21; i++) {
+            this.load.image(`explosion_${i}`, `assets/Explosion/1_${i}.png`)
+        }
     }
 
     create() {
         this.setupScene();
         this.setupInputEvents();
-        //socket.emit('initFallingObjects', this.multiplayerId)
-        //this.gunAnimation()
-        //this.generateFallingObjects();
     }
-
-    //  generateFallingObjects() {
-    //      // Define the interval for generating falling objects
-    //      this.time.addEvent({
-    //          delay: Phaser.Math.Between(4000, 5000), // Random delay between 1 to 3 seconds
-    //          callback: () => {
-    //              const numObjects = Phaser.Math.Between(2, 8); // Random number of objects between 2 to 4
-    //              const spaceBetween = Phaser.Math.Between(50, 150); // Random space between objects
-
-    //              let startX = Phaser.Math.Between(0, this.cameras.main.width); // Random starting X position
-    //              let startY = -50; // Start from above the screen
-
-    //              for (let i = 0; i < numObjects; i++) {
-
-    //                  const object = this.physics.add.image(
-    //                      startX = Phaser.Math.Between(0, this.cameras.main.width),
-    //                      startY,
-    //                      'wall' // Replace 'object_key' with the key of your falling object image
-    //                  ).setScale(2);
-    //                  this.fallingObjects.push(object);
-    //                  startY -= Phaser.Math.Between(25, 75) + Phaser.Math.Between(25, 75); // Move the startY position for the next object
-    //              }
-    //          },
-    //          loop: true // Repeat the event indefinitely
-    //      });
-    //  }
 
     gunAnimation(weaponId){
         if (!weaponId) return
@@ -81,7 +65,7 @@ class Multiplayer extends Phaser.Scene {
         this.anims.create({
             key: 'singleShot',
             frames: this.anims.generateFrameNumbers('shoot' + weapon, { start, end}),
-            frameRate: 60,
+            frameRate: 20,
             repeat: 0 // Play once
         });
 
@@ -97,7 +81,7 @@ class Multiplayer extends Phaser.Scene {
         this.anims.create({
             key: 'emptying',
             frames: this.anims.generateFrameNumbers('empty' + weapon, { start, end }),
-            frameRate: 60,
+            frameRate: 20,
             repeat: 0 // Play once
         });
     }
@@ -149,6 +133,20 @@ class Multiplayer extends Phaser.Scene {
         };
 
         this.anims.create(config);
+
+        const explosionFrames = [];
+        for (let i = 3; i <= 21; i++) {
+            let duration = i * 0.2; // Adjust as needed
+            explosionFrames.push({ key: `explosion_${i}`, duration: duration });
+        }
+
+        this.anims.create({
+            key: 'explosion_anim',
+            frames: explosionFrames,
+            frameRate: 20,
+            repeat: 0, // No repeat
+        });
+
     }
 
 
@@ -383,7 +381,7 @@ class Multiplayer extends Phaser.Scene {
     }
 
     setupProjectile(playerId, id, backendProjectile) {
-        const projectile = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet').setScale(4);
+        const projectile = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet').setScale(2);
         const direction = Phaser.Math.Angle.Between(
             this.frontendPlayers[playerId].x,
             this.frontendPlayers[playerId].y,
@@ -406,7 +404,9 @@ class Multiplayer extends Phaser.Scene {
     }
 
     setupGrenade(playerId, id, backendGrenade) {
-        const grenade = this.physics.add.sprite(backendGrenade.x, backendGrenade.y, 'smokeGrenade').setScale(4)
+        const grenadeName = this.grenades[backendGrenade.grenadeId]
+        console.log(grenadeName)
+        const grenade = this.physics.add.sprite(backendGrenade.x, backendGrenade.y, '' + grenadeName).setScale(4)
         const direction = Phaser.Math.Angle.Between(
             this.frontendPlayers[playerId].x,
             this.frontendPlayers[playerId].y,
@@ -420,9 +420,10 @@ class Multiplayer extends Phaser.Scene {
     updateGrenadePosition(id, backendGrenade) {
         const grenade = this.frontendGrenades[id]
         grenade.x += backendGrenade.velocity.x 
-        grenade.y += backendGrenade.velocity.y 
+        grenade.y += backendGrenade.velocity.y
+        const explosion = this.explosions[backendGrenade.grenadeId]
         if (backendGrenade.velocity.x === 0 && backendGrenade.velocity.y === 0) {
-            this.grenadeExplode(grenade.x, grenade.y, id)
+            this.grenadeExplode(grenade.x, grenade.y, id, explosion)
         }
     }
 
@@ -436,6 +437,7 @@ class Multiplayer extends Phaser.Scene {
         this.updateCameraPosition();
         this.updateCrosshairPosition();
         this.isInSmoke();
+        this.isInGrenade()
         this.onObject();
     }
     removeFallingObject(object) {
@@ -501,7 +503,6 @@ class Multiplayer extends Phaser.Scene {
                     orbitDistance = 110;
                     break;
             }
-            console.log('orbit', orbitDistance)
             const weaponX = player.x + Math.cos(angleToPointer) * orbitDistance;
             const weaponY = player.y + Math.sin(angleToPointer) * orbitDistance;
             weapon.setPosition(weaponX, weaponY);
@@ -571,24 +572,35 @@ class Multiplayer extends Phaser.Scene {
         });
     }
 
-    grenadeExplode(x, y, id) {
-    const smoke = this.add.sprite(x, y, 'smoke').setScale(14);
-    this.frontendSmoke[id] = smoke
+    grenadeExplode(x, y, id, explosion) {
+        if (explosion === 'smoke') {
+            const smoke = this.add.sprite(x, y, 'smoke').setScale(14);
+            this.frontendSmoke[id] = smoke
 
-    smoke.play('smokeExplode');
-    //removint granatos sprite
-    smoke.on('animationcomplete', () => {
-        smoke.destroy(); 
-        delete this.frontendSmoke[id]
-    });
+            smoke.play('smokeExplode');
+            //removint granatos sprite
+            smoke.on('animationcomplete', () => {
+                smoke.destroy(); 
+                delete this.frontendSmoke[id]
+            });
+        } else if (explosion === 'explosion') {
+            const grenade = this.add.sprite(x, y, 'explosion_1').setScale(7)
+            this.frontendExplosion[id] = grenade
+            grenade.play('explosion_anim')
+            grenade.on('animationcomplete', () => {
+                grenade.destroy(); 
+                delete this.frontendExplosion[id]
+            });
+        }
     }
+
     isInSmoke() {
         for (const id in this.frontendPlayers) {
             let isIntersecting = false;
             const player = this.frontendPlayers[id];
             // Check if player is undefined or doesn't contain valid data
-            if (!player || typeof player.getBounds !== 'function') continue;
-    
+            // if (!player || typeof player.getBounds !== 'function') continue;
+            if (!player)
             for (const smokeId in this.frontendSmoke) {
                 const smoke = this.frontendSmoke[smokeId];
                 if (!smoke) continue
@@ -616,6 +628,29 @@ class Multiplayer extends Phaser.Scene {
                 if (!this.darkOverlay[id]) return
                 this.darkOverlay[id].destroy();
                 delete this.darkOverlay[id]
+            }
+        }
+    }
+
+    isInGrenade() {
+        for (const id in this.frontendPlayers) {
+            const player = this.frontendPlayers[id]
+            if (!player) continue
+            for (const grenadeId in this.frontendExplosion) {
+                const explosion = this.frontendExplosion[grenadeId]
+                if (!explosion) continue
+                const explosionBounds = explosion.getBounds()
+                console.log('cia explosion', explosionBounds)
+                if (Phaser.Geom.Intersects.RectangleToRectangle(player.getBounds(), explosionBounds)
+                    && (!this.playersAffected[grenadeId] || !this.playersAffected[grenadeId][id])) {
+                    console.log('granatoj')
+                    socket.emit('explode', {playerId: id, grenadeId})
+                    if (!this.playersAffected[grenadeId]) {
+                        this.playersAffected[grenadeId] = {};
+                    }
+                    this.playersAffected[grenadeId][id] = true;
+                    break;
+                }
             }
         }
     }

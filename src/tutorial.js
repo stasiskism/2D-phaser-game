@@ -143,7 +143,7 @@ class Tutorial extends Phaser.Scene {
         if (!pointer.leftButtonDown()) return;
 
         // Create a projectile
-        const projectile = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(4);
+        const projectile = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(2);
         projectile.setRotation(direction);
 
         let x, y

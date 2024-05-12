@@ -42,7 +42,7 @@ class Singleplayer extends Phaser.Scene {
   gunAnimation(){
     this.anims.create({
         key: 'singleShot',
-        frames: this.anims.generateFrameNumbers('singleShot', { start: 0, end: 10 }),
+        frames: this.anims.generateFrameNumbers('shootAR', { start: 0, end: 10 }),
         frameRate: 60,
         repeat: 0 // Play once
     });
@@ -102,7 +102,7 @@ class Singleplayer extends Phaser.Scene {
     this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'WwalkDown2')
     this.player.setScale(4);
     this.player.setCollideWorldBounds(true);
-    this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'singleShot');
+    this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'AR');
     this.weapon.setScale(2);
   }
 
@@ -253,7 +253,7 @@ fireBullet(pointer) {
         if (!pointer.leftButtonDown()) return;
         this.weapon.anims.play('singleShot', true);
         // Create a projectile
-        const bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(4);
+        const bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(2);
         bullet.setRotation(direction);
 
         let x, y

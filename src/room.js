@@ -6,11 +6,16 @@ class Room extends Phaser.Scene {
     readyPlayersCount = 0
     countdownTime = 0
     weaponId
+    grenadeId
     weapons = {
         1: 'Pistol',
         2: 'Shotgun',
         3: 'AR',
         4: 'Sniper'
+    }
+    grenades = {
+        1: 'smokeGrenade',
+        2: 'grenade'
     }
     constructor() {
         super({ key: 'room'});
@@ -241,10 +246,10 @@ class Room extends Phaser.Scene {
             }
         })
 
-        this.nextButton = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
-        this.nextButton.setPosition(this.centerX + 250, 1000).setScrollFactor(0).setDepth(1)
-        this.nextButton.setInteractive({useHandCursor: true})
-        this.nextButton.on('pointerdown', () => {
+        this.nextButtonWeapon = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
+        this.nextButtonWeapon.setPosition(this.centerX - 250, 1000).setScrollFactor(0).setDepth(1)
+        this.nextButtonWeapon.setInteractive({useHandCursor: true})
+        this.nextButtonWeapon.on('pointerdown', () => {
             this.weaponId++;
             if (this.weaponId > 4) {
                 this.weaponId = 1
@@ -253,18 +258,42 @@ class Room extends Phaser.Scene {
             socket.emit('changeWeapon', this.weaponId)
         });
 
-        this.add.text(this.centerX - 160, 900, 'Choose weapon:', { fontFamily: 'Arial', fontSize: 48, color: '#ffffff' });
+        this.add.text(this.centerX - 660, 900, 'Choose loadout:', { fontFamily: 'Arial', fontSize: 48, color: '#ffffff' });
 
-        this.previousButton = this.add.sprite(0, 0, 'previousButton').setScale(0.2)
-        this.previousButton.setPosition(this.centerX - 250, 1000).setScrollFactor(0).setDepth(1)
-        this.previousButton.setInteractive({useHandCursor: true})
-        this.previousButton.on('pointerdown', () => {
+        this.previousButtonWeapon = this.add.sprite(0, 0, 'previousButton').setScale(0.2)
+        this.previousButtonWeapon.setPosition(this.centerX - 750, 1000).setScrollFactor(0).setDepth(1)
+        this.previousButtonWeapon.setInteractive({useHandCursor: true})
+        this.previousButtonWeapon.on('pointerdown', () => {
             this.weaponId--;
             if (this.weaponId < 1) {
                 this.weaponId = 4
             }
             this.setupWeapon(this.weaponId)
             socket.emit('changeWeapon', this.weaponId)
+        });
+
+        this.nextButtonGrenade = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
+        this.nextButtonGrenade.setPosition(this.centerX + 200, 1000).setScrollFactor(0).setDepth(1)
+        this.nextButtonGrenade.setInteractive({useHandCursor: true})
+        this.nextButtonGrenade.on('pointerdown', () => {
+            this.grenadeId++;
+            if (this.grenadeId > 2) {
+                this.grenadeId = 1
+            }
+            this.setupGrenade(this.grenadeId)
+            socket.emit('changeGrenade', this.grenadeId)
+        });
+
+        this.previousButtonGrenade = this.add.sprite(0, 0, 'previousButton').setScale(0.2)
+        this.previousButtonGrenade.setPosition(this.centerX, 1000).setScrollFactor(0).setDepth(1)
+        this.previousButtonGrenade.setInteractive({useHandCursor: true})
+        this.previousButtonGrenade.on('pointerdown', () => {
+            this.grenadeId--;
+            if (this.grenadeId < 1) {
+                this.grenadeId = 2
+            }
+            this.setupGrenade(this.grenadeId)
+            socket.emit('changeGrenade', this.grenadeId)
         });
 
     }
@@ -280,7 +309,9 @@ class Room extends Phaser.Scene {
         this.playerUsername[id] = playerData.username
         if (id === socket.id) {
             this.weaponId = playerData.weaponId
+            this.grenadeId = playerData.grenadeId
             this.setupWeapon(this.weaponId)
+            this.setupGrenade(this.grenadeId)
         }
     
         // Setup other players
@@ -301,11 +332,19 @@ class Room extends Phaser.Scene {
         }
         if (weaponId === 3) {
             this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
-            this.displayWeapon.setPosition(this.centerX + 70, 1000).setScrollFactor(0).setDepth(1)
+            this.displayWeapon.setPosition(this.centerX - 430, 1000).setScrollFactor(0).setDepth(1)
         } else {
             this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
-            this.displayWeapon.setPosition(this.centerX, 1000).setScrollFactor(0).setDepth(1)
+            this.displayWeapon.setPosition(this.centerX - 500, 1000).setScrollFactor(0).setDepth(1)
         }
+    }
+
+    setupGrenade(grenadeId) {
+        if (this.displayGrenade) {
+            this.displayGrenade.destroy()
+        }
+        this.displayGrenade = this.add.sprite(0, 0, '' + this.grenades[grenadeId]).setScale(3)
+        this.displayGrenade.setPosition(this.centerX + 100, 1000).setScrollFactor(0).setDepth(1)
     }
     
     update() {
