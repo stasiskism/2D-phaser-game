@@ -19,16 +19,18 @@ class Lobby extends Phaser.Scene {
         this.createButton = this.add.sprite(1920 / 2, (1080 / 2) - 170, 'create');
         this.createButton.setInteractive({ useHandCursor: true })
         this.createButton.on('pointerdown', () => this.createRoom())
-        this.createButton.on('pointerover', () => this.createButton.setTint(0xf1c40f)) // Change color on mouse over
-        this.createButton.on('pointerout', () => this.createButton.clearTint()) // Reset color when mouse leaves
+        this.createButton.on('pointerover', () => this.createButton.setTint(0xf1c40f))
+        this.createButton.on('pointerout', () => this.createButton.clearTint())
         this.codeButton = this.add.sprite(1920 / 2, (1080 / 2), 'code');
         this.codeButton.setInteractive({ useHandCursor: true })
         this.codeButton.on('pointerdown', () => this.codeRoom())
-        this.codeButton.on('pointerover', () => this.codeButton.setTint(0xf1c40f)) // Change color on mouse over
-        this.codeButton.on('pointerout', () => this.codeButton.clearTint()) // Reset color when mouse leaves
-        this.distance = -100
-        this.setupInputEvents()
-        this.createdSprites = {}
+        this.codeButton.on('pointerover', () => this.codeButton.setTint(0xf1c40f))
+        this.codeButton.on('pointerout', () => this.codeButton.clearTint())
+        this.searchButton = this.add.sprite(1920 / 2, (1080 / 2) + 370, 'Search available rooms')
+        this.searchButton.setInteractive({ useHandCursor: true })
+        this.searchButton.on('pointerdown', () => this.search())
+        this.searchButton.on('pointerover', () => this.searchButton.setTint(0xf1c40f))
+        this.searchButton.on('pointerout', () => this.searchButton.clearTint())
         this.exitButton = this.add.sprite(1920 / 2, (1080 / 2) + 170, 'exit');
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
@@ -36,28 +38,8 @@ class Lobby extends Phaser.Scene {
             this.scene.start('mainMenu')
             this.scene.stop()
         })
-        this.exitButton.on('pointerover', () => this.exitButton.setTint(0xf1c40f)) // Change color on mouse over
-        this.exitButton.on('pointerout', () => this.exitButton.clearTint()) // Reset color when mouse leaves
-    }
-
-    setupInputEvents() {
-        socket.on('updateRooms', (rooms) => {
-            for (const roomId in rooms) {
-                if (this.createdSprites[roomId]) continue
-                const roomName = rooms[roomId].name
-                const roomButton = this.add.text(1920 / 2, (1080 / 2) + this.distance, roomName, { fill: '#ffffff', fontSize: '24px', fontStyle: 'bold'}).setInteractive({useHandCursor: true}).setScale(2).setOrigin(0.5)
-                this.distance += 40
-                this.createdSprites[roomId] = roomButton
-                roomButton.on('pointerdown', () => this.joinRoom(roomId));
-            }
-            for (const id in this.createdSprites) {
-                if (!rooms[id]) {
-                    this.createdSprites[id].destroy();
-                    delete this.createdSprites[id];
-                    this.distance -= 40
-                }
-            }
-        });
+        this.exitButton.on('pointerover', () => this.exitButton.setTint(0xf1c40f))
+        this.exitButton.on('pointerout', () => this.exitButton.clearTint())
     }
     
     update() {
@@ -66,7 +48,7 @@ class Lobby extends Phaser.Scene {
     codeRoom(){
         let roomCode;
         do {
-            roomCode = window.prompt('Enter the name of the room:');
+            roomCode = window.prompt('Enter the code of the room:');
             if (roomCode === null) {
                 break;
             }
@@ -80,19 +62,17 @@ class Lobby extends Phaser.Scene {
     createRoom() {
         let roomName;
         let maxPlayers;
+        let isPrivate
         do {
-            roomName = window.prompt('Enter the name of the room:');
-            if (roomName === null) {
-                break; 
-            }
+            isPrivate = window.confirm('Do you want this room to be private?');
             maxPlayers = window.prompt('Enter the maximum number of players (2-4):');
             if (maxPlayers === null) {
                 break; 
             }
-        } while (!roomName || !roomName.trim() || !maxPlayers || isNaN(maxPlayers) || maxPlayers < 2 || maxPlayers > 4);
+        } while (!maxPlayers || isNaN(maxPlayers) || maxPlayers < 2 || maxPlayers > 4);
     
-        if (roomName != null && maxPlayers != null) {
-            socket.emit('createRoom', { roomName, maxPlayers });
+        if (maxPlayers != null) {
+            socket.emit('createRoom', { roomName, maxPlayers, isPrivate });
     
             socket.once('roomCreated', (roomId, mapSize) => {
                 this.scene.start('room', { roomId: roomId, mapSize });
@@ -109,6 +89,21 @@ class Lobby extends Phaser.Scene {
 
         socket.on('roomJoined', roomId => {
             this.scene.start('room', {roomId: roomId });
+            this.scene.stop()
+        })
+        socket.on('roomJoinFailed', errorMessage => {
+            alert(errorMessage)
+        })
+    }
+
+    search() {
+        socket.off('roomJoined');
+        socket.off('roomJoinFailed');
+
+        socket.emit('searchRoom')
+
+        socket.on('roomJoined', roomId => {
+            this.scene.start('room', {roomId})
             this.scene.stop()
         })
         socket.on('roomJoinFailed', errorMessage => {

@@ -121,9 +121,9 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on('createRoom', ({ roomName, maxPlayers }) => {
+    socket.on('createRoom', ({ roomName, maxPlayers, isPrivate }) => {
         const roomId = Math.random().toString(36).substring(7);
-        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false, maxPlayers };
+        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false, maxPlayers, isPrivate };
         const mapSize = 250 * maxPlayers
         console.log('Created roomId: ', roomId);
         socket.emit('roomCreated', roomId, mapSize);
@@ -137,6 +137,16 @@ io.on('connection', (socket) => {
             socket.emit('roomJoinFailed', 'Room is full or does not exist');
         }
     });
+
+    socket.on('searchRoom', () => {
+        for (const roomId in rooms) {
+            if (rooms[roomId].players.length < rooms[roomId].maxPlayers && !rooms[roomId].gameStarted && !rooms[roomId].isPrivate) {
+                socket.emit('roomJoined', roomId)
+            } else {
+                socket.emit('roomJoinFailed', 'There are no rooms available')
+            }
+        }
+    })
 
     socket.on('joinRoom', (roomId) => {
         if (rooms[roomId]) {
