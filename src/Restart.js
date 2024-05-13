@@ -12,9 +12,6 @@ class Restart extends Phaser.Scene {
     }
 
     preload () {
-        this.load.image('dead', 'assets/dead.jpg')
-        this.load.image('restartButton', 'assets/pngegg.png')
-        this.load.image('quitButton', 'assets/quit.png')
     }
 
     create () {
@@ -22,13 +19,21 @@ class Restart extends Phaser.Scene {
       const centerX = this.cameras.main.width / 2;
       const centerY = this.cameras.main.height / 2;
       this.restart = this.add.sprite(centerX, centerY, 'dead');
-      this.restartButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'restartButton')
-      this.scoreText = this.add.text(centerX, centerY - 200, 'Score: ' + this.score, { fontSize: '32px', fill: '#ffffff' }).setOrigin(0.5).setScale(2);
+      this.restartButton = this.add.sprite(1920 / 2 , (1080 / 2) + 200, 'restartButton')
+        this.scoreText = this.add.text(centerX, centerY - 400, 'SCORE: ' + this.score, {
+            fontFamily: 'Berlin Sans FB Demi',
+            fontSize: '32px',
+            fill: '#ffffff'
+        }).setOrigin(0.5).setScale(2);
       this.restartButton.setInteractive({ useHandCursor: true })
       this.restartButton.on('pointerdown', () => this.clickRestartButton())
-      this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) - 400, 'quitButton')
+        this.restartButton.on('pointerover', () => this.restartButton.setTint(0xf1c40f)); // Change color on mouse over
+        this.restartButton.on('pointerout', () => this.restartButton.clearTint()); // Reset color when mouse leaves
+      this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'quitButton')
       this.quitButton.setInteractive({useHandCursor: true})
       this.quitButton.on('pointerdown', () => this.clickQuitButton())
+        this.quitButton.on('pointerover', () => this.quitButton.setTint(0xf1c40f)); // Change color on mouse over
+        this.quitButton.on('pointerout', () => this.quitButton.clearTint()); // Reset color when mouse leaves
     }
 
     update () {

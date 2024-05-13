@@ -1,8 +1,10 @@
 class Lobby extends Phaser.Scene {
+    createdSprites = {}
+
     constructor() {
         super({ key: 'lobby'});
     }
-    createdSprites = {}
+
     init() {
 
     }
@@ -13,26 +15,35 @@ class Lobby extends Phaser.Scene {
     create() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
-        this.add.sprite(centerX, centerY, 'menu');
-        this.createButton = this.add.sprite(1920 / 2, (1080 / 2) - 200, 'create');
+        this.add.sprite(centerX, centerY, 'background');
+        this.createButton = this.add.sprite(1920 / 2, (1080 / 2) - 170, 'create');
         this.createButton.setInteractive({ useHandCursor: true })
         this.createButton.on('pointerdown', () => this.createRoom())
+        this.createButton.on('pointerover', () => this.createButton.setTint(0xf1c40f)) // Change color on mouse over
+        this.createButton.on('pointerout', () => this.createButton.clearTint()) // Reset color when mouse leaves
+        this.codeButton = this.add.sprite(1920 / 2, (1080 / 2), 'code');
+        this.codeButton.setInteractive({ useHandCursor: true })
+        this.codeButton.on('pointerdown', () => this.codeRoom())
+        this.codeButton.on('pointerover', () => this.codeButton.setTint(0xf1c40f)) // Change color on mouse over
+        this.codeButton.on('pointerout', () => this.codeButton.clearTint()) // Reset color when mouse leaves
         this.distance = -100
         this.setupInputEvents()
         this.createdSprites = {}
-        this.exitButton = this.add.sprite(100, 60, 'exit').setScale(0.2)
+        this.exitButton = this.add.sprite(1920 / 2, (1080 / 2) + 170, 'exit');
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
             socket.removeAllListeners()
             this.scene.start('mainMenu')
             this.scene.stop()
         })
+        this.exitButton.on('pointerover', () => this.exitButton.setTint(0xf1c40f)) // Change color on mouse over
+        this.exitButton.on('pointerout', () => this.exitButton.clearTint()) // Reset color when mouse leaves
     }
 
     setupInputEvents() {
         socket.on('updateRooms', (rooms) => {
             for (const roomId in rooms) {
-                if (this.createdSprites[roomId]) continue   
+                if (this.createdSprites[roomId]) continue
                 const roomName = rooms[roomId].name
                 const roomButton = this.add.text(1920 / 2, (1080 / 2) + this.distance, roomName, { fill: '#ffffff', fontSize: '24px', fontStyle: 'bold'}).setInteractive({useHandCursor: true}).setScale(2).setOrigin(0.5)
                 this.distance += 40
@@ -50,6 +61,20 @@ class Lobby extends Phaser.Scene {
     }
     
     update() {
+    }
+
+    codeRoom(){
+        let roomCode;
+        do {
+            roomCode = window.prompt('Enter the name of the room:');
+            if (roomCode === null) {
+                break;
+            }
+
+        } while (!roomCode || !roomCode.trim());
+        if (roomCode != null){
+            this.joinRoom(roomCode);
+        }
     }
 
     createRoom() {

@@ -269,17 +269,17 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
-        // socket.on('updateFallingObjects', (fallingObjects) => {
-        //     console.log('UPDATINA FALLING OBJECTUS')
-        //     for (const i in fallingObjects) {
-        //         const object = this.physics.add.image(
-        //             fallingObjects[i].x,
-        //             fallingObjects[i].y,
-        //             'wall' 
-        //         ).setScale(2);
-        //         this.fallingObjects.push(object);
-        //     }
-        // })
+        socket.on('updateFallingObjects', (fallingObjects) => {
+            console.log('UPDATINA FALLING OBJECTUS')
+            for (const i in fallingObjects) {
+                const object = this.physics.add.image(
+                    fallingObjects[i].x,
+                    fallingObjects[i].y,
+                    'wall' 
+                ).setScale(2);
+                this.fallingObjects.push(object);
+            }
+        })
 
     }
 
@@ -583,8 +583,8 @@ class Multiplayer extends Phaser.Scene {
                 smoke.destroy(); 
                 delete this.frontendSmoke[id]
             });
-        } else if (explosion === 'explosion') { // PADARYTI KAD SUVEIKTU TIK PO 2 SEKUNDZIU
-            const grenade = this.add.sprite(x - 10, y - 75, 'explosion_1').setScale(7)
+        } else if (explosion === 'explosion') {
+            const grenade = this.add.sprite(x, y, 'explosion_1').setScale(7)
             this.frontendExplosion[id] = grenade
             grenade.play('explosion_anim')
             grenade.on('animationcomplete', () => {
@@ -595,12 +595,12 @@ class Multiplayer extends Phaser.Scene {
     }
 
     isInSmoke() {
-        let playerIdInSmoke = []
         for (const id in this.frontendPlayers) {
+            let isIntersecting = false;
             const player = this.frontendPlayers[id];
             // Check if player is undefined or doesn't contain valid data
-            if (!player || typeof player.getBounds !== 'function') continue;
-            playerIdInSmoke[id] = false
+            // if (!player || typeof player.getBounds !== 'function') continue;
+            if (!player)
             for (const smokeId in this.frontendSmoke) {
                 const smoke = this.frontendSmoke[smokeId];
                 if (!smoke) continue
@@ -612,27 +612,22 @@ class Multiplayer extends Phaser.Scene {
                     smokeBounds.height - 120  
                 );
                 if (Phaser.Geom.Intersects.RectangleToRectangle(player.getBounds(), smallerBounds)) {
-                    playerIdInSmoke[id] = true
+                    isIntersecting = true;
                     break;
-                } else if (playerIdInSmoke[id]){
-                    delete playerIdInSmoke[id]
                 }
             }
-        }
-
-        for (const id in this.frontendPlayers) {
-            if (playerIdInSmoke[id] && id === socket.id) {
+            if (!socket.id) return
+            if (isIntersecting && id === socket.id) {
                 if (!this.darkOverlay[id]) {
+                    console.log('creating dark overlay');
                     this.darkOverlay[id] = this.add.rectangle(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize, 0x808080);
                     this.darkOverlay[id].setOrigin(0);
-                    this.darkOverlay[id].setAlpha(1);
+                    this.darkOverlay[id].setAlpha(1); // Adjust the alpha value to control darkness level
                 }
             } else {
-                if (this.darkOverlay[id]) {
-                    console.log('destroying dark overlay for player:', id);
-                    this.darkOverlay[id].destroy();
-                    delete this.darkOverlay[id];
-                }
+                if (!this.darkOverlay[id]) return
+                this.darkOverlay[id].destroy();
+                delete this.darkOverlay[id]
             }
         }
     }

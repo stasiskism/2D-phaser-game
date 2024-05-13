@@ -15,11 +15,17 @@ class Authenticate extends Phaser.Scene {
         this.registerButton = this.add.sprite(1920 / 2, (1080 / 2) + 170, 'register')
         this.loginButton.setInteractive({ useHandCursor: true })
         this.loginButton.on('pointerdown', () => this.login())
+        this.loginButton.on('pointerover', () => this.loginButton.setTint(0xf1c40f)) // Change color on mouse over
+        this.loginButton.on('pointerout', () => this.loginButton.clearTint()) // Reset color when mouse leaves
         this.registerButton.setInteractive({ useHandCursor: true })
         this.registerButton.on('pointerdown', () => this.register())
-        this.startButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'restartButton').setScale(0.5)
+        this.registerButton.on('pointerover', () => this.registerButton.setTint(0xf1c40f)) // Change color on mouse over
+        this.registerButton.on('pointerout', () => this.registerButton.clearTint()) // Reset color when mouse leaves
+        this.startButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'demo').setScale(0.5)
         this.startButton.setInteractive({ useHandCursor: true })
         this.startButton.on('pointerdown', () => this.start())
+        this.startButton.on('pointerover', () => this.startButton.setTint(0xf1c40f)) // Change color on mouse over
+        this.startButton.on('pointerout', () => this.startButton.clearTint()) // Reset color when mouse leaves
         this.isLogged = false
 
     }

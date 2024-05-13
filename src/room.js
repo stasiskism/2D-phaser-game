@@ -31,6 +31,11 @@ class Room extends Phaser.Scene {
     create() {
         this.setupScene()
         this.setupInputEvents()
+        this.add.text(1920 / 2, (1080 / 2) - 500, 'ROOM CODE: ' + this.roomId, {
+            fontFamily: 'Berlin Sans FB Demi',
+            fontSize: '32px',
+            fill: '#ffffff'
+        }).setOrigin(0.5).setScale(2);
     }
 
     setupInputEvents() {
@@ -100,7 +105,7 @@ class Room extends Phaser.Scene {
         socket.on('updateReadyPlayers', (readyCount) => {
             this.readyPlayersCount = readyCount
             if (this.readyPlayersText) {
-                this.readyPlayersText.setText(`Ready Players: ${this.readyPlayersCount}`);
+                this.readyPlayersText.setText(`READY PLAYERS: ${this.readyPlayersCount}`);
             }
             this.checkAllPlayersReady();
 
@@ -164,14 +169,17 @@ class Room extends Phaser.Scene {
             }
         })
 
-        this.readyButton = this.add.text(800, 400, 'Ready', { fill: '#0f0' }).setInteractive({ useHandCursor: true }).setScale(4);
+        this.readyButton = this.add.sprite(1920 / 2, (1080 / 2) - 300, 'ready')
+        this.readyButton.setInteractive({useHandCursor: true})
+        this.readyButton.on('pointerover', () => this.readyButton.setTint(0xf1c40f)); // Change color on mouse over
+        this.readyButton.on('pointerout', () => this.readyButton.clearTint()); // Reset color when mouse leaves
         this.readyButton.on('pointerdown', () => {
             let isReady = !this.readyPlayers[socket.id];
             this.readyPlayers[socket.id] = isReady
             socket.emit('updateReadyState', { playerId: socket.id, isReady, roomId: this.roomId });
         });
 
-        this.readyPlayersText = this.add.text(700, 300, `Ready Players: 0`, { fontSize: '32px', fill: '#fff' }).setScale(2)
+        this.readyPlayersText = this.add.text((1920 / 2), (1080 / 2) - 400, `READY PLAYERS: 0`, {fontFamily: 'Berlin Sans FB Demi', fontSize: '32px', fill: '#ffffff' }).setOrigin(0.5).setScale(2);
 
         // this.objects = this.physics.add.staticGroup();
         // this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')

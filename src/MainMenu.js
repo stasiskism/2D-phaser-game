@@ -13,9 +13,9 @@ class MainMenu extends Phaser.Scene {
 
   preload() {
     this.load.image('menu', 'assets/menuPhoto.jpg');
-    this.load.image('create', 'assets/create.png')
+    this.load.image('create', 'assets/Room_Button.png')
     this.load.image('join', 'assets/join.png')
-    this.load.image('exit', 'assets/exit.png')
+    this.load.image('exit', 'assets/Exit_Button.png')
     this.load.image('enemy', 'assets/enemy.png')
   }
 
