@@ -116,69 +116,39 @@ class Lobby extends Phaser.Scene {
     }
 
     search() {
-
         this.searchBox.setVisible(true);
-
-
         let continueSearching = true;
-
 
         const handleRoomJoined = (roomId) => {
             if (!continueSearching) return;
-
-
             this.searchBox.setVisible(false);
-
-
             continueSearching = false;
-
-
             this.scene.start('room', { roomId });
             this.scene.stop();
-
-
             cleanupEventListeners();
         };
-
 
         const handleRoomJoinFailed = (errorMessage) => {
             if (!continueSearching) return;
-
-
             this.searchBox.setVisible(false);
-
-
             alert(errorMessage);
-
-
             cleanupEventListeners();
         };
 
-
         const continuousSearch = () => {
             if (!continueSearching) return;
-
-
             socket.emit('searchRoom');
         };
-
 
         const cleanupEventListeners = () => {
             socket.off('roomJoined', handleRoomJoined);
             socket.off('roomJoinFailed', handleRoomJoinFailed);
         };
 
-
         socket.on('roomJoined', handleRoomJoined);
         socket.on('roomJoinFailed', handleRoomJoinFailed);
-
-
         continuousSearch();
-
-
         const searchInterval = setInterval(continuousSearch, 5000);
-
-
         this.searchBox.on('close', () => {
             clearInterval(searchInterval);
             continueSearching = false;
@@ -186,16 +156,9 @@ class Lobby extends Phaser.Scene {
         });
     }
 
-
-
-
-
     cancelSearch() {
-
         this.searchBox.setVisible(false);
-
-
-        socket.emit('cancelSearch');
+        socket.off('searchRoom');
     }
 
 }

@@ -8,6 +8,7 @@ const io = new Server(server, {pingInterval: 2000, pingTimeout: 7000});
 const bodyParser = require('body-parser')
 const { Pool } = require('pg');
 const nodemailer = require('nodemailer')
+const crypto = require('crypto')
 
 app.use(express.static('src'));
 
@@ -26,12 +27,11 @@ const sql = new Pool({
 })
 
 const sender = nodemailer.createTransport({
-    host: '2dcspbl@gmail.com',
+    host: 'smtp.gmail.com',
     port: 587,
-    secure: 465, // true for 465, false for other ports
     auth: {
-        user: 'your_email@example.com', // Your email address
-        pass: 'your_password' // Your email password or application-specific password
+        user: '2dcspbl@gmail.com', // Your email address
+        pass: 'pakx kcqr lbmk jrrf' // Your email password or application-specific password
     }
 });
 
@@ -62,9 +62,7 @@ const weaponDetails = {}
 const grenadeDetails = {}
 const reloadingStatus = {}
 const backendGrenades = {}
-
-
-
+const token = {}
 
 
 io.on('connection', (socket) => {
@@ -74,29 +72,52 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
     }
 
-    socket.on('sendEmail', (email) => {
-
+    socket.on('sendVerificationEmail', (email, username) => {
+        token[username] = crypto.randomBytes(6).toString('hex')
+        const mailOptions = {
+            from: '2dcspbl@gmail.com',
+            to: email,
+            subject: '2DCS Verification',
+            text: `Your verification code is: ${token[username]}`
+        }
+        sender.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error('Error sending email:', error);
+            } else {
+                console.log('email sent', info.response)
+            }
+        })
     })
 
     socket.on('register', async (data) => {
-        const { username, password } = data;
+        const { username, email, password, code } = data;
+        if (username === '', email === '', password === '', token === '') {
+            socket.emit('registerResponse', { success: false, error: 'Provided blank input' });
+            return;
+        }
+
         if (username.length > 20 || password.length > 20) {
             socket.emit('registerResponse', { success: false, error: 'Username and password must be 20 characters or less.' });
+            return;
+        }
+
+        if (code !== token[username]) {
+            socket.emit('registerResponse', { success: false, error: 'Verification code is wrong' });
             return;
         }
         try {
             const client = await sql.connect();
             const encryptedPassword = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [password]);
             const hashedPassword = encryptedPassword.rows[0].encrypted_password;
-            const values = [username, hashedPassword];
-            const result = await client.query('INSERT INTO user_authentication (user_name, user_password) VALUES ($1, $2) RETURNING user_id', values);
+            const values = [username, hashedPassword, email];
+            const result = await client.query('INSERT INTO user_authentication (user_name, user_password, email) VALUES ($1, $2, $3) RETURNING user_id', values);
             const id = result.rows[0].user_id;
             await client.query('INSERT INTO user_profile (user_id, user_name) VALUES ($1, $2)', [id, username]);
             client.release();
             socket.emit('registerResponse', { success: true });
         } catch (error) {
             console.error('Error inserting data into database:', error);
-            socket.emit('registerResponse', { success: false, error: 'Error inserting data into database'});
+            socket.emit('registerResponse', { success: false, error: error.detail});
         }
     })
 
@@ -123,7 +144,7 @@ io.on('connection', (socket) => {
                 weaponId = weaponResult.rows[0].weapon
                 grenadeResult = await client.query('SELECT grenade from user_profile WHERE user_name = $1', [username])
                 grenadeId = grenadeResult.rows[0].grenade
-                // Authentication successful
+
                 socket.emit('loginResponse', { success: true });
                 }
                 playerUsername[socket.id] = username
@@ -649,11 +670,7 @@ function startGame(multiplayerId) {
     playersInRoom.forEach((player, index) => {
         const id = player.id
         const username = playerUsername[id];
-<<<<<<< HEAD
-        const weaponId = weaponIds[id]
-=======
         const weaponId = weaponIds[id];
->>>>>>> 918bf8c83a52cb023213224a6b8b7727b6fd4dbf
         const bullets = weaponDetails[id].ammo
         const firerate = weaponDetails[id].fire_rate
         const reload = weaponDetails[id].reload
