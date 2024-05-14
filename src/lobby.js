@@ -1,5 +1,6 @@
 class Lobby extends Phaser.Scene {
     createdSprites = {}
+    searchBox;
 
     constructor() {
         super({ key: 'lobby'});
@@ -26,11 +27,29 @@ class Lobby extends Phaser.Scene {
         this.codeButton.on('pointerdown', () => this.codeRoom())
         this.codeButton.on('pointerover', () => this.codeButton.setTint(0xf1c40f))
         this.codeButton.on('pointerout', () => this.codeButton.clearTint())
-        this.searchButton = this.add.sprite(1920 / 2, (1080 / 2) + 170, 'Search')
-        this.searchButton.setInteractive({ useHandCursor: true })
-        this.searchButton.on('pointerdown', () => this.search())
-        this.searchButton.on('pointerover', () => this.searchButton.setTint(0xf1c40f))
-        this.searchButton.on('pointerout', () => this.searchButton.clearTint())
+        this.searchButton = this.add.sprite(1920 / 2, (1080 / 2) + 170, 'Search');
+        this.searchButton.setInteractive({ useHandCursor: true });
+        this.searchButton.on('pointerdown', () => this.search());
+        this.searchButton.on('pointerover', () => this.searchButton.setTint(0xf1c40f));
+        this.searchButton.on('pointerout', () => this.searchButton.clearTint());
+
+        // Create the dialog box
+        this.searchBox = this.add.container(1920 / 2, 1080 / 2);
+        let searchBoxBG = this.add.graphics();
+        searchBoxBG.fillStyle(0x000000, 0.7);
+        searchBoxBG.fillRect(-150, -50, 300, 100);
+        this.searchBox.add(searchBoxBG);
+
+        let searchText = this.add.text(0, -15, 'Searching...', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+        this.searchBox.add(searchText);
+
+        let cancelButton = this.add.text(0, 15, 'Cancel', { fontFamily: 'Arial', fontSize: 18, color: '#ffffff', backgroundColor: '#3498db', padding: { x: 10, y: 5 } });
+        cancelButton.setInteractive({ useHandCursor: true });
+        cancelButton.on('pointerdown', () => this.cancelSearch());
+        this.searchBox.add(cancelButton);
+
+        // Initially hide the dialog box
+        this.searchBox.setVisible(false);
         this.exitButton = this.add.sprite(1920 / 2, (1080 / 2) + 340, 'exit');
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
@@ -97,18 +116,86 @@ class Lobby extends Phaser.Scene {
     }
 
     search() {
-        socket.off('roomJoined');
-        socket.off('roomJoinFailed');
 
-        socket.emit('searchRoom')
+        this.searchBox.setVisible(true);
 
-        socket.on('roomJoined', roomId => {
-            this.scene.start('room', {roomId})
-            this.scene.stop()
-        })
-        socket.on('roomJoinFailed', errorMessage => {
-            alert(errorMessage)
-        })
+
+        let continueSearching = true;
+
+
+        const handleRoomJoined = (roomId) => {
+            if (!continueSearching) return;
+
+
+            this.searchBox.setVisible(false);
+
+
+            continueSearching = false;
+
+
+            this.scene.start('room', { roomId });
+            this.scene.stop();
+
+
+            cleanupEventListeners();
+        };
+
+
+        const handleRoomJoinFailed = (errorMessage) => {
+            if (!continueSearching) return;
+
+
+            this.searchBox.setVisible(false);
+
+
+            alert(errorMessage);
+
+
+            cleanupEventListeners();
+        };
+
+
+        const continuousSearch = () => {
+            if (!continueSearching) return;
+
+
+            socket.emit('searchRoom');
+        };
+
+
+        const cleanupEventListeners = () => {
+            socket.off('roomJoined', handleRoomJoined);
+            socket.off('roomJoinFailed', handleRoomJoinFailed);
+        };
+
+
+        socket.on('roomJoined', handleRoomJoined);
+        socket.on('roomJoinFailed', handleRoomJoinFailed);
+
+
+        continuousSearch();
+
+
+        const searchInterval = setInterval(continuousSearch, 5000);
+
+
+        this.searchBox.on('close', () => {
+            clearInterval(searchInterval);
+            continueSearching = false;
+            cleanupEventListeners();
+        });
+    }
+
+
+
+
+
+    cancelSearch() {
+
+        this.searchBox.setVisible(false);
+
+
+        socket.emit('cancelSearch');
     }
 
 }
