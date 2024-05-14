@@ -71,12 +71,13 @@ class Register extends Phaser.Scene {
 
             if (username.trim() === '' || password.trim() === '') {
                 alert('Please enter username and password')
+                this.removeInputs()
                 return;
             }
 
-            //REIKIA PACHEKINT AR NERA TOKIO USERNAME JAU DATABASE
-            if (password !== repeatPassword) {
-                alert('Passwords do not match');
+            if (username.length > 20 || password.length > 20) {
+                alert('Password and username cannot exceed 20 characters')
+                this.removeInputs()
                 return;
             }
 
@@ -87,6 +88,12 @@ class Register extends Phaser.Scene {
 
     update() {
 
+    }
+
+    removeInputs() {
+        document.getElementById('uname').value = '';
+        document.getElementById('pswd').value = '';
+        document.getElementById('repeatpswd').value = '';
     }
 
     checkPassword(password, confirmPassword) {
@@ -111,7 +118,6 @@ class Register extends Phaser.Scene {
                 this.scene.start('login');
                 this.scene.stop()
             } else {
-                console.log(response.error)
                 alert('Registration failed: ' + response.error);
             }
         })

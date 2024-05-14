@@ -58,6 +58,7 @@ class Login extends Phaser.Scene {
 
             if (username.trim() === '' || password.trim() === '') {
                 alert('Please enter username and password')
+                this.removeInputs()
                 return;
             }
 
@@ -71,6 +72,11 @@ class Login extends Phaser.Scene {
     
     update() {
 
+    }
+
+    removeInputs() {
+        document.getElementById('uname').value = '';
+        document.getElementById('pswd').value = '';
     }
 
     loadRegister() {
