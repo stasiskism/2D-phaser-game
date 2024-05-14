@@ -5,9 +5,9 @@ const {Server} = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {pingInterval: 2000, pingTimeout: 7000});
-const sanitizeHtml = require('sanitize-html')
 const bodyParser = require('body-parser')
 const { Pool } = require('pg');
+const nodemailer = require('nodemailer')
 
 app.use(express.static('src'));
 
@@ -24,6 +24,16 @@ const sql = new Pool({
     password: 'newteam',
     port: 8182
 })
+
+const sender = nodemailer.createTransport({
+    host: '2dcspbl@gmail.com',
+    port: 587,
+    secure: 465, // true for 465, false for other ports
+    auth: {
+        user: 'your_email@example.com', // Your email address
+        pass: 'your_password' // Your email password or application-specific password
+    }
+});
 
 sql.on('connect', () => {
     console.log('Connected to PostgreSQL database')
@@ -63,6 +73,10 @@ io.on('connection', (socket) => {
     for (const roomId in rooms) {
         io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
     }
+
+    socket.on('sendEmail', (email) => {
+
+    })
 
     socket.on('register', async (data) => {
         const { username, password } = data;
@@ -520,6 +534,7 @@ io.on('connection', (socket) => {
             const client = await sql.connect()
             const username = playerUsername[socket.id]
             await client.query('UPDATE user_profile SET weapon = $1 WHERE user_name = $2;', [weaponId, username]);
+            weaponIds[socket.id] = weaponId
             client.release()
         } catch (error) {
             console.error('Error updating weaponId:', error);
@@ -634,7 +649,7 @@ function startGame(multiplayerId) {
     playersInRoom.forEach((player, index) => {
         const id = player.id
         const username = playerUsername[id];
-        const weaponId = weaponDetails[id].weapon_id
+        const weaponId = weaponIds[id]
         const bullets = weaponDetails[id].ammo
         const firerate = weaponDetails[id].fire_rate
         const reload = weaponDetails[id].reload
@@ -654,7 +669,7 @@ function startGame(multiplayerId) {
             firerate,
             reload,
             radius,
-            grenades: 1000,
+            grenades: 1,
             grenadeId,
             weaponId
         };
