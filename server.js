@@ -30,8 +30,8 @@ const sender = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     auth: {
-        user: '2dcspbl@gmail.com', // Your email address
-        pass: 'pakx kcqr lbmk jrrf' // Your email password or application-specific password
+        user: '2dcspbl@gmail.com',
+        pass: 'pakx kcqr lbmk jrrf'
     }
 });
 
@@ -42,10 +42,6 @@ sql.on('connect', () => {
 sql.on('error', (err) => {
     console.error('Error connecting to PostgreSQL database:', err);
 });
-
-
-//SUKURTI USERIO PROFILIUS
-
 
 const backendPlayers = {}
 const backendProjectiles = {}
@@ -72,13 +68,13 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
     }
 
-    socket.on('sendVerificationEmail', (email, username) => {
-        token[username] = crypto.randomBytes(6).toString('hex')
+    socket.on('sendVerificationEmail', (email) => {
+        token[socket.id] = crypto.randomBytes(6).toString('hex')
         const mailOptions = {
             from: '2dcspbl@gmail.com',
             to: email,
             subject: '2DCS Verification',
-            text: `Your verification code is: ${token[username]}`
+            text: `Your verification code is: ${token[socket.id]}`
         }
         sender.sendMail(mailOptions, (error, info) => {
             if (error) {
@@ -91,7 +87,7 @@ io.on('connection', (socket) => {
 
     socket.on('register', async (data) => {
         const { username, email, password, code } = data;
-        if (username === '', email === '', password === '', token === '') {
+        if (username === '', email === '', password === '', code === '') {
             socket.emit('registerResponse', { success: false, error: 'Provided blank input' });
             return;
         }
@@ -101,7 +97,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        if (code !== token[username]) {
+        if (code !== token[socket.id]) {
             socket.emit('registerResponse', { success: false, error: 'Verification code is wrong' });
             return;
         }
@@ -136,7 +132,7 @@ io.on('connection', (socket) => {
                     weaponId = weaponResult.rows[0].weapon
                     grenadeResult = await client.query('SELECT grenade from user_profile WHERE user_name = $1', [username])
                     grenadeId = grenadeResult.rows[0].grenade
-                    await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
+                    await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1', [username]);
                     socket.emit('loginResponse', { success: true, firstLogin });
                 }
                 else {
@@ -158,7 +154,31 @@ io.on('connection', (socket) => {
             console.error('Error authenticating user:', error);
             socket.emit('loginResponse', { success: false, error });
         }
-    })
+    });
+
+    socket.on('resetPassword', async (data) => {
+        const {email, code, newPassword} = data
+        if (code !== token[socket.id]) {
+            socket.emit('resetResponse', { success: false, error: 'Verification code is wrong' });
+            return;
+        }
+        try {
+            const client = await sql.connect()
+            const result = await client.query(`SELECT user_id from user_authentication WHERE email = $1`, [email])
+            if (result.rows.length === 0) {
+                socket.emit('resetResponse', { success: false, error: 'Email does not exist' });
+            } else {
+                const userId = result.rows[0].user_id
+                const pswResult = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [newPassword]);
+                const encryptedPassword = pswResult.rows[0].encrypted_password
+                await client.query(`UPDATE user_authentication SET user_password = $1 WHERE user_id = $2`, [encryptedPassword, userId])
+                socket.emit('resetResponse', { success: true })
+            }
+        } catch (error) {
+            console.error('Error reseting password:', error);
+            socket.emit('resetResponse', { success: false, error });
+        }
+    });
 
     socket.on('createRoom', ({ roomName, maxPlayers, isPrivate }) => {
         const roomId = Math.random().toString(36).substring(7);

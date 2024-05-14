@@ -127,7 +127,7 @@ class Register extends Phaser.Scene {
     }
 
     sendVerificationEmail(username, email, password) {
-        socket.emit('sendVerificationEmail', email, username)
+        socket.emit('sendVerificationEmail', email)
         const verificationForm = this.add.dom(this.centerX, this.centerY).createFromHTML(`
             <style>
                 #verification {
@@ -171,7 +171,6 @@ class Register extends Phaser.Scene {
 
     sendData(username, email, password, code) {
         const data = { username, email, password, code };
-        console.log(data)
         socket.emit('register', data);
         socket.once('registerResponse', (response) => {
             if (response.success) {
