@@ -105,13 +105,14 @@ class Register extends Phaser.Scene {
     sendData(username, password) {
         const data = {username, password}
         socket.emit('register', data)
-        socket.on('registerResponse', (response) => {
+        socket.once('registerResponse', (response) => {
             if (response.success) {
                 alert('Registration successful');
                 this.scene.start('login');
                 this.scene.stop()
             } else {
-                alert('Registration failed');
+                console.log(response.error)
+                alert('Registration failed: ' + response.error);
             }
         })
     }

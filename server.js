@@ -5,7 +5,7 @@ const {Server} = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {pingInterval: 2000, pingTimeout: 7000});
-
+const sanitizeHtml = require('sanitize-html')
 const bodyParser = require('body-parser')
 const { Pool } = require('pg');
 
@@ -66,6 +66,10 @@ io.on('connection', (socket) => {
 
     socket.on('register', async (data) => {
         const { username, password } = data;
+        if (username.length > 20 || password.length > 20) {
+            socket.emit('registerResponse', { success: false, error: 'Username and password must be 20 characters or less.' });
+            return;
+        }
         try {
             const client = await sql.connect();
             const encryptedPassword = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [password]);
@@ -78,7 +82,7 @@ io.on('connection', (socket) => {
             socket.emit('registerResponse', { success: true });
         } catch (error) {
             console.error('Error inserting data into database:', error);
-            socket.emit('registerResponse', { success: false });
+            socket.emit('registerResponse', { success: false, error: 'Error inserting data into database'});
         }
     })
 
@@ -89,7 +93,7 @@ io.on('connection', (socket) => {
             const client = await sql.connect()
             const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
             if (result.rows.length === 0 || activeSessions[username]) {
-                socket.emit('loginResponse', { success: false });
+                socket.emit('loginResponse', { success: false, error: 'Wrong username or password' });
             } else {
                 const firstLogin = result.rows[0].first_login
                 if (firstLogin) {
@@ -117,7 +121,7 @@ io.on('connection', (socket) => {
             client.release();
         } catch (error) {
             console.error('Error authenticating user:', error);
-            socket.emit('loginResponse', { success: false });
+            socket.emit('loginResponse', { success: false, error });
         }
     })
 

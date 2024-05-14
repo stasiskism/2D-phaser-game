@@ -81,7 +81,7 @@ class Login extends Phaser.Scene {
     sendData(username, password) {
         const data = {username, password}
         socket.emit('login', data)
-        socket.on('loginResponse', (response) => {
+        socket.once('loginResponse', (response) => {
             if (response.success) {
                 console.log(response.success)
                 if (response.firstLogin) {
@@ -94,7 +94,7 @@ class Login extends Phaser.Scene {
                     this.scene.stop()
                 }
             } else {
-                alert('Login failed');
+                alert('Login failed: ' + response.error);
             }
         });
     }
