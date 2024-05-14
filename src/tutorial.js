@@ -81,8 +81,8 @@ class Tutorial extends Phaser.Scene {
             case 2:
                 //GALIMA PRIDETI NICKNAME
                 this.setupPopupText('Good job, now you can have a weapon.\nIt can be fired with left mouse click.\nIt shoots in the direction of the crosshair.\nTry shooting the target.')
-                this.weapon = this.physics.add.sprite(this.player.x + 80, this.player.y, 'shotgun').setScale(3);
-                this.enemy = this.physics.add.sprite(100, 200, 'enemy').setScale(0.1);
+                this.weapon = this.physics.add.sprite(this.player.x + 80, this.player.y, 'AR').setScale(2);
+                this.enemy = this.physics.add.sprite(100, 200, 'enemiess').setScale(2);
                 this.input.on('pointerdown', this.shootProjectile, this);
                 break;
             //case 3:
