@@ -89,6 +89,7 @@ class Scene1 extends Phaser.Scene {
         this.load.image('dead', 'assets/Dead_Screen.png')
         this.load.image('spectateButton', 'assets/Spectate_Button.png')
         this.load.image('quitButton', 'assets/Exit_Button.png')
+        this.load.image('Search', 'assets/Search_Button.png')
     }
 
     create (data) {

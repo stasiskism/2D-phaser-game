@@ -211,6 +211,36 @@ class Room extends Phaser.Scene {
         // this.popupText.setVisible(false);
 
         //this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
+        const chatButton = this.add.text(100, 100, 'Chat', {
+            fontSize: '32px',
+            fill: '#ffffff',
+            backgroundColor: '#333333',
+            padding: { x: 10, y: 10 },
+        }).setInteractive();
+
+// Add a click event to the button
+        chatButton.on('pointerdown', () => {
+            // Toggle the visibility of the chat, close button and input box
+            this.chatDisplay.visible = !this.chatDisplay.visible;
+            closeButton.visible = !closeButton.visible;
+            chatInputElement.style.display = chatInputElement.style.display === 'none' ? 'block' : 'none';
+        });
+
+// Add a close button to the chat
+        const closeButton = this.add.text(1300, 450, 'X', {
+            fontSize: '32px',
+            fill: '#ffffff',
+            backgroundColor: '#333333',
+            padding: { x: 10, y: 10 },
+        }).setInteractive();
+
+// Add a click event to the close button
+        closeButton.on('pointerdown', () => {
+            // Hide the chat, close button and input box when the close button is clicked
+            this.chatDisplay.visible = false;
+            closeButton.visible = false;
+            chatInputElement.style.display = 'none';
+        });
 
         this.chatDisplay = this.add.text(1300, 500, '', { 
             fontSize: '20px', 
@@ -227,7 +257,7 @@ class Room extends Phaser.Scene {
             </div>
         `;
 
-        this.chatInput = this.add.dom(1300, 1000).createFromHTML(chatInputHTML);
+        this.add.dom(1300, 1000).createFromHTML(chatInputHTML);
         const chatInputElement = document.getElementById('chatInput')
         chatInputElement.addEventListener('keydown', (event) => {
             if (chatInputElement.contains(document.activeElement)) {
@@ -235,12 +265,18 @@ class Room extends Phaser.Scene {
                 this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
                 this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
                 this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+                this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.E);
                 this.input.keyboard.enabled = false
-            } 
+            }
+            chatInputElement.addEventListener('keypress', function(event) {
+                if(chatInputElement.value.length >= 30) {
+                    event.preventDefault();
+                }
+            });
             if (event.key === 'Enter') {
                 event.preventDefault()
                 const text = chatInputElement.value.trim()
-                if (text === '') return
+                if (text === '' || text.length > 30) return
                 const username = this.playerUsername[socket.id]
                 const message = `${username}: ${text}`
                 chatInputElement.value = ''
@@ -250,8 +286,11 @@ class Room extends Phaser.Scene {
                 chatInputElement.value = '';
                 chatInputElement.blur();
             } else if (event.key === ' ') {
-                chatInputElement.value += ' '
+                if(chatInputElement.value.length < 30) {
+                    chatInputElement.value += ' '
+                }
             }
+
         })
 
         this.nextButtonWeapon = this.add.sprite(0, 0, 'nextButton').setScale(0.2)

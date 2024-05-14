@@ -649,7 +649,11 @@ function startGame(multiplayerId) {
     playersInRoom.forEach((player, index) => {
         const id = player.id
         const username = playerUsername[id];
+<<<<<<< HEAD
         const weaponId = weaponIds[id]
+=======
+        const weaponId = weaponIds[id];
+>>>>>>> 918bf8c83a52cb023213224a6b8b7727b6fd4dbf
         const bullets = weaponDetails[id].ammo
         const firerate = weaponDetails[id].fire_rate
         const reload = weaponDetails[id].reload
