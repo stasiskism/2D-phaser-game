@@ -1,6 +1,7 @@
 class Lobby extends Phaser.Scene {
     createdSprites = {}
     searchBox;
+    continueSearching = false;
 
     constructor() {
         super({ key: 'lobby'});
@@ -12,7 +13,7 @@ class Lobby extends Phaser.Scene {
     preload() {
 
     }
-    
+
     create() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
@@ -60,7 +61,7 @@ class Lobby extends Phaser.Scene {
         this.exitButton.on('pointerover', () => this.exitButton.setTint(0xf1c40f))
         this.exitButton.on('pointerout', () => this.exitButton.clearTint())
     }
-    
+
     update() {
     }
 
@@ -86,13 +87,13 @@ class Lobby extends Phaser.Scene {
             isPrivate = window.confirm('Do you want this room to be private?');
             maxPlayers = window.prompt('Enter the maximum number of players (2-4):');
             if (maxPlayers === null) {
-                break; 
+                break;
             }
         } while (!maxPlayers || isNaN(maxPlayers) || maxPlayers < 2 || maxPlayers > 4);
-    
+
         if (maxPlayers != null) {
             socket.emit('createRoom', { roomName, maxPlayers, isPrivate });
-    
+
             socket.once('roomCreated', (roomId, mapSize) => {
                 this.scene.start('room', { roomId: roomId, mapSize });
                 this.scene.stop();
@@ -103,7 +104,7 @@ class Lobby extends Phaser.Scene {
     joinRoom(roomId) {
         socket.off('roomJoined');
         socket.off('roomJoinFailed');
-        
+
         socket.emit('checkRoom', roomId)
 
         socket.on('roomJoined', roomId => {
@@ -116,86 +117,56 @@ class Lobby extends Phaser.Scene {
     }
 
     search() {
-
         this.searchBox.setVisible(true);
-
-
-        let continueSearching = true;
-
+        this.continueSearching = true;
 
         const handleRoomJoined = (roomId) => {
-            if (!continueSearching) return;
-
+            if (!this.continueSearching) return;
 
             this.searchBox.setVisible(false);
-
-
-            continueSearching = false;
-
+            this.continueSearching = false;
 
             this.scene.start('room', { roomId });
             this.scene.stop();
 
-
             cleanupEventListeners();
         };
-
 
         const handleRoomJoinFailed = (errorMessage) => {
-            if (!continueSearching) return;
-
+            if (!this.continueSearching) return;
 
             this.searchBox.setVisible(false);
-
-
             alert(errorMessage);
-
 
             cleanupEventListeners();
         };
 
-
         const continuousSearch = () => {
-            if (!continueSearching) return;
-
-
+            if (!this.continueSearching) return;
             socket.emit('searchRoom');
         };
-
 
         const cleanupEventListeners = () => {
             socket.off('roomJoined', handleRoomJoined);
             socket.off('roomJoinFailed', handleRoomJoinFailed);
         };
 
-
         socket.on('roomJoined', handleRoomJoined);
         socket.on('roomJoinFailed', handleRoomJoinFailed);
 
-
         continuousSearch();
-
 
         const searchInterval = setInterval(continuousSearch, 5000);
 
-
         this.searchBox.on('close', () => {
             clearInterval(searchInterval);
-            continueSearching = false;
-            cleanupEventListeners();
+            this.cancelSearch(); // Call cancelSearch when the search box is closed
         });
     }
 
-
-
-
-
     cancelSearch() {
-
         this.searchBox.setVisible(false);
-
-
-        socket.emit('cancelSearch');
+        this.continueSearching = false;
     }
 
 }
