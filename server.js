@@ -5,7 +5,6 @@ const {Server} = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {pingInterval: 2000, pingTimeout: 7000});
-const sanitizeHtml = require('sanitize-html')
 const bodyParser = require('body-parser')
 const { Pool } = require('pg');
 
@@ -520,6 +519,7 @@ io.on('connection', (socket) => {
             const client = await sql.connect()
             const username = playerUsername[socket.id]
             await client.query('UPDATE user_profile SET weapon = $1 WHERE user_name = $2;', [weaponId, username]);
+            weaponIds[socket.id] = weaponId
             client.release()
         } catch (error) {
             console.error('Error updating weaponId:', error);
@@ -634,7 +634,7 @@ function startGame(multiplayerId) {
     playersInRoom.forEach((player, index) => {
         const id = player.id
         const username = playerUsername[id];
-        const weaponId = weaponDetails[id].weapon_id
+        const weaponId = weaponIds[id];
         const bullets = weaponDetails[id].ammo
         const firerate = weaponDetails[id].fire_rate
         const reload = weaponDetails[id].reload

@@ -26,12 +26,12 @@ class Lobby extends Phaser.Scene {
         this.codeButton.on('pointerdown', () => this.codeRoom())
         this.codeButton.on('pointerover', () => this.codeButton.setTint(0xf1c40f))
         this.codeButton.on('pointerout', () => this.codeButton.clearTint())
-        this.searchButton = this.add.sprite(1920 / 2, (1080 / 2) + 370, 'Search available rooms')
+        this.searchButton = this.add.sprite(1920 / 2, (1080 / 2) + 170, 'Search')
         this.searchButton.setInteractive({ useHandCursor: true })
         this.searchButton.on('pointerdown', () => this.search())
         this.searchButton.on('pointerover', () => this.searchButton.setTint(0xf1c40f))
         this.searchButton.on('pointerout', () => this.searchButton.clearTint())
-        this.exitButton = this.add.sprite(1920 / 2, (1080 / 2) + 170, 'exit');
+        this.exitButton = this.add.sprite(1920 / 2, (1080 / 2) + 340, 'exit');
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
             socket.removeAllListeners()
