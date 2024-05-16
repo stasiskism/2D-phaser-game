@@ -34,8 +34,24 @@ class Register extends Phaser.Scene {
                     border: 1px solid #ccc;
                     display: block;
                 }
+                #register input[type="submit"] {
+                    width: 80%;
+                    padding: 10px;
+                    border-radius: 5px;
+                    border: none;
+                    color: white;
+                    background-color: #5C6BC0;
+                }
+                .link-like {
+                    color: white;
+                    text-decoration: underline;
+                    cursor: pointer;
+                }
+                .link-like:hover {
+                    color: #ffeb3b; /* Change color on hover to give a visual cue */
+                }
             </style>
-
+        
             <form id="register">
                 <div>
                     <input type="text" id="uname" placeholder="Username" name="username" class="forminput" required><br>
@@ -50,10 +66,11 @@ class Register extends Phaser.Scene {
                     <input type="password" id="repeatpswd" placeholder="Confirm Password" required><br>
                 </div>
                 <div>
-                    <input type="submit" value="Register account" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
+                    <input type="submit" value="Register account">
                 </div>
             </form>
-            <p style="color:white">Already have an account? <a href="#" id="login">Sign in</a></p>
+            <p style="color:white">Already have an account? <span class="link-like" id="login">Sign in</span></p>
+            <p style="color:white">Want to go back? <span class="link-like" id="back">Go back</span></p>
         `);
 
         const password = this.register.getChildByID('pswd');
@@ -63,6 +80,11 @@ class Register extends Phaser.Scene {
         password.addEventListener('change', () => this.checkPassword(password, confirmPassword));
         confirmPassword.addEventListener('keyup', () => this.checkPassword(password, confirmPassword));
         login.addEventListener('click', this.loadLogin.bind(this));
+
+        this.register.getChildByID('back').addEventListener('click', () => {
+            this.scene.start('authenticate')
+            this.scene.stop()
+        })
 
         const registerForm = this.register.getChildByID('register');
         registerForm.addEventListener('submit', (event) => {
@@ -145,6 +167,14 @@ class Register extends Phaser.Scene {
                     border: 1px solid #ccc;
                     display: block;
                 }
+                .link-like {
+                    color: white;
+                    text-decoration: underline;
+                    cursor: pointer;
+                }
+                .link-like:hover {
+                    color: #ffeb3b; /* Change color on hover to give a visual cue */
+                }
             </style>
 
             <form id="verification">
@@ -155,7 +185,22 @@ class Register extends Phaser.Scene {
                     <input type="submit" value="Submit Verification Code" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
                 </div>
             </form>
+            <p style="color:white">Did not get an email? <span class="link-like" id="resendCode">Resend code</span></p>
+            <p style="color:white">Want to go back to registration form? <span class="link-like" id="back">Go back</span></p>
         `);
+
+        verificationForm.getChildByID('resendCode').addEventListener('click', (event) => {
+            event.preventDefault()
+            socket.emit('sendVerificationEmail', email)
+        })
+
+        verificationForm.getChildByID('back').addEventListener('click', (event) => {
+            event.preventDefault()
+            this.removeInputs();
+            verificationForm.setVisible(false)
+            this.register.setVisible(true)
+        })
+
         const verify = verificationForm.getChildByID('verification')
         verify.addEventListener('submit', (event) => {
             event.preventDefault()
@@ -180,7 +225,7 @@ class Register extends Phaser.Scene {
             } else {
                 alert('Registration failed: ' + response.error);
                 this.removeInputs()
-                this.register.setVisible(true)
+                this.verificationForm.setVisible(true)
             }
         });
     }

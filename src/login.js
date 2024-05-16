@@ -12,39 +12,61 @@ class Login extends Phaser.Scene {
         this.centerY = this.cameras.main.height / 2;
         this.add.sprite(this.centerX, this.centerY, 'background');
         const login = this.add.dom(this.centerX, this.centerY).createFromHTML(`
-        <style>
-            #login {
-                background-color: rgba(255, 255, 255, 0.5);
-                padding: 20px;
-                border-radius: 5px;
-                box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
-                text-align: center;
-            }
-            #login input[type="text"],
-            #login input[type="password"] {
-                width: 80%;
-                padding: 10px;
-                margin: 10px auto;
-                border-radius: 5px;
-                border: 1px solid #ccc;
-                display: block;
-            }
-        </style>
-
-        <form id="login">
-            <div>
-                <input type="text" id="uname" placeholder="Username" name="username" class="forminput" required>
-            </div>
-            <div>
-                <input type="password" id="pswd" placeholder="Password" required>
-            </div>
-            <div>
-                <input type="submit" value="Login" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
-            </div>
-        </form>
-        <p style="color:white">Not a member? <a href="#" id="register">Sign up now</a></p>
-        <p style="color:white">Forgot your password? <a href="#" id="forgotPassword">Reset it here</a></p>
+            <style>
+                #login {
+                    background-color: rgba(255, 255, 255, 0.5);
+                    padding: 20px;
+                    border-radius: 5px;
+                    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+                    text-align: center;
+                }
+                #login input[type="text"],
+                #login input[type="password"] {
+                    width: 80%;
+                    padding: 10px;
+                    margin: 10px auto;
+                    border-radius: 5px;
+                    border: 1px solid #ccc;
+                    display: block;
+                }
+                #login input[type="submit"] {
+                    width: 80%;
+                    padding: 10px;
+                    border-radius: 5px;
+                    border: none;
+                    color: white;
+                    background-color: #5C6BC0;
+                }
+                .link-like {
+                    color: white;
+                    text-decoration: underline;
+                    cursor: pointer;
+                }
+                .link-like:hover {
+                    color: #ffeb3b; /* Change color on hover to give a visual cue */
+                }
+            </style>
+        
+            <form id="login">
+                <div>
+                    <input type="text" id="uname" placeholder="Username" name="username" class="forminput" required>
+                </div>
+                <div>
+                    <input type="password" id="pswd" placeholder="Password" required>
+                </div>
+                <div>
+                    <input type="submit" value="Login">
+                </div>
+            </form>
+            <p style="color:white">Not a member? <span class="link-like" id="register">Sign up now</span></p>
+            <p style="color:white">Forgot your password? <span class="link-like" id="forgotPassword">Reset it here</span></p>
+            <p style="color:white">Want to go back? <span class="link-like" id="back">Go back</span></p>
         `);
+
+        login.getChildByID('back').addEventListener('click', () => {
+            this.scene.start('authenticate')
+            this.scene.stop()
+        })
 
         const register = login.getChildByID('register');
         register.addEventListener('click', this.loadRegister.bind(this));
@@ -70,7 +92,7 @@ class Login extends Phaser.Scene {
         const resetPassword = login.getChildByID('forgotPassword')
         resetPassword.addEventListener('click', () => {
             login.setVisible(false)
-            const resetPassword = this.add.dom(this.centerX, this.centerY).createFromHTML(`
+            this.resetPasswordForm = this.add.dom(this.centerX, this.centerY).createFromHTML(`
             <style>
             #reset {
                 background-color: rgba(255, 255, 255, 0.5);
@@ -88,6 +110,14 @@ class Login extends Phaser.Scene {
                 border: 1px solid #ccc;
                 display: block;
             }
+            .link-like {
+                color: white;
+                text-decoration: underline;
+                cursor: pointer;
+            }
+            .link-like:hover {
+                color: #ffeb3b; /* Change color on hover to give a visual cue */
+            }
         </style>
 
             <form id="reset">
@@ -98,10 +128,19 @@ class Login extends Phaser.Scene {
                     <input type="submit" value="Submit Email Address" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
                 </div>
             </form>
+        <p style="color:white">Want to go back to login form? <span class="link-like" id="back">Go back</span></p>
         `);
+
+        this.resetPasswordForm.getChildByID('back').addEventListener('click', (event) => {
+            event.preventDefault()
+            this.removeInputs();
+            this.resetPasswordForm.setVisible(false)
+            login.setVisible(true)
+        })
+
         const emailPattern = /\S+@\S+\.\S+/
         
-        const resetForm = resetPassword.getChildByID('reset')
+        const resetForm = this.resetPasswordForm.getChildByID('reset')
         resetForm.addEventListener('submit', (event) => {
             event.preventDefault()
             const email = document.getElementById('email').value
@@ -111,7 +150,7 @@ class Login extends Phaser.Scene {
                 return;
             } else {
                 this.sendVerificationEmail(email)
-                resetPassword.setVisible(false)
+                this.resetPasswordForm.setVisible(false)
             }
         })
         
@@ -147,6 +186,14 @@ class Login extends Phaser.Scene {
                     border: 1px solid #ccc;
                     display: block;
                 }
+                .link-like {
+                    color: white;
+                    text-decoration: underline;
+                    cursor: pointer;
+                }
+                .link-like:hover {
+                    color: #ffeb3b; /* Change color on hover to give a visual cue */
+                }
             </style>
 
             <form id="verification">
@@ -163,7 +210,21 @@ class Login extends Phaser.Scene {
                     <input type="submit" value="Reset Password" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
                 </div>
             </form>
+            <p style="color:white">Did not get an email? <span class="link-like" id="resendCode">Resend code</span></p>
+            <p style="color:white">Wrote a wrong email? <span class="link-like" id="back">Go back</span></p>
         `);
+
+        verificationForm.getChildByID('resendCode').addEventListener('click', (event) => {
+            event.preventDefault()
+            socket.emit('sendVerificationEmail', email)
+        })
+
+        verificationForm.getChildByID('back').addEventListener('click', (event) => {
+            event.preventDefault()
+            this.removeInputs();
+            verificationForm.setVisible(false)
+            this.resetPasswordForm.setVisible(true)
+        })
 
         const verify = verificationForm.getChildByID('verification')
         verify.addEventListener('submit', (event) => {
