@@ -150,7 +150,7 @@ class Register extends Phaser.Scene {
 
     sendVerificationEmail(username, email, password) {
         socket.emit('sendVerificationEmail', email)
-        const verificationForm = this.add.dom(this.centerX, this.centerY).createFromHTML(`
+        this.verificationForm = this.add.dom(this.centerX, this.centerY).createFromHTML(`
             <style>
                 #verification {
                     background-color: rgba(255, 255, 255, 0.5);
@@ -189,19 +189,19 @@ class Register extends Phaser.Scene {
             <p style="color:white">Want to go back to registration form? <span class="link-like" id="back">Go back</span></p>
         `);
 
-        verificationForm.getChildByID('resendCode').addEventListener('click', (event) => {
+        this.verificationForm.getChildByID('resendCode').addEventListener('click', (event) => {
             event.preventDefault()
             socket.emit('sendVerificationEmail', email)
         })
 
-        verificationForm.getChildByID('back').addEventListener('click', (event) => {
+        this.verificationForm.getChildByID('back').addEventListener('click', (event) => {
             event.preventDefault()
             this.removeInputs();
-            verificationForm.setVisible(false)
+            this.verificationForm.setVisible(false)
             this.register.setVisible(true)
         })
 
-        const verify = verificationForm.getChildByID('verification')
+        const verify = this.verificationForm.getChildByID('verification')
         verify.addEventListener('submit', (event) => {
             event.preventDefault()
             const code = document.getElementById('verificationCode').value
@@ -209,7 +209,7 @@ class Register extends Phaser.Scene {
                 alert('Please enter code')
                 document.getElementById('verificationCode').value = ''
             }
-            verificationForm.setVisible(false)
+            this.verificationForm.setVisible(false)
             this.sendData(username, email, password, code)
         })
     }

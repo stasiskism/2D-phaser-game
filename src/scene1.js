@@ -43,7 +43,6 @@ class Scene1 extends Phaser.Scene {
         this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
         this.load.image('dead', 'assets/Dead_Screen.png')
         this.load.image('restartButton', 'assets/Restart_Button.png')
-        this.load.image('quitButton', 'assets/Exit_Button.png')
         this.load.image('mapas', 'assets/mapas.png')
         this.load.image('player', 'assets/player_23.png')
         this.load.image('bullet', 'assets/bullet.png')
@@ -88,7 +87,6 @@ class Scene1 extends Phaser.Scene {
         this.load.image('previousButton', 'assets/arrow-left.png')
         this.load.image('dead', 'assets/Dead_Screen.png')
         this.load.image('spectateButton', 'assets/Spectate_Button.png')
-        this.load.image('quitButton', 'assets/Exit_Button.png')
         this.load.image('Search', 'assets/Search_Button.png')
     }
 

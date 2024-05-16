@@ -98,9 +98,68 @@ class MainMenu extends Phaser.Scene {
         </div>
         `);
 
-        this.leaderboard.setPosition(100, 100).setScrollFactor(0);
-        this.document = this.leaderboard.node.querySelector(`#playerLabels`)
+    this.leaderboard.setPosition(100, 100).setScrollFactor(0);
+    this.document = this.leaderboard.node.querySelector(`#playerLabels`)
 
+    this.logoutButton = this.add.sprite(100, 30, 'quitButton').setDepth(1).setScale(0.2)
+    this.logoutButton.setInteractive({ useHandCursor: true });
+    
+    this.logoutButton.on('pointerdown', () => {      
+      this.showLogout()
+    });
+  }
+
+  showLogout() {
+    this.logoutPrompt = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Do you really want to logout?', {
+      fontFamily: 'Arial',
+      fontSize: 24,
+      color: '#ffffff',
+      backgroundColor: '#000000',
+      padding: {
+        x: 20,
+        y: 10
+      }
+    }).setOrigin(0.5).setDepth(1);
+
+    const yesButton = this.add.text(this.cameras.main.centerX - 50, this.cameras.main.centerY + 50, 'Yes', {
+      fontFamily: 'Arial',
+      fontSize: 18,
+      color: '#ffffff',
+      backgroundColor: '#5C6BC0',
+      padding: {
+        x: 10,
+        y: 5
+      }
+    }).setOrigin(0.5).setDepth(2).setInteractive({ useHandCursor: true });
+
+    const noButton = this.add.text(this.cameras.main.centerX + 50, this.cameras.main.centerY + 50, 'No', {
+      fontFamily: 'Arial',
+      fontSize: 18,
+      color: '#ffffff',
+      backgroundColor: '#5C6BC0',
+      padding: {
+        x: 10,
+        y: 5
+      }
+    }).setOrigin(0.5).setDepth(2).setInteractive({ useHandCursor: true });
+
+    yesButton.on('pointerdown', () => {
+      socket.emit('logout');
+      socket.removeAllListeners();
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+      this.scene.start('authenticate');
+      this.scene.stop();
+      this.logoutPrompt.destroy();
+    });
+
+    noButton.on('pointerdown', () => {
+      this.logoutPrompt.destroy();
+      yesButton.destroy();
+      noButton.destroy();
+    });
   }
 
   update() {

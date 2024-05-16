@@ -58,6 +58,8 @@ const weaponDetails = {}
 const grenadeDetails = {}
 const reloadingStatus = {}
 const backendGrenades = {}
+const availableWeapons = []
+const availableGrenades = []
 const token = {}
 
 
@@ -109,6 +111,7 @@ io.on('connection', (socket) => {
             const result = await client.query('INSERT INTO user_authentication (user_name, user_password, email) VALUES ($1, $2, $3) RETURNING user_id', values);
             const id = result.rows[0].user_id;
             await client.query('INSERT INTO user_profile (user_id, user_name) VALUES ($1, $2)', [id, username]);
+            await client.query('INSERT INTO inventory (inventory_id) VALUES ($1)', [username])
             client.release();
             socket.emit('registerResponse', { success: true });
         } catch (error) {
@@ -207,7 +210,7 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on('joinRoom', (roomId) => {
+    socket.on('joinRoom', async (roomId) => {
         if (rooms[roomId]) {
             projectileId = 0
             const username = playerUsername[socket.id];
@@ -221,6 +224,20 @@ io.on('connection', (socket) => {
                 readyPlayers[roomId] = {}
             }
             readyPlayers[roomId][socket.id] = false
+            try {
+                const client = await sql.connect()
+                const resultGrenades = await client.query('SELECT grenade_id FROM inventory WHERE inventory_id = $1', [username])
+                const resultWeapons = await client.query('SELECT weapon_id FROM inventory WHERE inventory_id = $1', [username])
+                for (const row of resultGrenades.rows) {
+                    availableGrenades.push(row.grenade_id)
+                }
+                for (const row of resultWeapons.rows) {
+                    availableWeapons.push(row.weapon_id)
+                }
+                io.to(socket.id).emit('availableWeapons', availableWeapons, availableGrenades)
+            } catch (error) {
+                console.error('Error getting available weapons and grenades:', error);
+            }
             io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
         } else {
             socket.emit('roomJoinFailed', 'Room is full or does not exist');
@@ -498,6 +515,13 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('logout', () => {
+        const username = Object.keys(activeSessions).find(key => activeSessions[key] === socket.id);
+        if (username) {
+            delete activeSessions[username];
+        }
+    })
+
     socket.on('leaveRoom', (roomId) => {
         for (const id in rooms) {
             if (id === roomId) {
@@ -570,12 +594,15 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('receiveMessage', message)
     })
 
+
     socket.on('changeWeapon', async (weaponId) => {
         try {
             const client = await sql.connect()
             const username = playerUsername[socket.id]
-            await client.query('UPDATE user_profile SET weapon = $1 WHERE user_name = $2;', [weaponId, username]);
-            weaponIds[socket.id] = weaponId
+            if (availableWeapons.includes(weaponId)) {
+                await client.query('UPDATE user_profile SET weapon = $1 WHERE user_name = $2;', [weaponId, username]);
+                weaponIds[socket.id] = weaponId
+            }
             client.release()
         } catch (error) {
             console.error('Error updating weaponId:', error);
@@ -586,8 +613,10 @@ io.on('connection', (socket) => {
         try {
             const client = await sql.connect()
             const username = playerUsername[socket.id]
-            await client.query('UPDATE user_profile SET grenade = $1 WHERE user_name = $2;', [grenadeId, username]);
-            grenadeIds[socket.id] = grenadeId 
+            if (availableGrenades.includes(grenadeId)) {
+                await client.query('UPDATE user_profile SET grenade = $1 WHERE user_name = $2;', [grenadeId, username]);
+                grenadeIds[socket.id] = grenadeId
+            }
             client.release()
         } catch (error) {
             console.error('Error updating grenadeId:', error);

@@ -17,6 +17,8 @@ class Room extends Phaser.Scene {
         1: 'smokeGrenade',
         2: 'grenade'
     }
+    availableWeapons = []
+    availableGrenades = []
     constructor() {
         super({ key: 'room'});
     }
@@ -128,6 +130,11 @@ class Room extends Phaser.Scene {
             this.chatDisplay.setText(this.chatHistory.slice(-15).join('\n'));
         })
 
+        socket.on('availableWeapons', (availableWeapons, availableGrenades) => {
+            this.availableWeapons = availableWeapons
+            this.availableGrenades = availableGrenades
+        })
+
     }
 
     setupScene() {
@@ -218,15 +225,12 @@ class Room extends Phaser.Scene {
             padding: { x: 10, y: 10 },
         }).setInteractive();
 
-// Add a click event to the button
         chatButton.on('pointerdown', () => {
-            // Toggle the visibility of the chat, close button and input box
             this.chatDisplay.visible = !this.chatDisplay.visible;
             closeButton.visible = !closeButton.visible;
             chatInputElement.style.display = chatInputElement.style.display === 'none' ? 'block' : 'none';
         });
 
-// Add a close button to the chat
         const closeButton = this.add.text(1300, 450, 'X', {
             fontSize: '32px',
             fill: '#ffffff',
@@ -234,9 +238,7 @@ class Room extends Phaser.Scene {
             padding: { x: 10, y: 10 },
         }).setInteractive();
 
-// Add a click event to the close button
         closeButton.on('pointerdown', () => {
-            // Hide the chat, close button and input box when the close button is clicked
             this.chatDisplay.visible = false;
             closeButton.visible = false;
             chatInputElement.style.display = 'none';
@@ -377,6 +379,10 @@ class Room extends Phaser.Scene {
         if (this.displayWeapon) {
             this.displayWeapon.destroy()
         }
+        if (this.lockedWeaponText) {
+            this.lockedWeaponText.destroy()
+        }
+
         if (weaponId === 3) {
             this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
             this.displayWeapon.setPosition(this.centerX - 430, 1000).setScrollFactor(0).setDepth(1)
@@ -384,14 +390,48 @@ class Room extends Phaser.Scene {
             this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
             this.displayWeapon.setPosition(this.centerX - 500, 1000).setScrollFactor(0).setDepth(1)
         }
+
+        if (!this.availableWeapons.length) return
+        if (!this.availableWeapons.includes(weaponId)) {
+            this.lockedWeaponText = this.add.text(this.centerX - 550, 1000, 'LOCKED', {
+                fontFamily: 'Arial',
+                fontSize: 28,
+                color: '#FFFFFF',
+                backgroundColor: '#000000',
+                padding: {
+                    x: 5,
+                    y: 2
+                }
+            });
+            this.lockedWeaponText.setScrollFactor(0).setDepth(1);
+        }
     }
 
     setupGrenade(grenadeId) {
         if (this.displayGrenade) {
             this.displayGrenade.destroy()
         }
+        if (this.lockedGrenadeText) {
+            this.lockedGrenadeText.destroy()
+        }
+
         this.displayGrenade = this.add.sprite(0, 0, '' + this.grenades[grenadeId]).setScale(3)
         this.displayGrenade.setPosition(this.centerX + 100, 1000).setScrollFactor(0).setDepth(1)
+
+        if (!this.availableGrenades.length) return
+        if (!this.availableGrenades.includes(grenadeId)) {
+            this.lockedGrenadeText = this.add.text(this.displayGrenade.x - 50, this.displayGrenade.y, 'LOCKED', {
+                fontFamily: 'Arial',
+                fontSize: 28,
+                color: '#FFFFFF',
+                backgroundColor: '#000000',
+                padding: {
+                    x: 5,
+                    y: 2
+                }
+            });
+            this.lockedGrenadeText.setScrollFactor(0).setDepth(1);
+        }
     }
     
     update() {
