@@ -44,7 +44,6 @@ class Scene1 extends Phaser.Scene {
         this.load.image('dead', 'assets/Dead_Screen.png')
         this.load.image('restartButton', 'assets/Restart_Button.png')
         this.load.image('mapas', 'assets/mapas.png')
-        this.load.image('player', 'assets/player_23.png')
         this.load.image('bullet', 'assets/bullet.png')
         this.load.image('crosshair', 'assets/crosshair008.png')
         this.load.image('fullscreen', 'assets/full-screen.png')

@@ -111,8 +111,8 @@ io.on('connection', (socket) => {
             const result = await client.query('INSERT INTO user_authentication (user_name, user_password, email) VALUES ($1, $2, $3) RETURNING user_id', values);
             const id = result.rows[0].user_id;
             await client.query('INSERT INTO user_profile (user_id, user_name) VALUES ($1, $2)', [id, username]);
-            await client.query('INSERT INTO user_weapons (user_id) VALUES ($1)', [username])
-            await client.query('INSERT INTO user_grenades (user_id) VALUES ($1)', [username])
+            await client.query('INSERT INTO user_weapons (user_id, user_name) VALUES ($1, $2)', [id, username])
+            await client.query('INSERT INTO user_grenades (user_id, user_name) VALUES ($1, $2)', [id, username])
             client.release();
             socket.emit('registerResponse', { success: true });
         } catch (error) {
@@ -227,8 +227,8 @@ io.on('connection', (socket) => {
             readyPlayers[roomId][socket.id] = false
             try {
                 const client = await sql.connect()
-                const resultGrenades = await client.query('SELECT grenade_id FROM user_grenades WHERE user_id = $1', [username])
-                const resultWeapons = await client.query('SELECT weapon_id FROM user_weapons WHERE user_id = $1', [username])
+                const resultGrenades = await client.query('SELECT grenade_id FROM user_grenades WHERE user_name = $1', [username])
+                const resultWeapons = await client.query('SELECT weapon_id FROM user_weapons WHERE user_name = $1', [username])
                 for (const row of resultGrenades.rows) {
                     availableGrenades.push(row.grenade_id)
                 }
