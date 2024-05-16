@@ -30,13 +30,6 @@ class Singleplayer extends Phaser.Scene {
     this.enemies = []
     this.bullets = []
 
-    this.anims.create({
-      key: 'enemiess', // Animation key
-      frames: this.anims.generateFrameNumbers('enemiess', { start: 0, end: 7 /* total number of frames - 1 */ }),
-      frameRate: 30 /* frame rate */,
-      repeat: -1 // Repeat indefinitely
-  });
-
   }
 
   gunAnimation(){

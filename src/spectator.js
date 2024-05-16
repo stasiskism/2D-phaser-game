@@ -52,7 +52,7 @@ class Spectator extends Phaser.Scene {
 
 
         this.nextButton = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
-        this.nextButton.setPosition(centerX + 200, 1000).setScrollFactor(0)
+        this.nextButton.setPosition(centerX + 320, 1000).setScrollFactor(0)
         this.nextButton.setInteractive({useHandCursor: true})
         this.nextButton.on('pointerdown', () => {
             this.nextPlayer();
@@ -60,7 +60,7 @@ class Spectator extends Phaser.Scene {
 
 
         this.previousButton = this.add.sprite(0, 0, 'previousButton').setScale(0.2)
-        this.previousButton.setPosition(centerX - 200, 1000).setScrollFactor(0)
+        this.previousButton.setPosition(centerX - 320, 1000).setScrollFactor(0)
         this.previousButton.setInteractive({useHandCursor: true})
         this.previousButton.on('pointerdown', () => {
             this.previousPlayer();

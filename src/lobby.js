@@ -15,6 +15,7 @@ class Lobby extends Phaser.Scene {
     }
 
     create() {
+        this.input.mouse.releasePointerLock();
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
         this.add.sprite(centerX, centerY, 'background');
