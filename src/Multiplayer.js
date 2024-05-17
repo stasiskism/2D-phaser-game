@@ -29,7 +29,6 @@ class Multiplayer extends Phaser.Scene {
         2: 'explosion'
     }
     playersAffected = {}
-    visibilityState = {}
 
     constructor() {
         super({ key: 'Multiplayer' });
@@ -439,16 +438,6 @@ class Multiplayer extends Phaser.Scene {
         this.isInSmoke();
         this.isInGrenade()
         this.onObject();
-        // const players = Object.keys(this.frontendPlayers);
-        // for (let i = 0; i < players.length; i++) {
-        //     const currentPlayerId = players[i];
-        //     this.visibilityState[currentPlayerId] = {}; // Initialize visibility state for currentPlayerId
-        //     for (let j = 0; j < players.length; j++) {
-        //         const otherPlayerId = players[j];
-        //         this.visibilityState[currentPlayerId][otherPlayerId] = true; // Initialize visibility state between currentPlayerId and otherPlayerId
-        //     }
-        // }
-        // console.log('visibilityState', this.visibilityState)
     }
     removeFallingObject(object) {
         object.destroy();
@@ -634,16 +623,15 @@ class Multiplayer extends Phaser.Scene {
 
     isInSmoke() {
         const players = Object.keys(this.frontendPlayers);
-        
-        // Initialize visibilityState object
-        for (let i = 0; i < players.length; i++) {
-            const currentPlayerId = players[i];
-            this.visibilityState[currentPlayerId] = {};
-            for (let j = 0; j < players.length; j++) {
-                const otherPlayerId = players[j];
-                this.visibilityState[currentPlayerId][otherPlayerId] = true;
-            }
-        }
+    
+        // Initialize visibility state object
+        const visibilityState = {};
+        players.forEach(playerId => {
+            visibilityState[playerId] = {};
+            players.forEach(otherPlayerId => {
+                visibilityState[playerId][otherPlayerId] = true;
+            });
+        });
     
         // Iterate through all pairs of players
         for (let i = 0; i < players.length; i++) {
@@ -660,64 +648,26 @@ class Multiplayer extends Phaser.Scene {
     
                 // If either player is inside smoke or the line between them is blocked by smoke, they are not visible to each other
                 if (player1InSmoke || player2InSmoke || this.isLineBlockedBySmoke(player1.x, player1.y, player2.x, player2.y)) {
-                    this.visibilityState[players[i]][players[j]] = false;
-                    this.visibilityState[players[j]][players[i]] = false;
-                    const currentPlayerId = socket.id
-                    if (players[j] !== currentPlayerId) {
-                        const otherPlayer = this.frontendPlayers[players[j]];
-                        otherPlayer.setVisible(false);
-                        this.playerHealth[players[j]].setVisible(false)
-                        this.playerUsername[players[j]].setVisible(false)
-                        this.frontendWeapons[players[j]].setVisible(false)
-                    }
-                
-                    // Update the visibility of the current player (not the other player) in the pair
-                    if (players[i] !== currentPlayerId) {
-                        const currentPlayer = this.frontendPlayers[players[i]];
-                        currentPlayer.setVisible(false);
-                        this.playerHealth[players[i]].setVisible(false)
-                        this.playerUsername[players[i]].setVisible(false)
-                        this.frontendWeapons[players[i]].setVisible(false)
-                    }
-                    console.log(`${players[i]} and ${players[j]} are not visible to each other`);
+                    visibilityState[players[i]][players[j]] = false;
+                    visibilityState[players[j]][players[i]] = false;
                 } else {
-                    this.visibilityState[players[i]][players[j]] = true;
-                    this.visibilityState[players[j]][players[i]] = true;
-                    const currentPlayerId = socket.id
-                    if (players[j] !== currentPlayerId) {
-                        const otherPlayer = this.frontendPlayers[players[j]];
-                        otherPlayer.setVisible(true);
-                        this.playerHealth[players[j]].setVisible(true)
-                        this.playerUsername[players[j]].setVisible(true)
-                        this.frontendWeapons[players[j]].setVisible(true)
-                    }
-                
-                    // Update the visibility of the current player (not the other player) in the pair
-                    if (players[i] !== currentPlayerId) {
-                        const currentPlayer = this.frontendPlayers[players[i]];
-                        currentPlayer.setVisible(true);
-                        this.playerHealth[players[i]].setVisible(true)
-                        this.playerUsername[players[i]].setVisible(true)
-                        this.frontendWeapons[players[i]].setVisible(false)
-                    }
-                    console.log(`${players[i]} and ${players[j]} are visible to each other`);
-                }
-            }
-        }
-        
-        // Ensure that the playable player is always visible
-        const currentPlayerId = socket.id; // Assuming you have a function to get the current player's ID
-        if (currentPlayerId && this.frontendPlayers[currentPlayerId]) {
-            for (const otherPlayerId in this.frontendPlayers) {
-                if (otherPlayerId !== currentPlayerId) {
-                    this.visibilityState[currentPlayerId][otherPlayerId] = true;
-                    this.visibilityState[otherPlayerId][currentPlayerId] = true;
+                    visibilityState[players[i]][players[j]] = true;
+                    visibilityState[players[j]][players[i]] = true;
                 }
             }
         }
     
-        // Update the visibility of frontend players
-        
+        // Update player visibility based on the updated visibility state
+        const currentPlayerId = socket.id; // Assuming you have a function to get the current player's ID
+        players.forEach(playerId => {
+            const currentPlayer = this.frontendPlayers[playerId];
+            const isVisible = visibilityState[currentPlayerId][playerId];
+            currentPlayer.setVisible(isVisible);
+            // Update visibility of other elements like health bars, usernames, weapons, etc.
+            this.playerHealth[playerId].setVisible(isVisible);
+            this.playerUsername[playerId].setVisible(isVisible);
+            this.frontendWeapons[playerId].setVisible(isVisible);
+        });
     }
 
     isInGrenade() {
