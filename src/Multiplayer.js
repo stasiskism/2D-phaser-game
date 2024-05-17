@@ -29,6 +29,7 @@ class Multiplayer extends Phaser.Scene {
         2: 'explosion'
     }
     playersAffected = {}
+    visibilityState = {}
 
     constructor() {
         super({ key: 'Multiplayer' });
@@ -56,6 +57,7 @@ class Multiplayer extends Phaser.Scene {
     gunAnimation(weaponId){
         if (!weaponId) return
         const weapon = weaponId.name
+        console.log(weapon)
         const start = weaponId.start
         const end = weaponId.end
         
@@ -437,6 +439,16 @@ class Multiplayer extends Phaser.Scene {
         this.isInSmoke();
         this.isInGrenade()
         this.onObject();
+        // const players = Object.keys(this.frontendPlayers);
+        // for (let i = 0; i < players.length; i++) {
+        //     const currentPlayerId = players[i];
+        //     this.visibilityState[currentPlayerId] = {}; // Initialize visibility state for currentPlayerId
+        //     for (let j = 0; j < players.length; j++) {
+        //         const otherPlayerId = players[j];
+        //         this.visibilityState[currentPlayerId][otherPlayerId] = true; // Initialize visibility state between currentPlayerId and otherPlayerId
+        //     }
+        // }
+        // console.log('visibilityState', this.visibilityState)
     }
     removeFallingObject(object) {
         object.destroy();
@@ -594,47 +606,118 @@ class Multiplayer extends Phaser.Scene {
         }
     }
 
-    isInSmoke() {
-        let playerIdInSmoke = []
-        for (const id in this.frontendPlayers) {
-            const player = this.frontendPlayers[id];
-            // Check if player is undefined or doesn't contain valid data
-            if (!player || typeof player.getBounds !== 'function') continue;
-            playerIdInSmoke[id] = false
-            for (const smokeId in this.frontendSmoke) {
-                const smoke = this.frontendSmoke[smokeId];
-                if (!smoke) continue
-                const smokeBounds = smoke.getBounds();
-                const smallerBounds = new Phaser.Geom.Rectangle(
-                    smokeBounds.x + 25, 
-                    smokeBounds.y + 20,  
-                    smokeBounds.width - 120,  
-                    smokeBounds.height - 120  
-                );
-                if (Phaser.Geom.Intersects.RectangleToRectangle(player.getBounds(), smallerBounds)) {
-                    playerIdInSmoke[id] = true
-                    break;
-                } else if (playerIdInSmoke[id]){
-                    delete playerIdInSmoke[id]
-                }
+    isLineBlockedBySmoke(x1, y1, x2, y2) {
+        for (const smokeId in this.frontendSmoke) {
+            const smoke = this.frontendSmoke[smokeId];
+            if (!smoke) continue;
+            const smokeBounds = smoke.getBounds();
+    
+            // Check intersection with each side of the smoke bounding box
+            if (Phaser.Geom.Intersects.LineToRectangle(new Phaser.Geom.Line(x1, y1, x2, y2), smokeBounds)) {
+                return true;
             }
         }
+        return false;
+    }
 
-        for (const id in this.frontendPlayers) {
-            if (playerIdInSmoke[id] && id === socket.id) {
-                if (!this.darkOverlay[id]) {
-                    this.darkOverlay[id] = this.add.rectangle(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize, 0x808080);
-                    this.darkOverlay[id].setOrigin(0);
-                    this.darkOverlay[id].setAlpha(1);
-                }
-            } else {
-                if (this.darkOverlay[id]) {
-                    console.log('destroying dark overlay for player:', id);
-                    this.darkOverlay[id].destroy();
-                    delete this.darkOverlay[id];
+    isPlayerInSmoke(player) {
+        for (const smokeId in this.frontendSmoke) {
+            const smoke = this.frontendSmoke[smokeId];
+            if (!smoke) continue;
+            const smokeBounds = smoke.getBounds();
+            if (smokeBounds.contains(player.x, player.y)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    isInSmoke() {
+        const players = Object.keys(this.frontendPlayers);
+        
+        // Initialize visibilityState object
+        for (let i = 0; i < players.length; i++) {
+            const currentPlayerId = players[i];
+            this.visibilityState[currentPlayerId] = {};
+            for (let j = 0; j < players.length; j++) {
+                const otherPlayerId = players[j];
+                this.visibilityState[currentPlayerId][otherPlayerId] = true;
+            }
+        }
+    
+        // Iterate through all pairs of players
+        for (let i = 0; i < players.length; i++) {
+            for (let j = i + 1; j < players.length; j++) {
+                const player1 = this.frontendPlayers[players[i]];
+                const player2 = this.frontendPlayers[players[j]];
+    
+                // Skip if either player is undefined
+                if (!player1 || !player2) continue;
+    
+                // Check if either player is inside a smoke area
+                const player1InSmoke = this.isPlayerInSmoke(player1);
+                const player2InSmoke = this.isPlayerInSmoke(player2);
+    
+                // If either player is inside smoke or the line between them is blocked by smoke, they are not visible to each other
+                if (player1InSmoke || player2InSmoke || this.isLineBlockedBySmoke(player1.x, player1.y, player2.x, player2.y)) {
+                    this.visibilityState[players[i]][players[j]] = false;
+                    this.visibilityState[players[j]][players[i]] = false;
+                    const currentPlayerId = socket.id
+                    if (players[j] !== currentPlayerId) {
+                        const otherPlayer = this.frontendPlayers[players[j]];
+                        otherPlayer.setVisible(false);
+                        this.playerHealth[players[j]].setVisible(false)
+                        this.playerUsername[players[j]].setVisible(false)
+                        this.frontendWeapons[players[j]].setVisible(false)
+                    }
+                
+                    // Update the visibility of the current player (not the other player) in the pair
+                    if (players[i] !== currentPlayerId) {
+                        const currentPlayer = this.frontendPlayers[players[i]];
+                        currentPlayer.setVisible(false);
+                        this.playerHealth[players[i]].setVisible(false)
+                        this.playerUsername[players[i]].setVisible(false)
+                        this.frontendWeapons[players[i]].setVisible(false)
+                    }
+                    console.log(`${players[i]} and ${players[j]} are not visible to each other`);
+                } else {
+                    this.visibilityState[players[i]][players[j]] = true;
+                    this.visibilityState[players[j]][players[i]] = true;
+                    const currentPlayerId = socket.id
+                    if (players[j] !== currentPlayerId) {
+                        const otherPlayer = this.frontendPlayers[players[j]];
+                        otherPlayer.setVisible(true);
+                        this.playerHealth[players[j]].setVisible(true)
+                        this.playerUsername[players[j]].setVisible(true)
+                        this.frontendWeapons[players[j]].setVisible(true)
+                    }
+                
+                    // Update the visibility of the current player (not the other player) in the pair
+                    if (players[i] !== currentPlayerId) {
+                        const currentPlayer = this.frontendPlayers[players[i]];
+                        currentPlayer.setVisible(true);
+                        this.playerHealth[players[i]].setVisible(true)
+                        this.playerUsername[players[i]].setVisible(true)
+                        this.frontendWeapons[players[i]].setVisible(false)
+                    }
+                    console.log(`${players[i]} and ${players[j]} are visible to each other`);
                 }
             }
         }
+        
+        // Ensure that the playable player is always visible
+        const currentPlayerId = socket.id; // Assuming you have a function to get the current player's ID
+        if (currentPlayerId && this.frontendPlayers[currentPlayerId]) {
+            for (const otherPlayerId in this.frontendPlayers) {
+                if (otherPlayerId !== currentPlayerId) {
+                    this.visibilityState[currentPlayerId][otherPlayerId] = true;
+                    this.visibilityState[otherPlayerId][currentPlayerId] = true;
+                }
+            }
+        }
+    
+        // Update the visibility of frontend players
+        
     }
 
     isInGrenade() {
