@@ -17,41 +17,6 @@ class Register extends Phaser.Scene {
         this.vaizdasImage = this.add.sprite(this.centerX, this.centerY, 'background');
 
         this.register = this.add.dom(this.centerX, this.centerY).createFromHTML(`
-            <style>
-                #register {
-                    background-color: rgba(255, 255, 255, 0.5);
-                    padding: 20px;
-                    border-radius: 5px;
-                    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
-                    text-align: center;
-                }
-                #register input[type="text"],
-                #register input[type="password"] {
-                    width: 80%;
-                    padding: 10px;
-                    margin: 10px auto;
-                    border-radius: 5px;
-                    border: 1px solid #ccc;
-                    display: block;
-                }
-                #register input[type="submit"] {
-                    width: 80%;
-                    padding: 10px;
-                    border-radius: 5px;
-                    border: none;
-                    color: white;
-                    background-color: #5C6BC0;
-                }
-                .link-like {
-                    color: white;
-                    text-decoration: underline;
-                    cursor: pointer;
-                }
-                .link-like:hover {
-                    color: #ffeb3b; /* Change color on hover to give a visual cue */
-                }
-            </style>
-        
             <form id="register">
                 <div>
                     <input type="text" id="uname" placeholder="Username" name="username" class="forminput" required><br>
@@ -151,38 +116,12 @@ class Register extends Phaser.Scene {
     sendVerificationEmail(username, email, password) {
         socket.emit('sendVerificationEmail', email)
         this.verificationForm = this.add.dom(this.centerX, this.centerY).createFromHTML(`
-            <style>
-                #verification {
-                    background-color: rgba(255, 255, 255, 0.5);
-                    padding: 20px;
-                    border-radius: 5px;
-                    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
-                    text-align: center;
-                }
-                #verification input[type="text"] {
-                    width: 80%;
-                    padding: 10px;
-                    margin: 10px auto;
-                    border-radius: 5px;
-                    border: 1px solid #ccc;
-                    display: block;
-                }
-                .link-like {
-                    color: white;
-                    text-decoration: underline;
-                    cursor: pointer;
-                }
-                .link-like:hover {
-                    color: #ffeb3b; /* Change color on hover to give a visual cue */
-                }
-            </style>
-
             <form id="verification">
                 <div>
                     <input type="text" id="verificationCode" placeholder="Verification Code" required><br>
                 </div>
                 <div>
-                    <input type="submit" value="Submit Verification Code" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
+                    <input type="submit" value="Submit Verification Code">
                 </div>
             </form>
             <p style="color:white">Did not get an email? <span class="link-like" id="resendCode">Resend code</span></p>

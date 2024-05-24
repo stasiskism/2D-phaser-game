@@ -12,41 +12,6 @@ class Login extends Phaser.Scene {
         this.centerY = this.cameras.main.height / 2;
         this.add.sprite(this.centerX, this.centerY, 'background');
         const login = this.add.dom(this.centerX, this.centerY).createFromHTML(`
-            <style>
-                #login {
-                    background-color: rgba(255, 255, 255, 0.5);
-                    padding: 20px;
-                    border-radius: 5px;
-                    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
-                    text-align: center;
-                }
-                #login input[type="text"],
-                #login input[type="password"] {
-                    width: 80%;
-                    padding: 10px;
-                    margin: 10px auto;
-                    border-radius: 5px;
-                    border: 1px solid #ccc;
-                    display: block;
-                }
-                #login input[type="submit"] {
-                    width: 80%;
-                    padding: 10px;
-                    border-radius: 5px;
-                    border: none;
-                    color: white;
-                    background-color: #5C6BC0;
-                }
-                .link-like {
-                    color: white;
-                    text-decoration: underline;
-                    cursor: pointer;
-                }
-                .link-like:hover {
-                    color: #ffeb3b; /* Change color on hover to give a visual cue */
-                }
-            </style>
-        
             <form id="login">
                 <div>
                     <input type="text" id="uname" placeholder="Username" name="username" class="forminput" required>
@@ -93,43 +58,16 @@ class Login extends Phaser.Scene {
         resetPassword.addEventListener('click', () => {
             login.setVisible(false)
             this.resetPasswordForm = this.add.dom(this.centerX, this.centerY).createFromHTML(`
-            <style>
-            #reset {
-                background-color: rgba(255, 255, 255, 0.5);
-                padding: 20px;
-                border-radius: 5px;
-                box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
-                text-align: center;
-            }
-            #reset input[type="text"],
-            #reset input[type="password"] {
-                width: 80%;
-                padding: 10px;
-                margin: 10px auto;
-                border-radius: 5px;
-                border: 1px solid #ccc;
-                display: block;
-            }
-            .link-like {
-                color: white;
-                text-decoration: underline;
-                cursor: pointer;
-            }
-            .link-like:hover {
-                color: #ffeb3b; /* Change color on hover to give a visual cue */
-            }
-        </style>
-
-            <form id="reset">
-                <div>
-                    <input type="text" id="email" placeholder="Email address" required>
-                </div>
-                <div>
-                    <input type="submit" value="Submit Email Address" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
-                </div>
-            </form>
-        <p style="color:white">Want to go back to login form? <span class="link-like" id="back">Go back</span></p>
-        `);
+                <form id="reset">
+                    <div>
+                        <input type="text" id="email" placeholder="Email address" required>
+                    </div>
+                    <div>
+                        <input type="submit" value="Submit Email Address">
+                    </div>
+                </form>
+                <p style="color:white">Want to go back to login form? <span class="link-like" id="back">Go back</span></p>
+            `);
 
         this.resetPasswordForm.getChildByID('back').addEventListener('click', (event) => {
             event.preventDefault()
@@ -162,40 +100,6 @@ class Login extends Phaser.Scene {
         socket.emit('sendVerificationEmail', email)
 
         const verificationForm = this.add.dom(this.centerX, this.centerY).createFromHTML(`
-            <style>
-                #verification {
-                    background-color: rgba(255, 255, 255, 0.5);
-                    padding: 20px;
-                    border-radius: 5px;
-                    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
-                    text-align: center;
-                }
-                #verification input[type="text"] {
-                    width: 80%;
-                    padding: 10px;
-                    margin: 10px auto;
-                    border-radius: 5px;
-                    border: 1px solid #ccc;
-                    display: block;
-                }
-                #verification input[type="password"] {
-                    width: 80%;
-                    padding: 10px;
-                    margin: 10px auto;
-                    border-radius: 5px;
-                    border: 1px solid #ccc;
-                    display: block;
-                }
-                .link-like {
-                    color: white;
-                    text-decoration: underline;
-                    cursor: pointer;
-                }
-                .link-like:hover {
-                    color: #ffeb3b; /* Change color on hover to give a visual cue */
-                }
-            </style>
-
             <form id="verification">
                 <div>
                     <input type="text" id="verificationCode" placeholder="Verification Code" required><br>
@@ -207,7 +111,7 @@ class Login extends Phaser.Scene {
                     <input type="password" id="repeatNewPassword" placeholder="Repeat New Password" required><br>
                 </div>
                 <div>
-                    <input type="submit" value="Reset Password" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
+                    <input type="submit" value="Reset Password">
                 </div>
             </form>
             <p style="color:white">Did not get an email? <span class="link-like" id="resendCode">Resend code</span></p>
