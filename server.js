@@ -687,19 +687,42 @@ function filterGrenadesByMultiplayerId(multiplayerId) {
 }
 
 function initFallingObjects(roomId) {
-    let mapSize = 250
-    mapSize = rooms[roomId].maxPlayers * 250
-    let fallingObjects = {}
-    setInterval(() => {
-        const numObjects = Math.floor(Math.random() * (8 - 2) + 2)
-        for (let i = 0; i < numObjects; i++) {
-            let startX = Math.floor(Math.random() * (1980 + mapSize))
-            let startY = -50
-            fallingObjects[i] = {x: startX, y: startY}
-        }
-        io.to(roomId).emit('updateFallingObjects', fallingObjects)
+    let mapSize = rooms[roomId].maxPlayers * 250;
+    let fallingObjects = {};
+    let objectId = 0;
 
-    }, Math.floor(Math.random() * (5000 - 4000) + 4000))
+    // Function to create new falling objects
+    function createFallingObjects() {
+        const numObjects = Math.floor(Math.random() * (8 - 2) + 2);
+        for (let i = 0; i < numObjects; i++) {
+            let startX = Math.floor(Math.random() * (1980 + mapSize));
+            let startY = Math.floor(Math.random() * (-15 + 350)) - 350;
+            fallingObjects[objectId] = { x: startX, y: startY };
+            objectId++;
+        }
+    }
+
+    // Function to update the positions of falling objects
+    function updateFallingObjects() {
+        for (let id in fallingObjects) {
+            if (fallingObjects.hasOwnProperty(id)) {
+                fallingObjects[id].y += 3;
+                if (fallingObjects[id].y >= 1080 + mapSize) {
+                    delete fallingObjects[id];
+                }
+            }
+        }
+        io.to(roomId).emit('updateFallingObjects', fallingObjects);
+    }
+
+    // Create new objects immediately
+    createFallingObjects();
+
+    // Set interval to create new objects at random intervals
+    setInterval(createFallingObjects, Math.floor(Math.random() * (5000 - 4000) + 4000));
+
+    // Set interval to update the positions of falling objects continuously
+    setInterval(updateFallingObjects, 15); // Update at 60 FPS
 }
 
 function startGame(multiplayerId) {

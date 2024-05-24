@@ -29,10 +29,10 @@ class Multiplayer extends Phaser.Scene {
         2: 'explosion'
     }
     playersAffected = {}
+    fallingObjects = []
 
     constructor() {
         super({ key: 'Multiplayer' });
-        this.fallingObjects = [];
     }
 
     init(data) {
@@ -269,17 +269,26 @@ class Multiplayer extends Phaser.Scene {
             }
         });
 
-        // socket.on('updateFallingObjects', (fallingObjects) => {
-        //     console.log('UPDATINA FALLING OBJECTUS')
-        //     for (const i in fallingObjects) {
-        //         const object = this.physics.add.image(
-        //             fallingObjects[i].x,
-        //             fallingObjects[i].y,
-        //             'wall' 
-        //         ).setScale(2);
-        //         this.fallingObjects.push(object);
-        //     }
-        // })
+        socket.on('updateFallingObjects', (fallingObjects) => {
+            for (const i in fallingObjects) {
+                if (this.fallingObjects[i]) {
+                    this.fallingObjects[i].setPosition(fallingObjects[i].x, fallingObjects[i].y);
+                } else {
+                    const object = this.physics.add.image(
+                        fallingObjects[i].x,
+                        fallingObjects[i].y,
+                        'wall' 
+                    ).setScale(2);
+                    this.fallingObjects[i] = object;
+                }
+            }
+            for (const id in this.fallingObjects) {
+                if (!fallingObjects.hasOwnProperty(id)) {
+                    this.fallingObjects[id].destroy();
+                    delete this.fallingObjects[id];
+                }
+            }
+        })
 
     }
 
@@ -439,7 +448,10 @@ class Multiplayer extends Phaser.Scene {
         this.isInGrenade()
         this.onObject();
     }
+
     removeFallingObject(object) {
+        console.log('asd')
+        socket.emit('removeFallingOject', object)
         object.destroy();
         this.fallingObjects = this.fallingObjects.filter(obj => obj !== object);
     }
@@ -700,12 +712,8 @@ class Multiplayer extends Phaser.Scene {
     onObject() {
         if (this.fallingObjects && this.frontendPlayers[socket.id]) {
             this.fallingObjects.forEach(object => {
-                object.y += 2;
-                if (object.y > this.cameras.main.height + this.mapSize) {
-                    this.removeFallingObject(object);
-                } else if (this.physics.overlap(this.frontendPlayers[socket.id], object)) {
+                if (this.physics.overlap(this.frontendPlayers[socket.id], object)) {
                     socket.emit('detect', this.multiplayerId, socket.id)
-
                 }
             });
         }
