@@ -194,8 +194,7 @@ class Multiplayer extends Phaser.Scene {
 
         this.input.keyboard.on('keydown-G', () => {
             if (!this.frontendPlayers[socket.id] || !this.crosshair) return;
-            const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
-            socket.emit('throw', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
+            socket.emit('throw', this.frontendPlayers[socket.id], this.crosshair, this.multiplayerId);
         })
 
         this.cursors = this.input.keyboard.createCursorKeys();

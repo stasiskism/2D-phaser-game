@@ -78,9 +78,12 @@ io.on('connection', (socket) => {
             subject: '2DCS Verification',
             text: `Your verification code is: ${token[socket.id]}`
         }
-        sender.sendMail(mailOptions, (error, info) => {
+        sender.sendMail(mailOptions, async (error, info) => {
             if (error) {
-                console.error('Error sending email:', error);
+                    const client = await sql.connect()
+                    await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error.detail, error])
+                    console.error('Error sending email:', error);
+                    client.release()
             } else {
                 console.log('email sent', info.response)
             }
@@ -91,16 +94,19 @@ io.on('connection', (socket) => {
         const { username, email, password, code } = data;
         if (username === '', email === '', password === '', code === '') {
             socket.emit('registerResponse', { success: false, error: 'Provided blank input' });
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1, )', ['Blank input while registering.'])
             return;
         }
 
         if (username.length > 20 || password.length > 20) {
             socket.emit('registerResponse', { success: false, error: 'Username and password must be 20 characters or less.' });
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Username and password must be 20 characters or less.'])
             return;
         }
 
         if (code !== token[socket.id]) {
-            socket.emit('registerResponse', { success: false, error: 'Verification code is wrong' });
+            socket.emit('registerResponse', { success: false, error: 'Verification code is wrong.' });
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Verification code is wrong.'])
             return;
         }
         try {
@@ -128,7 +134,8 @@ io.on('connection', (socket) => {
             const client = await sql.connect()
             const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
             if (result.rows.length === 0 || activeSessions[username]) {
-                socket.emit('loginResponse', { success: false, error: 'Wrong username or password' });
+                socket.emit('loginResponse', { success: false, error: 'Wrong username or password.' });
+                await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Wrong username or password.'])
             } else {
                 const firstLogin = result.rows[0].first_login
                 if (firstLogin) {
@@ -157,20 +164,23 @@ io.on('connection', (socket) => {
         } catch (error) {
             console.error('Error authenticating user:', error);
             socket.emit('loginResponse', { success: false, error });
+            await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
         }
     });
 
     socket.on('resetPassword', async (data) => {
         const {email, code, newPassword} = data
         if (code !== token[socket.id]) {
-            socket.emit('resetResponse', { success: false, error: 'Verification code is wrong' });
+            socket.emit('resetResponse', { success: false, error: 'Verification code is wrong.' });
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Verification code is wrong.'])
             return;
         }
         try {
             const client = await sql.connect()
             const result = await client.query(`SELECT user_id from user_authentication WHERE email = $1`, [email])
             if (result.rows.length === 0) {
-                socket.emit('resetResponse', { success: false, error: 'Email does not exist' });
+                socket.emit('resetResponse', { success: false, error: 'Email does not exist. Please provide a valid email.' });
+                await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Email does not exist.'])
             } else {
                 const userId = result.rows[0].user_id
                 const pswResult = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [newPassword]);
@@ -181,6 +191,7 @@ io.on('connection', (socket) => {
         } catch (error) {
             console.error('Error reseting password:', error);
             socket.emit('resetResponse', { success: false, error });
+            await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
         }
     });
 
@@ -190,7 +201,6 @@ io.on('connection', (socket) => {
         const mapSize = 250 * maxPlayers
         console.log('Created roomId: ', roomId);
         socket.emit('roomCreated', roomId, mapSize);
-        io.emit('updateRooms', rooms);
     });
 
     socket.on('checkRoom', (roomId) => {
@@ -238,6 +248,7 @@ io.on('connection', (socket) => {
                 io.to(socket.id).emit('availableWeapons', availableWeapons, availableGrenades)
             } catch (error) {
                 console.error('Error getting available weapons and grenades:', error);
+                await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
             }
             io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
         } else {
@@ -285,6 +296,7 @@ io.on('connection', (socket) => {
                         client.release();
                     } catch (error) {
                         console.error('Error in getting weapon details:', error);
+                        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
                     }
                 } else {
                    io.to(roomId).emit('updateCountdown', countdownTime);
@@ -340,16 +352,11 @@ io.on('connection', (socket) => {
                     multiplayerId,
                 }
             } 
-            if (backendPlayers[socket.id].bullets === 0) {
-                if (!weaponDetails[socket.id]) return
-                const reloadTime = weaponDetails[socket.id].reload
-                const bullets = weaponDetails[socket.id].ammo
-            }
 
         }
     })
 
-    socket.on('throw', (frontendPlayer, crosshair, direction, multiplayerId) => {
+    socket.on('throw', (frontendPlayer, crosshair, multiplayerId) => {
         //GRANATA TURI SUSTOTI KUR CROSSHAIRAS, IR TADA SPROGTI
         if (backendPlayers[socket.id] && backendPlayers[socket.id].grenades > 0) {
             grenadeId++
@@ -370,7 +377,6 @@ io.on('connection', (socket) => {
                 y: crosshair.y
             }
 
-            const distance = Math.hypot(crosshair.x - frontendPlayer.x, crosshair.y - frontendPlayer.y)
             backendGrenades[grenadeId] = {
                 x: frontendPlayer.x,
                 y: frontendPlayer.y,
@@ -380,8 +386,6 @@ io.on('connection', (socket) => {
                 target,
                 grenadeId: backendPlayers[socket.id].grenadeId
             }
-
-
         } 
     })
 
@@ -491,13 +495,11 @@ io.on('connection', (socket) => {
                 console.log('Deleting room:', roomId);
                 delete rooms[roomId];
             } else {
-                // Update room players for remaining clients
                 io.to(roomId).emit('updateRoomPlayers', room.players);
             }
-            socket.leave(roomId); // Leave the room
-            delete readyPlayers[socket.id]; // Remove from ready players
-            io.to(roomId).emit('updateRooms', rooms); // Update room list
-            break; // Exit the loop after handling the player's room
+            socket.leave(roomId);
+            delete readyPlayers[socket.id];
+            break;
         }
     }
         delete backendPlayers[socket.id]
@@ -505,7 +507,6 @@ io.on('connection', (socket) => {
         delete grenadeDetails[socket.id]
         delete weaponIds[socket.id]
         delete grenadeIds[socket.id]
-        // Inform other clients that this player has disconnected
         for (const roomId in rooms) {
             io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
         }
@@ -539,13 +540,11 @@ io.on('connection', (socket) => {
                         delete rooms[roomId];
                         delete readyPlayers[roomId]
                     } else {
-                        // Update room players for remaining clients
                         io.to(roomId).emit('updateRoomPlayers', room.players);
                     }
-                    socket.leave(roomId); // Leave the room
-                    delete readyPlayers[socket.id]; // Remove from ready players
-                    io.to(roomId).emit('updateRooms', rooms); // Update room list
-                    break; // Exit the loop after handling the player's room
+                    socket.leave(roomId);
+                    delete readyPlayers[socket.id];
+                    break;
                 }
             }
         }
@@ -566,9 +565,7 @@ io.on('connection', (socket) => {
         const client = await sql.connect()
         await client.query(`UPDATE user_profile SET coins = coins + 10, xp = xp + 20 WHERE user_name = $1`, [username])
         client.release()
-
         delete readyPlayers[multiplayerId];
-    
         delete rooms[multiplayerId];
     })
 
@@ -607,6 +604,7 @@ io.on('connection', (socket) => {
             client.release()
         } catch (error) {
             console.error('Error updating weaponId:', error);
+            await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
         }
     })
 
@@ -621,6 +619,7 @@ io.on('connection', (socket) => {
             client.release()
         } catch (error) {
             console.error('Error updating grenadeId:', error);
+            await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
         }
     })
 
@@ -792,6 +791,7 @@ app.get('/leaderboard', async (req, res) => {
     }
     catch (error) {
         console.error('Error fetching leaderboard data:', error);
+        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
         res.status(500).json({ error: 'Internal server error' });
     }
 })
@@ -876,7 +876,6 @@ setInterval(async () => {
         io.to(roomId).emit('updateProjectiles', projectiles, grenades)
         io.to(roomId).emit('updatePlayers', players)
     }
-    io.emit('updateRooms', rooms)
     for (const roomId in rooms) {
         io.emit('updateRoomPlayers', rooms[roomId].players)
     }
