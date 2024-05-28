@@ -109,57 +109,35 @@ class MainMenu extends Phaser.Scene {
   }
 
   showLogout() {
-    this.logoutPrompt = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Do you really want to logout?', {
-      fontFamily: 'Arial',
-      fontSize: 24,
-      color: '#ffffff',
-      backgroundColor: '#000000',
-      padding: {
-        x: 20,
-        y: 10
-      }
-    }).setOrigin(0.5).setDepth(1);
+    const promptContainer = document.getElementById('prompt-container');
+    promptContainer.style.display = 'block';
 
-    const yesButton = this.add.text(this.cameras.main.centerX - 50, this.cameras.main.centerY + 50, 'Yes', {
-      fontFamily: 'Arial',
-      fontSize: 18,
-      color: '#ffffff',
-      backgroundColor: '#5C6BC0',
-      padding: {
-        x: 10,
-        y: 5
-      }
-    }).setOrigin(0.5).setDepth(2).setInteractive({ useHandCursor: true });
+    const yesButton = document.getElementById('yesButton');
+    const noButton = document.getElementById('noButton');
 
-    const noButton = this.add.text(this.cameras.main.centerX + 50, this.cameras.main.centerY + 50, 'No', {
-      fontFamily: 'Arial',
-      fontSize: 18,
-      color: '#ffffff',
-      backgroundColor: '#5C6BC0',
-      padding: {
-        x: 10,
-        y: 5
-      }
-    }).setOrigin(0.5).setDepth(2).setInteractive({ useHandCursor: true });
+    const handleYesClick = () => {
+        socket.emit('logout');
+        socket.removeAllListeners();
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+        this.scene.start('authenticate');
+        this.scene.stop();
+        promptContainer.style.display = 'none';
+        yesButton.removeEventListener('click', handleYesClick);
+        noButton.removeEventListener('click', handleNoClick);
+    };
 
-    yesButton.on('pointerdown', () => {
-      socket.emit('logout');
-      socket.removeAllListeners();
-      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
-      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
-      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
-      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
-      this.scene.start('authenticate');
-      this.scene.stop();
-      this.logoutPrompt.destroy();
-    });
+    const handleNoClick = () => {
+        promptContainer.style.display = 'none';
+        yesButton.removeEventListener('click', handleYesClick);
+        noButton.removeEventListener('click', handleNoClick);
+    };
 
-    noButton.on('pointerdown', () => {
-      this.logoutPrompt.destroy();
-      yesButton.destroy();
-      noButton.destroy();
-    });
-  }
+    yesButton.addEventListener('click', handleYesClick);
+    noButton.addEventListener('click', handleNoClick);
+}
 
   update() {
     this.updatePlayerMovement()

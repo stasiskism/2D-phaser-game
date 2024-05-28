@@ -165,15 +165,40 @@ class Room extends Phaser.Scene {
         this.exitButton = this.add.sprite(100, 60, 'exit').setScale(0.2)
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
-            socket.emit('leaveRoom', this.roomId)
-            socket.removeAllListeners()
-            this.scene.start('lobby')
-            this.scene.stop()
-            if (this.frontendPlayers[socket.id]) {
-                this.frontendPlayers[socket.id].anims.stop()
-                this.frontendPlayers[socket.id].destroy();
-                delete this.frontendPlayers[socket.id];
-            }
+            const exitPromptContainer = document.getElementById('exit-prompt-container');
+            const exitYesButton = document.getElementById('exitYesButton');
+            const exitNoButton = document.getElementById('exitNoButton');
+
+            const handleExitYes = () => {
+                socket.emit('leaveRoom', this.roomId);
+                socket.removeAllListeners();
+                this.scene.start('lobby');
+                this.scene.stop();
+                if (this.frontendPlayers[socket.id]) {
+                    this.frontendPlayers[socket.id].anims.stop()
+                    this.frontendPlayers[socket.id].destroy();
+                    delete this.frontendPlayers[socket.id];
+                }
+                cleanupEventListeners();
+                hideExitPrompt();
+            };
+        
+            const handleExitNo = () => {
+                cleanupEventListeners();
+                hideExitPrompt();
+            };
+        
+            const cleanupEventListeners = () => {
+                exitYesButton.removeEventListener('click', handleExitYes);
+                exitNoButton.removeEventListener('click', handleExitNo);
+            };
+            const hideExitPrompt = () => {
+                overlay.style.display = 'none';
+                exitPromptContainer.style.display = 'none';
+            };
+            exitPromptContainer.style.display = 'block';
+            exitYesButton.addEventListener('click', handleExitYes);
+            exitNoButton.addEventListener('click', handleExitNo);
         })
 
         this.readyButton = this.add.sprite(1920 / 2, (1080 / 2) - 300, 'ready')
