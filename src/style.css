@@ -1,9 +1,12 @@
-/* General styles for forms */
+html, body {
+    background-color: black;
+    overflow: hidden;
+}
+
 form {
     background-color: rgba(255, 255, 255, 0.5);
     padding: 20px;
     border-radius: 5px;
-    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
     text-align: center;
 }
 
@@ -13,9 +16,7 @@ form input[type="email"] {
     width: 80%;
     padding: 10px;
     margin: 10px auto;
-    border-radius: 5px;
     border: 1px solid #ccc;
-    display: block;
 }
 
 form input[type="submit"] {
@@ -25,6 +26,7 @@ form input[type="submit"] {
     border: none;
     color: white;
     background-color: #5C6BC0;
+    cursor: pointer;
 }
 
 .link-like {
@@ -34,5 +36,5 @@ form input[type="submit"] {
 }
 
 .link-like:hover {
-    color: #ffeb3b; /* Change color on hover to give a visual cue */
+    color: #ffeb3b;
 }

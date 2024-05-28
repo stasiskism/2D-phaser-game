@@ -1,28 +1,16 @@
 <!DOCTYPE html>
 <html lang="en-ca">
-    <head>
-        <meta charset="utf-8">
-        <title>2DCS</title>
-        <link rel="stylesheet" href="style.css">
-        <style>
-            html, body {
-            margin: 0;
-            padding: 0;
-            background-color: black;
-            overflow: hidden;
-        }
-        canvas {
-            display: block; /* Make the canvas fill the entire page */
-        }
-        </style>
-    </head>
+<head>
+    <meta charset="utf-8">
+    <title>2DCS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
-    <div id="phaser-example"></div>
     <script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
-</script>
+    <script>
+        const socket = io();
+    </script>
     <script src="phaser.min.js"></script>
-    <script type="module" src = "main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
