@@ -158,6 +158,22 @@ io.on('connection', (socket) => {
                 activeSessions[username] = socket.id
                 weaponIds[socket.id] = weaponId
                 grenadeIds[socket.id] = grenadeId
+
+                app.get('/get-coins', async (req, res) => {
+                    try {
+                        const result = await client.query(`SELECT coins FROM user_profile WHERE user_name = $1;`, [username])
+                        const data = result.rows[0]
+                        console.log(result.rows);
+                        console.log(playerUsername[socket.id]);
+                        res.json(data)
+                    }
+                    catch (error) {
+                        console.error('Error fetching coins data:', error);
+                        await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
+                        res.status(500).json({ error: 'Internal server error' });
+                    }
+                })
+                
             }
             
             client.release();

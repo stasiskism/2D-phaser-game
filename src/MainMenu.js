@@ -9,6 +9,8 @@ class MainMenu extends Phaser.Scene {
     this.singleplayerObject = null;
     this.multiplayerObject = null;
     this.login = true
+    this.coinsText = null;
+    this.plusButton = null;
   }
 
   preload() {
@@ -16,12 +18,14 @@ class MainMenu extends Phaser.Scene {
     this.load.image('join', 'assets/join.png')
     this.load.image('exit', 'assets/Exit_Button.png')
     this.load.image('enemy', 'assets/enemy.png')
+    this.load.image('plus', 'assets/Plus_Button.png'); // Add an image for the plus button
   }
 
   create() {
     this.fetchLeaderboardData()
     this.setupScene()
     this.setupInputEvents()
+    this.fetchCoins();
   }
 
   setupInputEvents() {
@@ -106,6 +110,12 @@ class MainMenu extends Phaser.Scene {
     this.logoutButton.on('pointerdown', () => {      
       this.showLogout()
     });
+    this.coinsText = this.add.text(1700, 30, 'Coins: 0', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
+
+    this.plusButton.on('pointerdown', () => {
+      this.showCoinPurchaseOptions();
+    });
   }
 
   showLogout() {
@@ -137,6 +147,62 @@ class MainMenu extends Phaser.Scene {
 
     yesButton.addEventListener('click', handleYesClick);
     noButton.addEventListener('click', handleNoClick);
+}
+
+showCoinPurchaseOptions() {
+  // Display purchase options
+  const options = [
+    { label: '100 Coins - $1', amount: 100 },
+    { label: '500 Coins - $4', amount: 500 },
+    { label: '1000 Coins - $7', amount: 1000 },
+  ];
+
+  const centerX = this.cameras.main.width / 2;
+  const centerY = this.cameras.main.height / 2;
+
+  const background = this.add.rectangle(centerX, centerY, 400, 300, 0x000000, 0.8);
+  const text = this.add.text(centerX, centerY - 100, 'Purchase Coins', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' }).setOrigin(0.5);
+
+  options.forEach((option, index) => {
+    const optionText = this.add.text(centerX, centerY - 50 + index * 50, option.label, { fontFamily: 'Arial', fontSize: 18, color: '#ffffff' })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+
+    optionText.on('pointerdown', () => {
+      this.purchaseCoins(option.amount);
+      background.destroy();
+      text.destroy();
+      optionText.destroy();
+    });
+  });
+}
+
+purchaseCoins(amount) {
+  fetch('/purchase-coins', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`Purchased ${amount} coins!`);
+      this.fetchCoins();
+    } else {
+      alert('Purchase failed.');
+    }
+  })
+  .catch(error => console.error('Error purchasing coins:', error));
+}
+
+fetchCoins() {
+  fetch('/get-coins')
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+      this.coinsText.setText(`Coins: ${data.coins}`);
+    })
+    .catch(error => console.error('Error fetching coins:', error));
 }
 
   update() {
