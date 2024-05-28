@@ -864,7 +864,7 @@ setInterval(async () => {
             } else if (backendGrenades[id].grenadeId === 2) {
                 setTimeout(() => {
                     delete backendGrenades[id];
-                }, 2000);
+                }, 400); //2000
             }
         }
     }

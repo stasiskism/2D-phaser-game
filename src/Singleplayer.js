@@ -80,6 +80,7 @@ class Singleplayer extends Phaser.Scene {
 
   this.input.on('pointerdown', pointer => {
       if (pointer.leftButtonDown()) {
+        this.sound.play('ARSound', { volume: 0.5})
         this.fireBullet(pointer)
       }
   });

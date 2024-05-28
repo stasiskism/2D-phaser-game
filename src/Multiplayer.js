@@ -166,7 +166,7 @@ class Multiplayer extends Phaser.Scene {
             this.input.mouse.requestPointerLock();
             if (!this.weaponDetails) return
             const firerate = this.weaponDetails.fire_rate
-            if (pointer.leftButtonDown() && canShoot) {
+            if (pointer.leftButtonDown() && canShoot && this.ammo != 0) {
                 this.startShooting(firerate);
                 canShoot = false;
                 setTimeout(() => {
@@ -295,10 +295,13 @@ class Multiplayer extends Phaser.Scene {
     startShooting(firerate) {
         if (!this.frontendPlayers[socket.id] || !this.crosshair) return;
         this.frontendWeapons[socket.id].anims.play('singleShot', true);
+        this.sound.play(this.weapon[socket.id] + 'Sound', { volume: 0.5})
         const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
         socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
         this.shootingInterval = setInterval(() => {
+            if (this.ammo === 0) return
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
+            this.sound.play(this.weapon[socket.id] + 'Sound', { volume: 0.5})
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
             this.frontendWeapons[socket.id].anims.play('singleShot', true);
         }, firerate); // fire rate based on weapon
@@ -366,7 +369,8 @@ class Multiplayer extends Phaser.Scene {
         this.playerUsername[id].setText(`${backendPlayer.username}`);
         this.playerUsername[id].setOrigin(0.5).setScale(2);
         if (id === socket.id) {
-            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 75).setText(`Ammo: ${backendPlayer.bullets}`).setOrigin(0.5).setScale(2)
+            this.ammo = backendPlayer.bullets
+            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 75).setText(`Ammo: ${this.ammo}`).setOrigin(0.5).setScale(2)
         }
     }
 
@@ -427,11 +431,15 @@ class Multiplayer extends Phaser.Scene {
 
     updateGrenadePosition(id, backendGrenade) {
         const grenade = this.frontendGrenades[id]
+        if (this.frontendGrenades[id].exploded) {
+            return
+        }    
         grenade.x += backendGrenade.velocity.x 
         grenade.y += backendGrenade.velocity.y
         const explosion = this.explosions[backendGrenade.grenadeId]
         if (backendGrenade.velocity.x === 0 && backendGrenade.velocity.y === 0) {
             this.grenadeExplode(grenade.x, grenade.y, id, explosion)
+            this.frontendGrenades[id].exploded = true;
         }
     }
 
@@ -587,7 +595,8 @@ class Multiplayer extends Phaser.Scene {
         if (explosion === 'smoke') {
             const smoke = this.add.sprite(x, y, 'smoke').setScale(14);
             this.frontendSmoke[id] = smoke
-
+            
+           // this.sound.play('smokeSound', {volume: 0.5})
             smoke.play('smokeExplode');
             //removint granatos sprite
             smoke.on('animationcomplete', () => {
@@ -595,6 +604,7 @@ class Multiplayer extends Phaser.Scene {
                 delete this.frontendSmoke[id]
             });
         } else if (explosion === 'explosion') {
+            this.sound.play('grenadeSound', {volume: 1})
             setTimeout(() => {
                 const grenade = this.add.sprite(x - 30, y - 110, 'explosion_1').setScale(7);
                 this.frontendExplosion[id] = grenade;
@@ -603,7 +613,7 @@ class Multiplayer extends Phaser.Scene {
                     grenade.destroy();
                     delete this.frontendExplosion[id];
                 });
-            }, 0); //2000
+            }, 400); //2000
         }
     }
 

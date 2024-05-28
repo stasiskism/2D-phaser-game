@@ -87,6 +87,11 @@ class Scene1 extends Phaser.Scene {
         this.load.image('dead', 'assets/Dead_Screen.png')
         this.load.image('spectateButton', 'assets/Spectate_Button.png')
         this.load.image('Search', 'assets/Search_Button.png')
+        this.load.audio('PistolSound', 'assets/sounds/pistol.mp3')
+        this.load.audio('ARSound', 'assets/sounds/ar.mp3')
+        this.load.audio('SniperSound', 'assets/sounds/sniper.mp3')
+        this.load.audio('ShotgunSound', 'assets/sounds/shotgun.mp3')
+        this.load.audio('grenadeSound', 'assets/sounds/grenade.mp3')
     }
 
     create (data) {
