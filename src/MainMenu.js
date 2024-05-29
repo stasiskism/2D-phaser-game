@@ -1,4 +1,3 @@
-
 class MainMenu extends Phaser.Scene {
   constructor() {
     super({ key: 'mainMenu' });
@@ -8,24 +7,29 @@ class MainMenu extends Phaser.Scene {
     this.popupText = null;
     this.singleplayerObject = null;
     this.multiplayerObject = null;
-    this.login = true
+    this.login = true;
     this.coinsText = null;
     this.plusButton = null;
   }
 
+  init(data) {
+    this.username = data.username
+  }
+
   preload() {
-    this.load.image('create', 'assets/Room_Button.png')
-    this.load.image('join', 'assets/join.png')
-    this.load.image('exit', 'assets/Exit_Button.png')
-    this.load.image('enemy', 'assets/enemy.png')
-    this.load.image('plus', 'assets/Plus_Button.png'); // Add an image for the plus button
+    this.load.image('create', 'assets/Room_Button.png');
+    this.load.image('join', 'assets/join.png');
+    this.load.image('exit', 'assets/Exit_Button.png');
+    this.load.image('enemy', 'assets/enemy.png');
+    this.load.image('plus', 'assets/Plus_Button.png');
   }
 
   create() {
-    this.fetchLeaderboardData()
-    this.setupScene()
-    this.setupInputEvents()
+    this.fetchLeaderboardData();
+    this.setupScene();
+    this.setupInputEvents();
     this.fetchCoins();
+    this.setupPaymentListener();
   }
 
   setupInputEvents() {
@@ -40,42 +44,41 @@ class MainMenu extends Phaser.Scene {
     let centerX = this.cameras.main.width / 2;
     let centerY = this.cameras.main.height / 2;
 
-    const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32});
+    const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32 });
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
     
-    //this.add.text(350, 350, 'Controls:').setScale(1.5)
-    this.add.sprite(430, 430, 'wasd').setScale(0.2)
-    this.add.text(375, 350, 'Movement').setScale(1.5)
+    this.add.sprite(430, 430, 'wasd').setScale(0.2);
+    this.add.text(375, 350, 'Movement').setScale(1.5);
 
-    this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3); // 'WwalkDown2' is the idle frame
+    this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3);
 
-    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
-    this.fullscreenButton.setInteractive({ useHandCursor: true })
+    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1);
+    this.fullscreenButton.setInteractive({ useHandCursor: true });
     this.fullscreenButton.on('pointerdown', () => {
       document.getElementById('phaser-example');
       if (this.scale.isFullscreen) {
-          this.scale.stopFullscreen();
+        this.scale.stopFullscreen();
       } else {
-          this.scale.startFullscreen();
+        this.scale.startFullscreen();
       }
-    })
+    });
 
     this.objects = this.physics.add.staticGroup();
-    this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
-    this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer')
-    this.marketplaceObject = this.objects.create(1290, 653, 'marketplace')
-    this.tutorialObject = this.objects.create(1290, 453, 'tutorial')
+    this.singleplayerObject = this.objects.create(720, 653, 'singleplayer');
+    this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer');
+    this.marketplaceObject = this.objects.create(1290, 653, 'marketplace');
+    this.tutorialObject = this.objects.create(1290, 453, 'tutorial');
 
     this.objects.getChildren().forEach(object => {
       object.setScale(0.2);
     });
 
     const invisibleWalls = [
-      { x: 336, y: 959, width: 1250, height: 10 }, // Wall 1
-      { x: 326, y: 315, width: 10, height: 650 }, // Wall 2
-      { x: 1580, y: 315, width: 10, height: 650 }, // Wall 3
-      { x: 326, y: 315, width: 1250, height: 10 }, // Wall 4
+      { x: 336, y: 959, width: 1250, height: 10 },
+      { x: 326, y: 315, width: 10, height: 650 },
+      { x: 1580, y: 315, width: 10, height: 650 },
+      { x: 326, y: 315, width: 1250, height: 10 },
     ];
 
     invisibleWalls.forEach(wall => {
@@ -85,36 +88,33 @@ class MainMenu extends Phaser.Scene {
       this.physics.add.collider(this.player, invisibleWall);
     });
 
-    // from 576x 872y to 1344x 872y
-
     this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-
     this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
     this.popupText.setVisible(false);
 
     this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
 
     this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
-        <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
-            <div style="margin-bottom: 8px">Leaderboard</div>
-            <div id="playerLabels"></div>
-        </div>
-        `);
+      <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
+        <div style="margin-bottom: 8px">Leaderboard</div>
+        <div id="playerLabels"></div>
+      </div>
+    `);
 
     this.leaderboard.setPosition(100, 100).setScrollFactor(0);
-    this.document = this.leaderboard.node.querySelector(`#playerLabels`)
+    this.document = this.leaderboard.node.querySelector(`#playerLabels`);
 
-    this.logoutButton = this.add.sprite(100, 30, 'quitButton').setDepth(1).setScale(0.2)
+    this.logoutButton = this.add.sprite(100, 30, 'quitButton').setDepth(1).setScale(0.2);
     this.logoutButton.setInteractive({ useHandCursor: true });
-    
-    this.logoutButton.on('pointerdown', () => {      
-      this.showLogout()
+    this.logoutButton.on('pointerdown', () => {
+      this.showLogout();
     });
-    this.coinsText = this.add.text(1700, 30, 'Coins: 0', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
-    this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
 
+    this.coinsText = this.add.text(1700, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
     this.plusButton.on('pointerdown', () => {
-      this.showCoinPurchaseOptions();
+      this.showCoinPurchaseOptions(this.username);
+
     });
   }
 
@@ -149,103 +149,183 @@ class MainMenu extends Phaser.Scene {
     noButton.addEventListener('click', handleNoClick);
 }
 
-showCoinPurchaseOptions() {
-  // Display purchase options
-  const options = [
-    { label: '100 Coins - $1', amount: 100 },
-    { label: '500 Coins - $4', amount: 500 },
-    { label: '1000 Coins - $7', amount: 1000 },
-  ];
 
-  const centerX = this.cameras.main.width / 2;
-  const centerY = this.cameras.main.height / 2;
-
-  const background = this.add.rectangle(centerX, centerY, 400, 300, 0x000000, 0.8);
-  const text = this.add.text(centerX, centerY - 100, 'Purchase Coins', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' }).setOrigin(0.5);
-
-  options.forEach((option, index) => {
-    const optionText = this.add.text(centerX, centerY - 50 + index * 50, option.label, { fontFamily: 'Arial', fontSize: 18, color: '#ffffff' })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-
-    optionText.on('pointerdown', () => {
-      this.purchaseCoins(option.amount);
-      background.destroy();
-      text.destroy();
-      optionText.destroy();
+  setupPaymentListener() {
+    window.addEventListener('payment-success', (event) => {
+      const { username, amount } = event.detail;
+      console.log('usernam', event.detail)
+      this.handlePaymentSuccess(username, amount);
     });
-  });
-}
+  }
 
-purchaseCoins(amount) {
-  fetch('/purchase-coins', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      alert(`Purchased ${amount} coins!`);
-      this.fetchCoins();
-    } else {
-      alert('Purchase failed.');
+  showCoinPurchaseOptions(username) {
+    const options = [
+      { label: '100 Coins - $1', amount: 100 },
+      { label: '500 Coins - $4', amount: 500 },
+      { label: '1000 Coins - $7', amount: 1000 },
+    ];
+
+    const coinPurchaseContainer = document.getElementById('coin-purchase-container');
+    const coinOptions = document.getElementById('coin-options');
+    coinOptions.innerHTML = ''; // Clear previous options
+
+    options.forEach(option => {
+      const optionButton = document.createElement('div');
+      optionButton.className = 'prompt-button';
+      optionButton.textContent = option.label;
+      optionButton.addEventListener('click', async () => {
+        try {
+          const response = await fetch('/create-payment-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: option.amount, username })
+          });
+          const { clientSecret } = await response.json();
+          this.showPaymentForm(clientSecret, option.amount);
+          coinPurchaseContainer.style.display = 'none'; // Hide the prompt after selection
+        } catch (err) {
+          console.error('Error creating payment intent:', err);
+        }
+      });
+      coinOptions.appendChild(optionButton);
+    });
+
+    const coinCancelButton = document.getElementById('coinCancelButton');
+    coinCancelButton.addEventListener('click', () => {
+      coinPurchaseContainer.style.display = 'none';
+    });
+
+    coinPurchaseContainer.style.display = 'block';
+  }
+
+
+  showPaymentForm(clientSecret, amount) {
+    const formHtml = `
+      <div id="payment-form">
+        <form id="payment-element-form">
+          <div id="payment-element"><!-- Stripe.js will insert the Payment Element here --></div>
+          <button id="submit-button">Pay</button>
+          <div id="error-message"></div>
+        </form>
+      </div>
+    `;
+    const paymentForm = this.add.dom(400, 300).createFromHTML(formHtml);
+
+    this.time.delayedCall(100, () => {
+      this.setupStripeElements(clientSecret, amount);
+    });
+  }
+
+  setupStripeElements(clientSecret, amount) {
+    const stripe = Stripe('pk_test_51PJtjWP7nzuSu7T7Q211oUu5LICFrh0QjI6hx4KiOAjZSXXhe0HgNlImYdEdPDAa5OGKG4y8hyR1B0SuiiP3okTP00OOp963M1');
+    const options = {
+      layout: {
+        type: 'accordion',
+        defaultCollapsed: false,
+        radios: false,
+        spacedAccordionItems: true
+      },
+      wallets: {
+        applePay: 'never',
+        googlePay: 'never'
+      }
+    };
+    const appearance = {
+      theme: 'stripe',
+    };
+    const elements = stripe.elements({ clientSecret, appearance });
+    const paymentElement = elements.create('payment', options);
+    paymentElement.mount('#payment-element');
+
+    const form = document.getElementById('payment-element-form');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {},
+        redirect: 'if_required' // Avoids automatic redirect
+      });
+
+      if (error) {
+        document.getElementById('error-message').textContent = error.message;
+      } else {
+        const event = new CustomEvent('payment-success', { detail: { username: this.username, amount } });
+        window.dispatchEvent(event);
+      }
+    });
+  }
+
+  async handlePaymentSuccess(username, amount) {
+    console.log(`Payment successful for user: ${username}`);
+    try {
+      const response = await fetch('/update-coins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, amount })
+      });
+      const data = await response.json();
+      console.log('data', data)
+      if (data.success) {
+        this.coinsText.setText(`Coins: ${data.coins}`);
+      } else {
+        console.error('Failed to update coins.');
+      }
+    } catch (error) {
+      console.error('Error updating coins:', error);
     }
-  })
-  .catch(error => console.error('Error purchasing coins:', error));
-}
+  }
 
-fetchCoins() {
-  fetch('/get-coins')
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
-      this.coinsText.setText(`Coins: ${data.coins}`);
-    })
-    .catch(error => console.error('Error fetching coins:', error));
-}
+  fetchCoins() {
+    fetch(`get-coins?username=${encodeURIComponent(this.username)}`)
+      .then(response => response.json())
+      .then(data => {
+        this.coinsText.setText(`Coins: ${data.coins}`);
+      })
+      .catch(error => console.error('Error fetching coins:', error));
+  }
 
   update() {
-    this.updatePlayerMovement()
+    this.updatePlayerMovement();
   }
 
   updatePlayerMovement() {
     if (!this.player) return;
-    const player = this.player
+    const player = this.player;
     let moving = false;
     let direction = '';
 
     if (this.w.isDown) {
-        moving = true;
-        direction += 'Up';
-        player.y -= 2;
+      moving = true;
+      direction += 'Up';
+      player.y -= 2;
     } else if (this.s.isDown) {
-        moving = true;
-        direction += 'Down';
-        player.y += 2;
+      moving = true;
+      direction += 'Down';
+      player.y += 2;
     }
 
     if (this.a.isDown) {
-        moving = true;
-        direction += 'Left';
-        player.x -= 2;
+      moving = true;
+      direction += 'Left';
+      player.x -= 2;
     } else if (this.d.isDown) {
-        moving = true;
-        direction += 'Right';
-        player.x += 2;
+      moving = true;
+      direction += 'Right';
+      player.x += 2;
     }
 
     if (moving) {
-        if (player && player.anims) {
-            const animationName = `Wwalk${direction}`;
-            player.anims.play(animationName, true);
-        }
+      if (player && player.anims) {
+        const animationName = `Wwalk${direction}`;
+        player.anims.play(animationName, true);
+      }
     } else {
-        if (player && player.anims) {
-          player.anims.play('idle', true);
-        }
+      if (player && player.anims) {
+        player.anims.play('idle', true);
+      }
     }
-}
+  }
 
   interactWithObject(player, object) {
     const distance = Phaser.Math.Distance.Between(player.x, player.y, object.x, object.y);
@@ -256,48 +336,38 @@ fetchCoins() {
         message = 'Press E to start singleplayer';
       } else if (object === this.multiplayerObject) {
         message = 'Press E to start multiplayer';
-      }
-      else if (object === this.tutorialObject) {
+      } else if (object === this.tutorialObject) {
         message = 'Press E to start tutorial';
       }
-
 
       this.popupText.setPosition(object.x - 100, object.y - 50);
       this.popupText.setText(message);
       this.popupText.setVisible(true);
     } else {
-
       this.popupText.setVisible(false);
     }
 
     if (this.eKey.isDown && distance < 50) {
       if (object === this.singleplayerObject) {
-
-        this.scene.start('Singleplayer', {login: this.login});
-        this.scene.stop()
+        this.scene.start('Singleplayer', { login: this.login });
+        this.scene.stop();
       } else if (object === this.multiplayerObject) {
-
         this.scene.start('lobby');
-        this.scene.stop()
+        this.scene.stop();
       } else if (object === this.marketplaceObject) {
-
+        // Handle marketplace object interaction
+      } else if (object === this.tutorialObject) {
+        this.scene.start('tutorial');
+        this.scene.stop();
       }
-        else if (object === this.tutorialObject) {
-          this.scene.start('tutorial')
-          this.scene.stop()
-        }
     }
   }
 
   fetchLeaderboardData() {
-    // Fetch top 10 players from the server
     fetch('/leaderboard')
       .then(response => response.json())
       .then(data => {
-        // Clear existing leaderboard data
         this.document.innerHTML = '';
-
-        // Update leaderboard with fetched data
         data.forEach((player, index) => {
           const playerDiv = document.createElement('div');
           playerDiv.textContent = `${index + 1}. ${player.user_name}: ${player.high_score}`;
@@ -310,8 +380,6 @@ fetchCoins() {
       })
       .catch(error => console.error('Error fetching leaderboard data:', error));
   }
-
-
 }
 
 export default MainMenu;

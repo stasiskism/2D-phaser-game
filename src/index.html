@@ -2,8 +2,10 @@
 <html lang="en-ca">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2DCS</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
     <script src="/socket.io/socket.io.js"></script>
@@ -22,7 +24,9 @@
             </div>
         </div>
     </div>
+
     <div id="overlay" style="display: none;"></div>
+
     <div id="create-room-container" style="display: none;">
         <div class="prompt">
             <div id="private-room-prompt" class="prompt-message">
@@ -41,6 +45,7 @@
             </div>
         </div>
     </div>
+
     <div id="code-room-container" style="display: none;">
         <div class="prompt">
             <div id="code-room-prompt" class="prompt-message">
@@ -51,6 +56,7 @@
             </div>
         </div>
     </div>
+
     <div id="search-room-container" style="display: none;">
         <div class="prompt">
             <div id="search-room-prompt" class="prompt-message">
@@ -59,6 +65,7 @@
             </div>
         </div>
     </div>
+
     <div id="exit-prompt-container" style="display: none;">
         <div class="prompt">
             Do you really want to exit to the main menu?
@@ -68,7 +75,15 @@
             </div>
         </div>
     </div>
-</body>
-</html>
+
+    <div id="coin-purchase-container" style="display: none;">
+        <div class="prompt">
+            <div id="coin-purchase-prompt" class="prompt-message">
+                Purchase Coins
+                <div id="coin-options"></div>
+                <div class="prompt-button" id="coinCancelButton">Cancel</div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

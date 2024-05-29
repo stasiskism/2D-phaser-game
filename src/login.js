@@ -189,11 +189,11 @@ class Login extends Phaser.Scene {
                 console.log(response.success)
                 if (response.firstLogin) {
                     alert('Login successful');
-                    this.scene.start('tutorial')
+                    this.scene.start('tutorial', {username})
                     this.scene.stop()
                 } else {
                     alert('Login successful');
-                    this.scene.start('mainMenu');
+                    this.scene.start('mainMenu', {username});
                     this.scene.stop()
                 }
             } else {
