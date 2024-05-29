@@ -13,6 +13,7 @@ class Tutorial extends Phaser.Scene {
   
     init(data) {
         this.cameras.main.setBackgroundColor('#000000');
+        this.username = data.username
     }
 
     preload() {
@@ -21,7 +22,7 @@ class Tutorial extends Phaser.Scene {
 
     create() {
         this.setupScene();
-        this.setupPopupText('Hello, this is tutorial');
+        this.setupPopupText(`Hello, ${this.username} this is tutorial`);
         this.setupNextText();
         this.setupInputEvents();
     }
@@ -80,7 +81,7 @@ class Tutorial extends Phaser.Scene {
             default:
                 this.setupPopupText('Congratulations! You have completed the tutorial! Good luck and have fun!')
                 setTimeout(() => {
-                    this.scene.start('mainMenu');
+                    this.scene.start('mainMenu', {username: this.username});
                     this.scene.stop()
                 }, 5000);
                 break;

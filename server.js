@@ -63,102 +63,43 @@ const availableWeapons = []
 const availableGrenades = []
 const token = {}
 
-
-app.post('/create-checkout-session', async (req, res) => {
-    const { amount } = req.body;
-    const playerUsername = req.body.username;
-  
-    try {
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: `${amount} Coins`,
-              },
-              unit_amount: amount * 100,
-            },
-            quantity: 1,
-          },
-        ],
-        mode: 'payment',
-        success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/cancel.html`,
-        metadata: {
-          username: playerUsername
-        }
-      });
-  
-      res.json({ id: session.id });
-    } catch (error) {
-      console.error('Error creating Stripe Checkout session:', error);
-      res.status(500).json({ error: 'Failed to create Stripe Checkout session' });
-    }
-  });
-
-app.post('/purchase-coins', async (req, res) => {
-    const { amount, token } = req.body;
-
-    try {
-        const charge = await stripe.charges.create({
-            amount: amount * 100, // Amount in cents
-            currency: 'usd',
-            source: token,
-            description: `Purchase of ${amount} coins`,
-        });
-
-        const client = await sql.connect();
-        await client.query('UPDATE user_profile SET coins = coins + $1 WHERE user_name = $2', [amount, playerUsername[token]]);
-        client.release();
-
-        res.json({ success: true, charge });
-    } catch (error) {
-        console.error('Error purchasing coins:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-const endpointSecret = 'whsec_y8WhYaFALJLRVHhkVVNBstc7as3p6aC5'; // Get it from your Stripe dashboard
-
-app.post('/webhook', express.raw({ type: 'application/json' }), (request, response) => {
-  const sig = request.headers['stripe-signature'];
-
-  let event;
-
+app.post('/create-payment-intent', async (req, res) => {
+  const { amount, username } = req.body;
   try {
-    event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
-  } catch (err) {
-    console.log(`Webhook Error: ${err.message}`);
-    return response.status(400).send(`Webhook Error: ${err.message}`);
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100,
+      currency: 'eur',
+      metadata: { integration_check: 'accept_a_payment', username: username }
+    });
+
+    res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    console.error('Error creating Payment Intent:', error);
+    res.status(500).json({ error: 'Failed to create Payment Intent' });
   }
-
-  // Handle the event
-  switch (event.type) {
-    case 'checkout.session.completed':
-      const session = event.data.object;
-      const username = session.metadata.username;
-      const amount = session.amount_total / 100; // Amount in dollars
-
-      // Update the user's coins in the database
-      sql.query('UPDATE user_profile SET coins = coins + $1 WHERE user_name = $2', [amount, username], (err, res) => {
-        if (err) {
-          console.error('Error updating coins:', err);
-        } else {
-          console.log('Coins updated for user:', username);
-        }
-      });
-      break;
-    // ... handle other event types
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  }
-
-  // Return a response to acknowledge receipt of the event
-  response.json({ received: true });
 });
 
+app.post('/update-coins', async (req, res) => {
+    const { username, amount } = req.body;
+
+    try {
+        const client = await sql.connect();
+        console.log('amount', amount, username)
+        await client.query('UPDATE user_profile SET coins = coins + $1 WHERE user_name = $2', [amount, username]);
+
+        console.log(`Updating ${amount} coins for user ${username}`);
+        
+        const result = await client.query('SELECT coins FROM user_profile WHERE user_name = $1', [username]);
+        const data = result.rows[0];
+        console.log('cia', data)
+
+        res.json({ success: true, coins: data.coins });
+        client.release();
+    } catch (error) {
+        console.error('Error updating coins:', error);
+        res.status(500).json({ success: false, error: 'Failed to update coins' });
+    }
+});
 
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
@@ -255,22 +196,6 @@ io.on('connection', (socket) => {
                 activeSessions[username] = socket.id
                 weaponIds[socket.id] = weaponId
                 grenadeIds[socket.id] = grenadeId
-
-                app.get('/get-coins', async (req, res) => {
-                    try {
-                        const result = await client.query(`SELECT coins FROM user_profile WHERE user_name = $1;`, [username])
-                        const data = result.rows[0]
-                        console.log(result.rows);
-                        console.log(playerUsername[socket.id]);
-                        res.json(data)
-                    }
-                    catch (error) {
-                        console.error('Error fetching coins data:', error);
-                        await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
-                        res.status(500).json({ error: 'Internal server error' });
-                    }
-                })
-
             }
             
             client.release();
@@ -278,6 +203,7 @@ io.on('connection', (socket) => {
             console.error('Error authenticating user:', error);
             socket.emit('loginResponse', { success: false, error });
             await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+            
         }
     });
 
@@ -904,7 +830,26 @@ app.get('/leaderboard', async (req, res) => {
     }
     catch (error) {
         console.error('Error fetching leaderboard data:', error);
-        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error]) //CLIENTAS NEDEFINED
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+
+app.get('/get-coins', async (req, res) => {
+    try {
+        const username = req.query.username
+        const client = await sql.connect()
+        console.log('userNAME', username) //NEUPDATINA USERNAMU IR SOCKETU
+        const result = await client.query(`SELECT coins FROM user_profile WHERE user_name = $1;`, [username])
+        const data = result.rows[0]
+        res.json({coins: data.coins})
+        client.release()
+        
+    }
+    catch (error) {
+        console.error('Error fetching coins data:', error);
+        await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
         res.status(500).json({ error: 'Internal server error' });
     }
 })
