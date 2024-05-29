@@ -18,7 +18,7 @@ class MainMenu extends Phaser.Scene {
     this.load.image('join', 'assets/join.png')
     this.load.image('exit', 'assets/Exit_Button.png')
     this.load.image('enemy', 'assets/enemy.png')
-    this.load.image('plus', 'assets/Plus_Button.png'); // Add an image for the plus button
+    this.load.image('plus', 'assets/Plus_Button.png');
   }
 
   create() {
@@ -85,7 +85,6 @@ class MainMenu extends Phaser.Scene {
       this.physics.add.collider(this.player, invisibleWall);
     });
 
-    // from 576x 872y to 1344x 872y
 
     this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
 
@@ -150,7 +149,6 @@ class MainMenu extends Phaser.Scene {
 }
 
 showCoinPurchaseOptions() {
-  // Display purchase options
   const options = [
     { label: '100 Coins - $1', amount: 100 },
     { label: '500 Coins - $4', amount: 500 },
@@ -168,31 +166,46 @@ showCoinPurchaseOptions() {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
 
-    optionText.on('pointerdown', () => {
-      this.purchaseCoins(option.amount);
-      background.destroy();
-      text.destroy();
-      optionText.destroy();
+    optionText.on('pointerdown', async () => {
+      try {
+        const response = await fetch('/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: option.amount, username: 'Vardas' }) //reikia atsiusti varda
+        });
+        const session = await response.json();
+
+        const stripe = Stripe('pk_test_51PJtjWP7nzuSu7T7Q211oUu5LICFrh0QjI6hx4KiOAjZSXXhe0HgNlImYdEdPDAa5OGKG4y8hyR1B0SuiiP3okTP00OOp963M1');
+        const { error } = await stripe.redirectToCheckout({ sessionId: session.id });
+
+        if (error) {
+          console.error('Error redirecting to Stripe Checkout:', error);
+        }
+      } catch (err) {
+        console.error('Error creating checkout session:', err);
+      }
     });
   });
 }
 
-purchaseCoins(amount) {
-  fetch('/purchase-coins', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount })
-  })
-  .then(response => response.json())
-  .then(data => {
+async purchaseCoins(amount, token) {
+  try {
+    const response = await fetch('/purchase-coins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, token })
+    });
+    const data = await response.json();
     if (data.success) {
       alert(`Purchased ${amount} coins!`);
       this.fetchCoins();
     } else {
       alert('Purchase failed.');
     }
-  })
-  .catch(error => console.error('Error purchasing coins:', error));
+  } catch (error) {
+    console.error('Error purchasing coins:', error);
+    alert('An error occurred. Please try again.');
+  }
 }
 
 fetchCoins() {
