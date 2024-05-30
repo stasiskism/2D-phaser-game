@@ -25,6 +25,7 @@ class Tutorial extends Phaser.Scene {
         this.setupPopupText(`Hello, ${this.username} this is tutorial`);
         this.setupNextText();
         this.setupInputEvents();
+        this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
     }
     
     setupPopupText(text) {

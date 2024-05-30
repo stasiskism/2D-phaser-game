@@ -29,6 +29,7 @@ class Singleplayer extends Phaser.Scene {
     this.intervalID
     this.enemies = []
     this.bullets = []
+    this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
 
   }
 

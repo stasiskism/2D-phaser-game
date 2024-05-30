@@ -38,6 +38,7 @@ class Room extends Phaser.Scene {
             fontSize: '32px',
             fill: '#ffffff'
         }).setOrigin(0.5).setScale(2);
+        this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
     }
 
     setupInputEvents() {

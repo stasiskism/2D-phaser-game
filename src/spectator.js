@@ -30,6 +30,7 @@ class Spectator extends Phaser.Scene {
     create () {
         this.setupScene();
         this.setupInputEvents();
+        this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
     }
 
     setupScene() {
