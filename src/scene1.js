@@ -92,6 +92,7 @@ class Scene1 extends Phaser.Scene {
         this.load.audio('SniperSound', 'assets/sounds/sniper.mp3')
         this.load.audio('ShotgunSound', 'assets/sounds/shotgun.mp3')
         this.load.audio('grenadeSound', 'assets/sounds/grenade.mp3')
+        this.load.image('settingsButton', 'assets/settings_button.png');
     }
 
     create (data) {
