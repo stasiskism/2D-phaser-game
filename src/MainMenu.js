@@ -30,6 +30,7 @@ class MainMenu extends Phaser.Scene {
     this.setupInputEvents();
     this.fetchCoins();
     this.setupPaymentListener();
+    this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
   }
 
   setupInputEvents() {
