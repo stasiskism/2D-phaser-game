@@ -10,6 +10,11 @@ class MainMenu extends Phaser.Scene {
     this.login = true;
     this.coinsText = null;
     this.plusButton = null;
+    this.progressBar = null;
+    this.progressBarBackground = null;
+    this.currentLevelText = null;
+    this.nextLevelText = null;
+    this.percentageText = null;
   }
 
   init(data) {
@@ -30,6 +35,7 @@ class MainMenu extends Phaser.Scene {
     this.setupInputEvents();
     this.fetchInfo();
     this.setupPaymentListener();
+    this.setupProgressBar();
   }
 
   setupInputEvents() {
@@ -111,12 +117,53 @@ class MainMenu extends Phaser.Scene {
     });
 
     this.coinsText = this.add.text(1500, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
-    this.levelText = this.add.text(1500, 50, 'Level: ', {fontFamily: 'Arial', fontSize: 24, color: '#ffffff'})
-    this.xpText = this.add.text(1500, 70, 'Experience: ', {fontFamily: 'Arial', fontSize: 24, color: '#ffffff'}) //GAL GERIAU PRIDETI PROGRESS BARA KOKI
     this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
     this.plusButton.on('pointerdown', () => {
       this.showCoinPurchaseOptions(this.username);
     });
+  }
+
+  setupProgressBar() {
+    this.barWidth = 200;
+    this.barHeight = 20;
+    this.barX = 1500;
+    this.barY = 70;
+
+    this.progressBarBackground = this.add.graphics();
+    this.progressBarBackground.fillStyle(0x000000, 1);
+    this.progressBarBackground.fillRect(this.barX, this.barY, this.barWidth, this.barHeight);
+
+    this.progressBar = this.add.graphics();
+
+    this.currentLevelText = this.add.text(this.barX - 80, this.barY - 2, 'Level ', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    });
+
+    this.nextLevelText = this.add.text(this.barX + this.barWidth + 10, this.barY - 2, 'Level ', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    });
+
+    this.percentageText = this.add.text(this.barX + this.barWidth / 2, this.barY - 2, '0%', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0);
+
+    this.updateProgressBar(0, 1); //default
+  }
+
+  updateProgressBar(percentage, level) {
+    this.progressBar.clear();
+    this.progressBar.fillStyle(0x00ff00, 1);
+    this.progressBar.fillRect(this.barX, this.barY, this.barWidth * percentage, this.barHeight);
+
+    this.currentLevelText.setText(`Level ${level}`);
+    this.nextLevelText.setText(`Level ${level + 1}`);
+    this.percentageText.setText(`${Math.round(percentage * 100)}%`);
   }
 
   showLogout() {
@@ -315,10 +362,11 @@ class MainMenu extends Phaser.Scene {
       .then(response => response.json())
       .then(data => {
         this.coinsText.setText(`Coins: ${data.coins}`);
-        this.levelText.setText(`Level: ${data.level}`)
-        this.xpText.setText(`Experience: ${data.xp}`)
+        
+        const experiencePercentage = data.xp / (data.level * 100);
+        this.updateProgressBar(experiencePercentage, data.level);
       })
-      .catch(error => console.error('Error fetching coins:', error));
+      .catch(error => console.error('Error fetching info:', error));
   }
 
   update() {
