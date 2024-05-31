@@ -253,7 +253,7 @@ class Multiplayer extends Phaser.Scene {
 
         socket.on('updateProjectiles', (backendProjectiles, backendGrenades) => {
             for (const id in backendProjectiles) {
-                if (!this.frontendProjectiles[id]) this.setupProjectile(backendProjectiles[id].playerId, id, backendProjectiles[id]);
+                if (!this.frontendProjectiles[id]) this.setupProjectile(backendProjectiles[id].playerId, id);
                 else this.updateProjectilePosition(id, backendProjectiles[id]);
             }
             for (const id in backendGrenades) {
@@ -392,15 +392,15 @@ class Multiplayer extends Phaser.Scene {
         delete this.frontendPlayers[id];
     }
 
-    setupProjectile(playerId, id, backendProjectile) {
-        const projectile = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet').setScale(2);
-        const direction = Phaser.Math.Angle.Between(
-            this.frontendPlayers[playerId].x,
-            this.frontendPlayers[playerId].y,
-            this.crosshair.x,
-            this.crosshair.y
-        );
-        projectile.setRotation(direction);
+    setupProjectile(playerId, id) {
+        const weapon = this.frontendWeapons[playerId]
+        const angle = weapon.rotation
+        const bulletOffsetX = Math.cos(angle) * 40
+        const bulletOffsetY = Math.sin(angle) * 40
+        const bulletX = weapon.x + bulletOffsetX
+        const bulletY = weapon.y + bulletOffsetY
+        const projectile = this.physics.add.sprite(bulletX, bulletY, 'bullet').setScale(2);
+        projectile.setRotation(angle);
         this.frontendProjectiles[id] = projectile;
     }
 
