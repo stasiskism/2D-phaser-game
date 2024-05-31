@@ -13,7 +13,7 @@ class MainMenu extends Phaser.Scene {
   }
 
   init(data) {
-    this.username = data.username
+    this.username = data.username;
   }
 
   preload() {
@@ -28,7 +28,7 @@ class MainMenu extends Phaser.Scene {
     this.fetchLeaderboardData();
     this.setupScene();
     this.setupInputEvents();
-    this.fetchCoins();
+    this.fetchInfo();
     this.setupPaymentListener();
   }
 
@@ -110,11 +110,12 @@ class MainMenu extends Phaser.Scene {
       this.showLogout();
     });
 
-    this.coinsText = this.add.text(1700, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.coinsText = this.add.text(1500, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.levelText = this.add.text(1500, 50, 'Level: ', {fontFamily: 'Arial', fontSize: 24, color: '#ffffff'})
+    this.xpText = this.add.text(1500, 70, 'Experience: ', {fontFamily: 'Arial', fontSize: 24, color: '#ffffff'}) //GAL GERIAU PRIDETI PROGRESS BARA KOKI
     this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
     this.plusButton.on('pointerdown', () => {
       this.showCoinPurchaseOptions(this.username);
-
     });
   }
 
@@ -126,43 +127,42 @@ class MainMenu extends Phaser.Scene {
     const noButton = document.getElementById('noButton');
 
     const handleYesClick = () => {
-        socket.emit('logout');
-        socket.removeAllListeners();
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
-        this.scene.start('authenticate');
-        this.scene.stop();
-        promptContainer.style.display = 'none';
-        yesButton.removeEventListener('click', handleYesClick);
-        noButton.removeEventListener('click', handleNoClick);
+      socket.emit('logout');
+      socket.removeAllListeners();
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+      this.scene.start('authenticate');
+      this.scene.stop();
+      promptContainer.style.display = 'none';
+      yesButton.removeEventListener('click', handleYesClick);
+      noButton.removeEventListener('click', handleNoClick);
     };
 
     const handleNoClick = () => {
-        promptContainer.style.display = 'none';
-        yesButton.removeEventListener('click', handleYesClick);
-        noButton.removeEventListener('click', handleNoClick);
+      promptContainer.style.display = 'none';
+      yesButton.removeEventListener('click', handleYesClick);
+      noButton.removeEventListener('click', handleNoClick);
     };
 
     yesButton.addEventListener('click', handleYesClick);
     noButton.addEventListener('click', handleNoClick);
-}
-
+  }
 
   setupPaymentListener() {
     window.addEventListener('payment-success', (event) => {
       const { username, amount } = event.detail;
-      console.log('usernam', event.detail)
       this.handlePaymentSuccess(username, amount);
+      this.clearPaymentForm();
     });
   }
 
   showCoinPurchaseOptions(username) {
     const options = [
-      { label: '100 Coins - $1', amount: 100 },
-      { label: '500 Coins - $4', amount: 500 },
-      { label: '1000 Coins - $7', amount: 1000 },
+      { label: '100 Coins - €1', amount: 100, cost: 1 },
+      { label: '500 Coins - €4', amount: 500, cost: 4 },
+      { label: '1000 Coins - €7', amount: 1000, cost: 7 },
     ];
 
     const coinPurchaseContainer = document.getElementById('coin-purchase-container');
@@ -181,7 +181,9 @@ class MainMenu extends Phaser.Scene {
             body: JSON.stringify({ amount: option.amount, username })
           });
           const { clientSecret } = await response.json();
-          this.showPaymentForm(clientSecret, option.amount);
+          const coins = option.amount;
+          const cost = option.cost;
+          this.showPaymentForm(clientSecret, coins, cost);
           coinPurchaseContainer.style.display = 'none'; // Hide the prompt after selection
         } catch (err) {
           console.error('Error creating payment intent:', err);
@@ -198,13 +200,23 @@ class MainMenu extends Phaser.Scene {
     coinPurchaseContainer.style.display = 'block';
   }
 
+  showPaymentForm(clientSecret, coins, cost) {
+    // Clear any previous instances of the payment form
+    const existingForm = document.getElementById('payment-form');
+    if (existingForm) {
+      existingForm.remove();
+    }
 
-  showPaymentForm(clientSecret, amount) {
     const formHtml = `
       <div id="payment-form">
         <form id="payment-element-form">
+          <div id="coin-details" style="margin-bottom: 10px; font-size: 24px;">
+            <div>Coins: ${coins}</div>
+            <div>Cost: €${cost.toFixed(2)}</div>
+          </div>
           <div id="payment-element"><!-- Stripe.js will insert the Payment Element here --></div>
-          <button id="submit-button">Pay</button>
+          <button id="submit-button" class="prompt-button">Pay</button>
+          <button id="cancel-button" class="prompt-button" type="button">Cancel</button>
           <div id="error-message"></div>
         </form>
       </div>
@@ -212,7 +224,12 @@ class MainMenu extends Phaser.Scene {
     const paymentForm = this.add.dom(400, 300).createFromHTML(formHtml);
 
     this.time.delayedCall(100, () => {
-      this.setupStripeElements(clientSecret, amount);
+      this.setupStripeElements(clientSecret, coins);
+    });
+
+    const cancelButton = document.getElementById('cancel-button');
+    cancelButton.addEventListener('click', () => {
+      this.clearPaymentForm();
     });
   }
 
@@ -235,6 +252,13 @@ class MainMenu extends Phaser.Scene {
     };
     const elements = stripe.elements({ clientSecret, appearance });
     const paymentElement = elements.create('payment', options);
+
+    // Clear any child nodes in the payment element container
+    const paymentElementContainer = document.getElementById('payment-element');
+    while (paymentElementContainer.firstChild) {
+      paymentElementContainer.removeChild(paymentElementContainer.firstChild);
+    }
+
     paymentElement.mount('#payment-element');
 
     const form = document.getElementById('payment-element-form');
@@ -265,7 +289,6 @@ class MainMenu extends Phaser.Scene {
         body: JSON.stringify({ username, amount })
       });
       const data = await response.json();
-      console.log('data', data)
       if (data.success) {
         this.coinsText.setText(`Coins: ${data.coins}`);
       } else {
@@ -276,11 +299,24 @@ class MainMenu extends Phaser.Scene {
     }
   }
 
-  fetchCoins() {
-    fetch(`get-coins?username=${encodeURIComponent(this.username)}`)
+  clearPaymentForm() {
+    const paymentForm = document.getElementById('payment-form');
+    if (paymentForm) {
+      paymentForm.style.display = 'none';
+      const paymentElementForm = document.getElementById('payment-element-form');
+      if (paymentElementForm) {
+        paymentElementForm.reset();
+      }
+    }
+  }
+
+  fetchInfo() {
+    fetch(`get-info?username=${encodeURIComponent(this.username)}`)
       .then(response => response.json())
       .then(data => {
         this.coinsText.setText(`Coins: ${data.coins}`);
+        this.levelText.setText(`Level: ${data.level}`)
+        this.xpText.setText(`Experience: ${data.xp}`)
       })
       .catch(error => console.error('Error fetching coins:', error));
   }

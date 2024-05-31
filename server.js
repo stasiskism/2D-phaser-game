@@ -65,9 +65,25 @@ const token = {}
 
 app.post('/create-payment-intent', async (req, res) => {
   const { amount, username } = req.body;
+
+  let cost;
+  switch (amount) {
+    case 100:
+      cost = 100; // 1 EUR
+      break;
+    case 500:
+      cost = 400; // 4 EUR
+      break;
+    case 1000:
+      cost = 700; // 7 EUR
+      break;
+    default:
+      return res.status(400).json({ error: 'Invalid amount of coins' });
+  }
+
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100,
+      amount: cost,
       currency: 'eur',
       metadata: { integration_check: 'accept_a_payment', username: username }
     });
@@ -836,14 +852,14 @@ app.get('/leaderboard', async (req, res) => {
 })
 
 
-app.get('/get-coins', async (req, res) => {
+app.get('/get-info', async (req, res) => {
     try {
         const username = req.query.username
         const client = await sql.connect()
-        console.log('userNAME', username) //NEUPDATINA USERNAMU IR SOCKETU
-        const result = await client.query(`SELECT coins FROM user_profile WHERE user_name = $1;`, [username])
+        const result = await client.query(`SELECT coins, level, xp FROM user_profile WHERE user_name = $1;`, [username])
         const data = result.rows[0]
-        res.json({coins: data.coins})
+
+        res.json({coins: data.coins, level: data.level, xp: data.xp})
         client.release()
         
     }
