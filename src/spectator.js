@@ -1,5 +1,3 @@
-/* global Phaser */
-
 class Spectator extends Phaser.Scene {
     frontendPlayers = {};
     frontendWeapons = {};
@@ -9,25 +7,38 @@ class Spectator extends Phaser.Scene {
     currentPlayerIndex = 0
     playerIds = []
     gameStop = false
+    weapon = {}
+    animationKeys = {
+        1: { name: 'Pistol', start: 0, end: 11 },
+        2: { name: 'Shotgun', start: 0, end: 11 },
+        3: { name: 'AR', start: 0, end: 11 },
+        4: { name: 'Sniper', start: 0, end: 11 },
+    }
+    grenades = {
+        1: 'smokeGrenade',
+        2: 'grenade'
+    }
+    explosions = {
+        1: 'smoke',
+        2: 'explosion'
+    }
+    fallingObjects = []
 
     constructor() {
-        super({ key: 'spectator'});
+        super({ key: 'spectator' });
     }
 
-    init (data) {
+    init(data) {
         this.cameras.main.setBackgroundColor('#000000')
         this.multiplayerId = data.multiplayerId
+        this.mapSize = data.mapSize
     }
 
-    preload () {
-        this.loadImages();
-    }
-
-    loadImages() {
+    preload() {
         this.graphics = this.add.graphics()
     }
 
-    create () {
+    create() {
         this.setupScene();
         this.setupInputEvents();
     }
@@ -46,34 +57,71 @@ class Spectator extends Phaser.Scene {
                 this.scale.stopFullscreen();
             } else {
                 this.scale.startFullscreen();
-
             }
         })
 
-
         this.nextButton = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
         this.nextButton.setPosition(centerX + 320, 1000).setScrollFactor(0)
-        this.nextButton.setInteractive({useHandCursor: true})
+        this.nextButton.setInteractive({ useHandCursor: true })
         this.nextButton.on('pointerdown', () => {
             this.nextPlayer();
         });
 
-
         this.previousButton = this.add.sprite(0, 0, 'previousButton').setScale(0.2)
         this.previousButton.setPosition(centerX - 320, 1000).setScrollFactor(0)
-        this.previousButton.setInteractive({useHandCursor: true})
+        this.previousButton.setInteractive({ useHandCursor: true })
         this.previousButton.on('pointerdown', () => {
             this.previousPlayer();
         });
-        
+
         this.graphics.lineStyle(10, 0xff0000);
-        this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+        this.graphics.strokeRect(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize);
 
         this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) - 400, 'quitButton')
-        this.quitButton.setInteractive({useHandCursor: true}).setScale(0.75).setPosition(centerX, 1000).setScrollFactor(0)
+        this.quitButton.setInteractive({ useHandCursor: true }).setScale(0.75).setPosition(centerX, 1000).setScrollFactor(0)
         this.quitButton.on('pointerdown', () => this.clickQuitButton())
+
+        const smoke = [
+            { key: 'smoke', frame: 1, duration: 200 },
+            { key: 'smoke', frame: 2, duration: 200 },
+            { key: 'smoke', frame: 4, duration: 200 },
+            { key: 'smoke', frame: 8, duration: 500 },
+            { key: 'smoke', frame: 12, duration: 500 },
+            { key: 'smoke', frame: 13, duration: 2000 },
+            { key: 'smoke', frame: 14, duration: 2000 },
+            { key: 'smoke', frame: 15, duration: 2000 },
+            { key: 'smoke', frame: 16, duration: 3000 },
+            { key: 'smoke', frame: 17, duration: 2000 },
+            { key: 'smoke', frame: 18, duration: 1000 },
+            { key: 'smoke', frame: 20, duration: 500 },
+            { key: 'smoke', frame: 22, duration: 500 },
+            { key: 'smoke', frame: 26, duration: 200 },
+            { key: 'smoke', frame: 30, duration: 200 },
+            { key: 'smoke', frame: 31, duration: 200 },
+        ];
+
+        const config = {
+            key: 'smokeExplode',
+            frames: smoke,
+            frameRate: 20,
+            repeat: 0,
+        };
+
+        this.anims.create(config);
+
+        const explosionFrames = [];
+        for (let i = 3; i <= 21; i++) {
+            explosionFrames.push({ key: `explosion_${i}` });
+        }
+
+        this.anims.create({
+            key: 'explosion_anim',
+            frames: explosionFrames,
+            frameRate: 30,
+            repeat: 0, // No repeat
+        });
     }
-    //NELOADINA PROJECTILE IR ANIMACIJU, BORDERIU
+
     setupInputEvents() {
         this.input.on('pointermove', pointer => {
             if (this.input.mouse.locked) {
@@ -81,14 +129,14 @@ class Spectator extends Phaser.Scene {
                 this.crosshair.y += pointer.movementY;
             }
         });
-        
+
         socket.on('playerAnimationUpdate', animData => {
             const { playerId, animation } = animData;
             if (this.frontendPlayers[playerId]) {
                 this.frontendPlayers[playerId].anims.play(animation, true);
             }
         });
-        //AR REIKIA SIUSTI SOCKETA DEL WEAPONO?
+
         socket.on('weaponStateUpdate', wsData => {
             const { playerId, x, y, rotation } = wsData;
             if (this.frontendPlayers[playerId] && this.frontendWeapons[playerId]) {
@@ -98,7 +146,6 @@ class Spectator extends Phaser.Scene {
 
         socket.on('updatePlayers', backendPlayers => {
             const alivePlayers = {}
-            // Update existing players and mark them as alive
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id];
                 if (this.multiplayerId !== backendPlayer.multiplayerId) return
@@ -108,19 +155,17 @@ class Spectator extends Phaser.Scene {
                 } else {
                     this.updatePlayerPosition(playerId, backendPlayer);
                 }
-                // Mark player as alive
                 alivePlayers[id] = true;
             }
 
-            const alivePlayerCount = Object.keys(alivePlayers).length;
-            if (alivePlayerCount === 1) {
-                this.gameStop = true
-                const id = Object.keys(alivePlayers)[0]
-                this.gameWon(backendPlayers[id].username)
-                socket.off('updatePlayers')
-            }
-        
-            // Remove players that are not present in the backend data
+            // const alivePlayerCount = Object.keys(alivePlayers).length;
+            // if (alivePlayerCount === 1) {
+            //     this.gameStop = true
+            //     const id = Object.keys(alivePlayers)[0]
+            //     this.gameWon(backendPlayers[id].username)
+            //     socket.off('updatePlayers')
+            // }
+
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {
                     this.removePlayer(id);
@@ -132,10 +177,9 @@ class Spectator extends Phaser.Scene {
                     this.playerIds.push(playerId);
                 }
             });
-        
         });
 
-        socket.on('updateProjectiles', backendProjectiles => {
+        socket.on('updateProjectiles', (backendProjectiles, backendGrenades) => {
             for (const id in backendProjectiles) {
                 if (!this.frontendProjectiles[id]) {
                     this.setupProjectile(backendProjectiles[id].playerId, id, backendProjectiles[id]);
@@ -144,47 +188,88 @@ class Spectator extends Phaser.Scene {
                     this.updateProjectilePosition(id, backendProjectiles[id]);
                 }
             }
+
+            for (const id in backendGrenades) {
+                if (!this.frontendGrenades[id]) {
+                    this.setupGrenade(backendGrenades[id].playerId, id, backendGrenades[id])
+                }
+                else {
+                    this.updateGrenadePosition(id, backendGrenades[id])
+                }
+            }
+
             for (const id in this.frontendProjectiles) {
                 if (!backendProjectiles[id]) {
                     this.removeProjectile(id);
                 }
             }
+
+            for (const id in this.frontendGrenades) {
+                if (!backendGrenades[id]) {
+                    this.removeGrenade(id)
+                }
+            }
         });
+
+        socket.on('updateFallingObjects', (fallingObjects) => {
+            for (const i in fallingObjects) {
+                if (this.fallingObjects[i]) {
+                    this.fallingObjects[i].setPosition(fallingObjects[i].x, fallingObjects[i].y);
+                } else {
+                    const object = this.physics.add.image(
+                        fallingObjects[i].x,
+                        fallingObjects[i].y,
+                        'wall'
+                    ).setScale(2);
+                    this.fallingObjects[i] = object;
+                }
+            }
+            for (const id in this.fallingObjects) {
+                if (!fallingObjects.hasOwnProperty(id)) {
+                    this.fallingObjects[id].destroy();
+                    delete this.fallingObjects[id];
+                }
+            }
+        })
     }
 
     setupPlayer(id, playerData) {
-        // Cleanup existing player sprites if they exist
         if (this.frontendPlayers[id]) {
             this.frontendPlayers[id].destroy();
             this.frontendWeapons[id].destroy();
-            this.playerHealth[id].destroy();
+            this.playerHealth[id].container.destroy();
             this.playerAmmo[id].destroy()
         }
-        // Setup the player
+
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
-        console.log('kai setupina playeri: ', this.frontendPlayers[id])
-        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x + 80, playerData.y, 'shotgun').setScale(3);
-        this.playerHealth[id] = this.add.text(playerData.x, playerData.y - 30, `Health: ${playerData.health}`, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
-        this.playerAmmo[id] = this.add.text(playerData.x, playerData.y + 30, `Ammo: ${playerData.bullets}`, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
-        // You can add more customization or adjustments here if needed
+        this.weapon[id] = this.animationKeys[playerData.weaponId].name;
+        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x, playerData.y, '' + this.weapon[id]).setScale(2);
+
+        const healthBarWidth = 100;
+        const healthBarHeight = 10;
+        const healthBarBg = this.add.graphics().fillStyle(0xff0000).fillRect(0, 0, healthBarWidth, healthBarHeight);
+        const healthBarFg = this.add.graphics().fillStyle(0x00ff00).fillRect(0, 0, healthBarWidth, healthBarHeight);
+        const healthBarContainer = this.add.container(playerData.x - healthBarWidth / 2, playerData.y + 55, [healthBarBg, healthBarFg]);
+        this.playerHealth[id] = { bg: healthBarBg, fg: healthBarFg, container: healthBarContainer };
+        this.weapon[id] = playerData.weaponId
+        this.playerAmmo[id] = this.add.text(playerData.x, playerData.y + 75, `Ammo: ${playerData.bullets}`, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
     }
 
     updatePlayerPosition(id, backendPlayer) {
-        // Update player position, health, etc.
         this.frontendPlayers[id].x = backendPlayer.x;
         this.frontendPlayers[id].y = backendPlayer.y;
-        this.playerHealth[id].setPosition(backendPlayer.x - 33, backendPlayer.y - 50);
-        this.playerHealth[id].setText(`Health: ${backendPlayer.health}`).setScale(2);
-        this.playerAmmo[id].setPosition(backendPlayer.x - 33, backendPlayer.y + 50)
-        this.playerAmmo[id].setText(`Ammo: ${backendPlayer.bullets}`).setScale(2);
+        this.playerHealth[id].container.setPosition(backendPlayer.x - 50, backendPlayer.y + 55);
+        const healthPercentage = backendPlayer.health / 100;
+        this.playerHealth[id].fg.scaleX = healthPercentage;
+        this.playerAmmo[id].setPosition(backendPlayer.x, backendPlayer.y + 75)
+        this.playerAmmo[id].setText(`Ammo: ${backendPlayer.bullets}`).setOrigin(0.5).setScale(2);
     }
 
     removePlayer(id) {
-        // Remove player and associated data
         if (this.frontendPlayers[id]) {
             this.frontendPlayers[id].destroy();
             this.frontendWeapons[id].destroy();
-            this.playerHealth[id].destroy();
+            this.playerHealth[id].container.destroy();
             this.playerAmmo[id].destroy();
             delete this.frontendPlayers[id];
             delete this.frontendWeapons[id];
@@ -193,40 +278,22 @@ class Spectator extends Phaser.Scene {
         }
     }
 
-    setupProjectile(playerId, id, backendProjectile) {
-        if (!this.frontendPlayers[playerId]) return
-        const projectile = this.physics.add.sprite(backendProjectile.x, backendProjectile.y, 'bullet').setScale(4);
-
-        const direction = Phaser.Math.Angle.Between(
-            this.frontendPlayers[playerId].x,
-            this.frontendPlayers[playerId].y,
-            this.crosshair.x,
-            this.crosshair.y
-        );
-        projectile.setRotation(direction);
+    setupProjectile(playerId, id) {
+        const weapon = this.frontendWeapons[playerId]
+        const angle = weapon.rotation
+        const bulletOffsetX = Math.cos(angle) * 40
+        const bulletOffsetY = Math.sin(angle) * 40
+        const bulletX = weapon.x + bulletOffsetX
+        const bulletY = weapon.y + bulletOffsetY
+        const projectile = this.physics.add.sprite(bulletX, bulletY, 'bullet').setScale(2);
+        projectile.setRotation(angle);
         this.frontendProjectiles[id] = projectile;
-    }
-
-    updateProjectiles(backendProjectiles) {
-        for (const id in backendProjectiles) {
-            const backendProjectile = backendProjectiles[id];
-            if (!this.frontendProjectiles[id]) {
-                this.setupProjectile(backendProjectile.playerId, id, backendProjectile);
-            } else {
-                this.updateProjectilePosition(id, backendProjectile);
-            }
-        }
-        for (const id in this.frontendProjectiles) {
-            if (!backendProjectiles[id]) {
-                this.removeProjectile(id);
-            }
-        }
     }
 
     updateProjectilePosition(id, backendProjectile) {
         const projectile = this.frontendProjectiles[id];
         projectile.x += backendProjectile.velocity.x * 1;
-        projectile.y += backendProjectile.velocity.y * 1; 
+        projectile.y += backendProjectile.velocity.y * 1;
     }
 
     removeProjectile(id) {
@@ -234,18 +301,48 @@ class Spectator extends Phaser.Scene {
         delete this.frontendProjectiles[id];
     }
 
-    update () {
+    setupGrenade(playerId, id, backendGrenade) {
+        const grenadeName = this.grenades[backendGrenade.grenadeId]
+        const grenade = this.physics.add.sprite(backendGrenade.x, backendGrenade.y, '' + grenadeName).setScale(4)
+        const direction = Phaser.Math.Angle.Between(
+            this.frontendPlayers[playerId].x,
+            this.frontendPlayers[playerId].y,
+            this.crosshair.x,
+            this.crosshair.y
+        );
+        grenade.setRotation(direction)
+        this.frontendGrenades[id] = grenade
+    }
+
+    updateGrenadePosition(id, backendGrenade) {
+        const grenade = this.frontendGrenades[id]
+        if (this.frontendGrenades[id].exploded) {
+            return
+        }
+        grenade.x += backendGrenade.velocity.x
+        grenade.y += backendGrenade.velocity.y
+        const explosion = this.explosions[backendGrenade.grenadeId]
+        if (backendGrenade.velocity.x === 0 && backendGrenade.velocity.y === 0) {
+            this.grenadeExplode(grenade.x, grenade.y, id, explosion)
+            this.frontendGrenades[id].exploded = true;
+        }
+    }
+
+    removeGrenade(id) {
+        this.frontendGrenades[id].destroy()
+        delete this.frontendGrenades[id]
+    }
+
+    update() {
         this.updateCameraPosition();
         this.updateCrosshairPosition();
     }
 
     updateCameraPosition() {
-        if (this.playerIds.length === 0) return; // No players to focus on
+        if (this.playerIds.length === 0) return;
 
-        // Get the ID of the current player to focus on
         const playerId = this.playerIds[this.currentPlayerIndex];
-        console.log('camera' , playerId)
-        if (!this.frontendPlayers[playerId]) return; // Player not found
+        if (!this.frontendPlayers[playerId]) return;
 
         const playerX = this.frontendPlayers[playerId].x;
         const playerY = this.frontendPlayers[playerId].y;
@@ -259,20 +356,17 @@ class Spectator extends Phaser.Scene {
 
     nextPlayer() {
         if (this.playerIds.length === 0) return;
-        console.log('next')
         this.currentPlayerIndex++;
         if (this.currentPlayerIndex >= this.playerIds.length) {
-            this.currentPlayerIndex = 0; // Reset index to loop back to the first player
+            this.currentPlayerIndex = 0;
         }
     }
 
     previousPlayer() {
-        if (this.playerIds.length === 0) return; // No players to cycle through
-        console.log('previous')
-        // Decrement the current player index
+        if (this.playerIds.length === 0) return;
         this.currentPlayerIndex--;
         if (this.currentPlayerIndex < 0) {
-            this.currentPlayerIndex = this.playerIds.length - 1; // Loop back to the last player
+            this.currentPlayerIndex = this.playerIds.length - 1;
         }
     }
 
@@ -313,6 +407,32 @@ class Spectator extends Phaser.Scene {
             this.scene.start('lobby');
         });
     }
+
+    grenadeExplode(x, y, id, explosion) {
+        if (explosion === 'smoke') {
+            const smoke = this.add.sprite(x, y, 'smoke').setScale(14);
+            this.frontendSmoke[id] = smoke
+
+            // this.sound.play('smokeSound', {volume: 0.5})
+            smoke.play('smokeExplode');
+            //removint granatos sprite
+            smoke.on('animationcomplete', () => {
+                smoke.destroy();
+                delete this.frontendSmoke[id]
+            });
+        } else if (explosion === 'explosion') {
+            this.sound.play('grenadeSound', { volume: 1 })
+            setTimeout(() => {
+                const grenade = this.add.sprite(x - 30, y - 110, 'explosion_1').setScale(7);
+                this.frontendExplosion[id] = grenade;
+                grenade.play('explosion_anim');
+                grenade.on('animationcomplete', () => {
+                    grenade.destroy();
+                    delete this.frontendExplosion[id];
+                });
+            }, 400); //2000
+        }
+    }
 }
 
-export default Spectator
+export default Spectator;

@@ -214,8 +214,7 @@ class Multiplayer extends Phaser.Scene {
         });
 
         socket.on('updatePlayers', backendPlayers => {
-            const alivePlayers = {}; // To keep track of alive players
-            // Update existing players and mark them as alive
+            const alivePlayers = {};
             for (const id in backendPlayers) {
                 const backendPlayer = backendPlayers[id];
                 if (this.multiplayerId !== backendPlayer.multiplayerId) return
@@ -225,11 +224,9 @@ class Multiplayer extends Phaser.Scene {
                 } else {
                     this.updatePlayerPosition(playerId, backendPlayer);
                 }
-                // Mark player as alive
                 alivePlayers[id] = true;
             }
 
-            // Remove players that are not present in the backend data
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {
                     this.removePlayer(id);
@@ -239,18 +236,30 @@ class Multiplayer extends Phaser.Scene {
 
         socket.on('updateProjectiles', (backendProjectiles, backendGrenades) => {
             for (const id in backendProjectiles) {
-                if (!this.frontendProjectiles[id]) this.setupProjectile(backendProjectiles[id].playerId, id);
-                else this.updateProjectilePosition(id, backendProjectiles[id]);
+                if (!this.frontendProjectiles[id]) {
+                    this.setupProjectile(backendProjectiles[id].playerId, id);
+                }
+                else {
+                    this.updateProjectilePosition(id, backendProjectiles[id]);
+                }
             }
             for (const id in backendGrenades) {
-                if (!this.frontendGrenades[id]) this.setupGrenade(backendGrenades[id].playerId, id, backendGrenades[id])
-                else this.updateGrenadePosition(id, backendGrenades[id])
+                if (!this.frontendGrenades[id]) {
+                    this.setupGrenade(backendGrenades[id].playerId, id, backendGrenades[id])
+                }
+                else {
+                    this.updateGrenadePosition(id, backendGrenades[id])
+                }
             }
             for (const id in this.frontendProjectiles) {
-                if (!backendProjectiles[id]) this.removeProjectile(id);
+                if (!backendProjectiles[id]) {
+                    this.removeProjectile(id);
+                }
             }
             for (const id in this.frontendGrenades) {
-                if (!backendGrenades[id]) this.removeGrenade(id)
+                if (!backendGrenades[id]) {
+                    this.removeGrenade(id)
+                }
             }
         });
 
@@ -322,6 +331,7 @@ class Multiplayer extends Phaser.Scene {
         if (id === socket.id) {
             this.playerAmmo = this.add.text(playerData.x, playerData.y + 750, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             this.weaponDetails = { fire_rate: playerData.firerate, ammo: playerData.bullets, reload: playerData.reload, radius: playerData.radius };
+            this.ammoFixed = playerData.bullets
             this.gunAnimation(this.animationKeys[playerData.weaponId]);
         }
 
@@ -341,7 +351,7 @@ class Multiplayer extends Phaser.Scene {
 
         if (id === socket.id) {
             this.ammo = backendPlayer.bullets;
-            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 75).setText(`Ammo: ${this.ammo}`).setOrigin(0.5).setScale(2);
+            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 75).setText(`Ammo: ${this.ammo}/${this.ammoFixed}`).setOrigin(0.5).setScale(2);
         }
     }
 
@@ -349,7 +359,7 @@ class Multiplayer extends Phaser.Scene {
         if (id === socket.id && !this.gameStop) {
             socket.removeAllListeners()
             this.scene.stop('Multiplayer')
-            this.scene.start('respawn', { multiplayerId: this.multiplayerId, frontendPlayers: this.frontendPlayers, frontendProjectiles: this.frontendProjectiles, frontendWeapons: this.frontendWeapons, playerHealth: this.playerHealth })
+            this.scene.start('respawn', { multiplayerId: this.multiplayerId, mapSize: this.mapSize})
             this.playerAmmo.destroy()
             delete this.weaponDetails
         }
@@ -537,25 +547,25 @@ class Multiplayer extends Phaser.Scene {
         );
 
         winningText.setOrigin(0.5);
-        for (const id in this.frontendPlayers) {
-            this.removePlayer(id);
-        }
-        for (const id in this.frontendGrenades) {
-            this.removeGrenade(id)
-        }
-        for (const id in this.frontendSmoke) {
-            delete this.frontendSmoke[id]
-        }
-        for (const id in this.frontendProjectiles) {
-            this.removeProjectile(id)
-        }
-        for (const id in this.darkOverlay) {
-            delete this.darkOverlay[id]
-        }
 
         socket.emit('gameWon', this.multiplayerId, username)
 
         this.time.delayedCall(5000, () => {
+            for (const id in this.frontendPlayers) {
+                this.removePlayer(id);
+            }
+            for (const id in this.frontendGrenades) {
+                this.removeGrenade(id)
+            }
+            for (const id in this.frontendSmoke) {
+                delete this.frontendSmoke[id]
+            }
+            for (const id in this.frontendProjectiles) {
+                this.removeProjectile(id)
+            }
+            for (const id in this.darkOverlay) {
+                delete this.darkOverlay[id]
+            }
             socket.emit('leaveRoom', this.multiplayerId)
             this.scene.stop()
             this.scene.start('lobby');
