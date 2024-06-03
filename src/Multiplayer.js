@@ -1,5 +1,3 @@
-/* global Phaser, socket */
-
 class Multiplayer extends Phaser.Scene {
     frontendPlayers = {}
     frontendWeapons = {}
@@ -15,10 +13,10 @@ class Multiplayer extends Phaser.Scene {
     empty = false
     gameStop = false
     animationKeys = {
-        1: {name: 'Pistol', start: 0, end: 11},
-        2: {name: 'Shotgun', start: 0, end: 11},
-        3: {name: 'AR', start: 0, end: 11},
-        4: {name: 'Sniper', start: 0, end: 11},
+        1: { name: 'Pistol', start: 0, end: 11 },
+        2: { name: 'Shotgun', start: 0, end: 11 },
+        3: { name: 'AR', start: 0, end: 11 },
+        4: { name: 'Sniper', start: 0, end: 11 },
     }
     grenades = {
         1: 'smokeGrenade',
@@ -53,19 +51,19 @@ class Multiplayer extends Phaser.Scene {
         this.setupInputEvents();
     }
 
-    gunAnimation(weaponId){
+    gunAnimation(weaponId) {
         if (!weaponId) return
         const weapon = weaponId.name
         console.log(weapon)
         const start = weaponId.start
         const end = weaponId.end
-        
+
         //weapon yra ginklo pavadinimas, weapon ateina is 320eilutes, 319 eilutej gali pakeist weapono pavadinima ir testuot
         // kad paimt framus
         this.animationKeys
         this.anims.create({
             key: 'singleShot',
-            frames: this.anims.generateFrameNumbers('shoot' + weapon, { start, end}),
+            frames: this.anims.generateFrameNumbers('shoot' + weapon, { start, end }),
             frameRate: 20,
             repeat: 0 // Play once
         });
@@ -86,7 +84,7 @@ class Multiplayer extends Phaser.Scene {
             repeat: 0 // Play once
         });
     }
-    
+
     setupScene() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
@@ -101,7 +99,6 @@ class Multiplayer extends Phaser.Scene {
                 this.scale.stopFullscreen();
             } else {
                 this.scale.startFullscreen();
-
             }
         })
         this.graphics.lineStyle(10, 0xff0000);
@@ -120,7 +117,7 @@ class Multiplayer extends Phaser.Scene {
             { key: 'smoke', frame: 17, duration: 2000 },
             { key: 'smoke', frame: 18, duration: 1000 },
             { key: 'smoke', frame: 20, duration: 500 },
-            { key: 'smoke', frame: 22, duration: 500 }, 
+            { key: 'smoke', frame: 22, duration: 500 },
             { key: 'smoke', frame: 26, duration: 200 },
             { key: 'smoke', frame: 30, duration: 200 },
             { key: 'smoke', frame: 31, duration: 200 },
@@ -137,7 +134,7 @@ class Multiplayer extends Phaser.Scene {
 
         const explosionFrames = [];
         for (let i = 3; i <= 21; i++) {
-            explosionFrames.push({ key: `explosion_${i}`});
+            explosionFrames.push({ key: `explosion_${i}` });
         }
 
         this.anims.create({
@@ -148,7 +145,6 @@ class Multiplayer extends Phaser.Scene {
         });
 
     }
-
 
     setupInputEvents() {
 
@@ -171,7 +167,7 @@ class Multiplayer extends Phaser.Scene {
                 canShoot = false;
                 setTimeout(() => {
                     canShoot = true;
-                }, firerate); 
+                }, firerate);
             }
         });
 
@@ -203,14 +199,13 @@ class Multiplayer extends Phaser.Scene {
         this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
-        //AR REIKIA SIUSTI SOCKETA DEL ANIMACIJU?
         socket.on('playerAnimationUpdate', animData => {
             const { playerId, animation } = animData;
             if (this.frontendPlayers[playerId]) {
                 this.frontendPlayers[playerId].anims.play(animation, true);
             }
         });
-        //AR REIKIA SIUSTI SOCKETA DEL WEAPONO?
+
         socket.on('weaponStateUpdate', wsData => {
             const { playerId, x, y, rotation } = wsData;
             if (this.frontendPlayers[playerId] && this.frontendWeapons[playerId]) {
@@ -234,21 +229,12 @@ class Multiplayer extends Phaser.Scene {
                 alivePlayers[id] = true;
             }
 
-            // const alivePlayerCount = Object.keys(alivePlayers).length;
-            // if (alivePlayerCount === 1) {
-            //     this.gameStop = true
-            //     const id = Object.keys(alivePlayers)[0]
-            //     this.gameWon(backendPlayers[id].username)
-            //     socket.off('updatePlayers')
-            // }
-        
             // Remove players that are not present in the backend data
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {
                     this.removePlayer(id);
                 }
             }
-        
         });
 
         socket.on('updateProjectiles', (backendProjectiles, backendGrenades) => {
@@ -276,7 +262,7 @@ class Multiplayer extends Phaser.Scene {
                     const object = this.physics.add.image(
                         fallingObjects[i].x,
                         fallingObjects[i].y,
-                        'wall' 
+                        'wall'
                     ).setScale(2);
                     this.fallingObjects[i] = object;
                 }
@@ -294,13 +280,13 @@ class Multiplayer extends Phaser.Scene {
     startShooting(firerate) {
         if (!this.frontendPlayers[socket.id] || !this.crosshair) return;
         this.frontendWeapons[socket.id].anims.play('singleShot', true);
-        this.sound.play(this.weapon[socket.id] + 'Sound', { volume: 0.5})
+        this.sound.play(this.weapon[socket.id] + 'Sound', { volume: 0.5 })
         const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
         socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
         this.shootingInterval = setInterval(() => {
             if (this.ammo === 0) return
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
-            this.sound.play(this.weapon[socket.id] + 'Sound', { volume: 0.5})
+            this.sound.play(this.weapon[socket.id] + 'Sound', { volume: 0.5 })
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
             this.frontendWeapons[socket.id].anims.play('singleShot', true);
         }, firerate); // fire rate based on weapon
@@ -311,65 +297,51 @@ class Multiplayer extends Phaser.Scene {
         clearInterval(this.shootingInterval)
     }
 
-
     setupPlayer(id, playerData) {
         // Cleanup existing player sprites if they exist
         if (this.frontendPlayers[id]) {
             this.frontendPlayers[id].destroy();
             this.frontendWeapons[id].destroy();
-            this.playerHealth[id].destroy();
-            this.playerUsername[id].destroy()
-            this.weaponDetails.destroy()
+            this.playerHealth[id].container.destroy();
+            this.playerUsername[id].destroy();
             if (id === socket.id) {
-                this.playerAmmo.destroy()
+                this.playerAmmo.destroy();
             }
         }
 
-        // Setup the player
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(5);
-        this.playerHealth[id] = this.add.text(playerData.x, playerData.y + 55, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
         this.playerUsername[id] = this.add.text(playerData.x, playerData.y - 50, playerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
+
+        const healthBarWidth = 100;
+        const healthBarHeight = 10;
+        const healthBarBg = this.add.graphics().fillStyle(0xff0000).fillRect(0, 0, healthBarWidth, healthBarHeight);
+        const healthBarFg = this.add.graphics().fillStyle(0x00ff00).fillRect(0, 0, healthBarWidth, healthBarHeight);
+        const healthBarContainer = this.add.container(playerData.x - healthBarWidth / 2, playerData.y + 55, [healthBarBg, healthBarFg]);
+        this.playerHealth[id] = { bg: healthBarBg, fg: healthBarFg, container: healthBarContainer };
+
         if (id === socket.id) {
             this.playerAmmo = this.add.text(playerData.x, playerData.y + 750, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
-            this.weaponDetails = {fire_rate: playerData.firerate, ammo: playerData.bullets, reload: playerData.reload, radius: playerData.radius}
+            this.weaponDetails = { fire_rate: playerData.firerate, ammo: playerData.bullets, reload: playerData.reload, radius: playerData.radius };
             this.gunAnimation(this.animationKeys[playerData.weaponId]);
         }
-        this.weapon[id] = this.animationKeys[playerData.weaponId].name
-        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x, playerData.y, '' + this.weapon[id]).setScale(2);
 
-        // Setup other players
-        for (const playerId in this.frontendPlayers) {
-            if (playerId !== id) {
-                const otherPlayerData = this.frontendPlayers[playerId];
-                const weapon = this.weapon[playerId]
-                // Cleanup existing player sprites if they exist
-                if (this.frontendPlayers[playerId]) {
-                    this.frontendPlayers[playerId].destroy();
-                    this.frontendWeapons[playerId].destroy();
-                    this.playerHealth[playerId].destroy()
-                    this.playerUsername[playerId].destroy()
-                }
-                // Create frontend sprites for other players
-                this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(5);
-                this.frontendWeapons[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, '' + weapon).setScale(2);
-                this.playerHealth[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 30, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
-                this.playerUsername[playerId] = this.add.text(otherPlayerData.x, otherPlayerData.y - 50, otherPlayerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
-            }
-        }
+        this.weapon[id] = this.animationKeys[playerData.weaponId].name;
+        this.frontendWeapons[id] = this.physics.add.sprite(playerData.x, playerData.y, '' + this.weapon[id]).setScale(2);
     }
 
     updatePlayerPosition(id, backendPlayer) {
         this.frontendPlayers[id].x = backendPlayer.x;
         this.frontendPlayers[id].y = backendPlayer.y;
-        this.playerHealth[id].setPosition(backendPlayer.x, backendPlayer.y + 55)
-        this.playerHealth[id].setText(`Health: ${backendPlayer.health}`);
-        this.playerHealth[id].setOrigin(0.5).setScale(2);
-        this.playerUsername[id].setPosition(backendPlayer.x, backendPlayer.y - 50)
+        this.playerHealth[id].container.setPosition(backendPlayer.x - 50, backendPlayer.y + 55);
+        const healthPercentage = backendPlayer.health / 100;
+        this.playerHealth[id].fg.scaleX = healthPercentage;
+        this.playerUsername[id].setPosition(backendPlayer.x, backendPlayer.y - 50);
         this.playerUsername[id].setText(`${backendPlayer.username}`);
         this.playerUsername[id].setOrigin(0.5).setScale(2);
+
         if (id === socket.id) {
-            this.ammo = backendPlayer.bullets
-            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 75).setText(`Ammo: ${this.ammo}`).setOrigin(0.5).setScale(2)
+            this.ammo = backendPlayer.bullets;
+            this.playerAmmo.setPosition(backendPlayer.x, backendPlayer.y + 75).setText(`Ammo: ${this.ammo}`).setOrigin(0.5).setScale(2);
         }
     }
 
@@ -377,18 +349,18 @@ class Multiplayer extends Phaser.Scene {
         if (id === socket.id && !this.gameStop) {
             socket.removeAllListeners()
             this.scene.stop('Multiplayer')
-            this.scene.start('respawn', {multiplayerId: this.multiplayerId, frontendPlayers: this.frontendPlayers, frontendProjectiles: this.frontendProjectiles, frontendWeapons: this.frontendWeapons, playerHealt: this.playerHealth})
+            this.scene.start('respawn', { multiplayerId: this.multiplayerId, frontendPlayers: this.frontendPlayers, frontendProjectiles: this.frontendProjectiles, frontendWeapons: this.frontendWeapons, playerHealth: this.playerHealth })
             this.playerAmmo.destroy()
             delete this.weaponDetails
         }
-        if (id === socket.id ) {
+        if (id === socket.id) {
             this.playerAmmo.destroy()
         }
         this.frontendPlayers[id].anims.stop()
         this.frontendPlayers[id].destroy();
         this.frontendWeapons[id].destroy();
-        this.playerHealth[id].destroy()
-        this.playerUsername[id].destroy()
+        this.playerHealth[id].container.destroy();
+        this.playerUsername[id].destroy();
         delete this.frontendPlayers[id];
     }
 
@@ -432,8 +404,8 @@ class Multiplayer extends Phaser.Scene {
         const grenade = this.frontendGrenades[id]
         if (this.frontendGrenades[id].exploded) {
             return
-        }    
-        grenade.x += backendGrenade.velocity.x 
+        }
+        grenade.x += backendGrenade.velocity.x
         grenade.y += backendGrenade.velocity.y
         const explosion = this.explosions[backendGrenade.grenadeId]
         if (backendGrenade.velocity.x === 0 && backendGrenade.velocity.y === 0) {
@@ -542,7 +514,7 @@ class Multiplayer extends Phaser.Scene {
         const player = this.frontendPlayers[socket.id];
         this.crosshair.body.velocity.x = player.body.velocity.x;
         this.crosshair.body.velocity.y = player.body.velocity.y;
-        this.constrainReticle(this.crosshair, crosshairRadius); 
+        this.constrainReticle(this.crosshair, crosshairRadius);
     }
 
     constrainReticle(reticle, radius) {
@@ -594,8 +566,8 @@ class Multiplayer extends Phaser.Scene {
         if (explosion === 'smoke') {
             const smoke = this.add.sprite(x, y, 'smoke').setScale(14);
             this.frontendSmoke[id] = smoke
-            
-           // this.sound.play('smokeSound', {volume: 0.5})
+
+            // this.sound.play('smokeSound', {volume: 0.5})
             smoke.play('smokeExplode');
             //removint granatos sprite
             smoke.on('animationcomplete', () => {
@@ -603,7 +575,7 @@ class Multiplayer extends Phaser.Scene {
                 delete this.frontendSmoke[id]
             });
         } else if (explosion === 'explosion') {
-            this.sound.play('grenadeSound', {volume: 1})
+            this.sound.play('grenadeSound', { volume: 1 })
             setTimeout(() => {
                 const grenade = this.add.sprite(x - 30, y - 110, 'explosion_1').setScale(7);
                 this.frontendExplosion[id] = grenade;
@@ -621,7 +593,7 @@ class Multiplayer extends Phaser.Scene {
             const smoke = this.frontendSmoke[smokeId];
             if (!smoke) continue;
             const smokeBounds = smoke.getBounds();
-    
+
             // Check intersection with each side of the smoke bounding box
             if (Phaser.Geom.Intersects.LineToRectangle(new Phaser.Geom.Line(x1, y1, x2, y2), smokeBounds)) {
                 return true;
@@ -644,8 +616,7 @@ class Multiplayer extends Phaser.Scene {
 
     isInSmoke() {
         const players = Object.keys(this.frontendPlayers);
-    
-        // Initialize visibility state object
+
         const visibilityState = {};
         players.forEach(playerId => {
             visibilityState[playerId] = {};
@@ -653,21 +624,17 @@ class Multiplayer extends Phaser.Scene {
                 visibilityState[playerId][otherPlayerId] = true;
             });
         });
-    
-        // Iterate through all pairs of players
+
         for (let i = 0; i < players.length; i++) {
             for (let j = i + 1; j < players.length; j++) {
                 const player1 = this.frontendPlayers[players[i]];
                 const player2 = this.frontendPlayers[players[j]];
-    
-                // Skip if either player is undefined
+
                 if (!player1 || !player2) continue;
-    
-                // Check if either player is inside a smoke area
+
                 const player1InSmoke = this.isPlayerInSmoke(player1);
                 const player2InSmoke = this.isPlayerInSmoke(player2);
-    
-                // If either player is inside smoke or the line between them is blocked by smoke, they are not visible to each other
+
                 if (player1InSmoke || player2InSmoke || this.isLineBlockedBySmoke(player1.x, player1.y, player2.x, player2.y)) {
                     visibilityState[players[i]][players[j]] = false;
                     visibilityState[players[j]][players[i]] = false;
@@ -677,15 +644,13 @@ class Multiplayer extends Phaser.Scene {
                 }
             }
         }
-    
-        // Update player visibility based on the updated visibility state
-        const currentPlayerId = socket.id; // Assuming you have a function to get the current player's ID
+
+        const currentPlayerId = socket.id;
         players.forEach(playerId => {
             const currentPlayer = this.frontendPlayers[playerId];
             const isVisible = visibilityState[currentPlayerId][playerId];
             currentPlayer.setVisible(isVisible);
-            // Update visibility of other elements like health bars, usernames, weapons, etc.
-            this.playerHealth[playerId].setVisible(isVisible);
+            this.playerHealth[playerId].container.setVisible(isVisible);
             this.playerUsername[playerId].setVisible(isVisible);
             this.frontendWeapons[playerId].setVisible(isVisible);
         });
@@ -699,15 +664,15 @@ class Multiplayer extends Phaser.Scene {
                 const explosion = this.frontendExplosion[grenadeId]
                 if (!explosion) continue
                 const smallerBounds = new Phaser.Geom.Rectangle(
-                    explosion.x - 90, 
-                    explosion.y,  
-                    100 * 2,  
+                    explosion.x - 90,
+                    explosion.y,
+                    100 * 2,
                     100 * 2
                 )
                 if (Phaser.Geom.Intersects.RectangleToRectangle(player.getBounds(), smallerBounds)
                     && (!this.playersAffected[grenadeId] || !this.playersAffected[grenadeId][id])) {
                     console.log('granatoj')
-                    socket.emit('explode', {playerId: id, grenadeId})
+                    socket.emit('explode', { playerId: id, grenadeId })
                     if (!this.playersAffected[grenadeId]) {
                         this.playersAffected[grenadeId] = {};
                     }

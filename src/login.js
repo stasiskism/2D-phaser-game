@@ -37,7 +37,6 @@ class Login extends Phaser.Scene {
         register.addEventListener('click', this.loadRegister.bind(this));
 
         const loginForm = login.getChildByID('login')
-        //REIKIA PACHEKINT AR YRA TOKS USERNAME SU PASSWORDU DATABASE. JEI TAIP - PALEIDZIA I MULTIPLAYERI.
         loginForm.addEventListener('submit', (event) => {
             event.preventDefault()
 

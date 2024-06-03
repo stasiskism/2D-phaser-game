@@ -22,11 +22,6 @@ class MainMenu extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('create', 'assets/Room_Button.png');
-    this.load.image('join', 'assets/join.png');
-    this.load.image('exit', 'assets/Exit_Button.png');
-    this.load.image('enemy', 'assets/enemy.png');
-    this.load.image('plus', 'assets/Plus_Button.png');
   }
 
   create() {
@@ -47,8 +42,8 @@ class MainMenu extends Phaser.Scene {
   }
 
   setupScene() {
-    let centerX = this.cameras.main.width / 2;
-    let centerY = this.cameras.main.height / 2;
+    this.centerX = this.cameras.main.width / 2;
+    this.centerY = this.cameras.main.height / 2;
 
     const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32 });
     const tileset = map.addTilesetImage("asd", "tiles");
@@ -101,8 +96,8 @@ class MainMenu extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
 
     this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
-      <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
-        <div style="margin-bottom: 8px">Leaderboard</div>
+      <div id="displayLeaderboard">
+        <div>Leaderboard</div>
         <div id="playerLabels"></div>
       </div>
     `);
@@ -261,7 +256,7 @@ class MainMenu extends Phaser.Scene {
             <div>Coins: ${coins}</div>
             <div>Cost: €${cost.toFixed(2)}</div>
           </div>
-          <div id="payment-element"><!-- Stripe.js will insert the Payment Element here --></div>
+          <div id="payment-element"></div>
           <button id="submit-button" class="prompt-button">Pay</button>
           <button id="cancel-button" class="prompt-button" type="button">Cancel</button>
           <div id="error-message"></div>

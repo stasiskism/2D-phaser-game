@@ -5,7 +5,7 @@ class Scene1 extends Phaser.Scene {
         super({ key: 'scene1'});
     }
 
-    init (data) {
+    init () {
         this.cameras.main.setBackgroundColor('#ffffff')
     }
 
@@ -92,9 +92,12 @@ class Scene1 extends Phaser.Scene {
         this.load.audio('SniperSound', 'assets/sounds/sniper.mp3')
         this.load.audio('ShotgunSound', 'assets/sounds/shotgun.mp3')
         this.load.audio('grenadeSound', 'assets/sounds/grenade.mp3')
+        this.load.image('create', 'assets/Room_Button.png');
+        this.load.image('exit', 'assets/Exit_Button.png');
+        this.load.image('plus', 'assets/Plus_Button.png');
     }
 
-    create (data) {
+    create () {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
 
@@ -123,15 +126,15 @@ class Scene1 extends Phaser.Scene {
       }));
 
       this.anims.create({
-        key: 'enemiess', // Animation key
+        key: 'enemiess',
         frames: this.anims.generateFrameNumbers('enemiess', { start: 0, end: 7 /* total number of frames - 1 */ }),
-        frameRate: 30 /* frame rate */,
-        repeat: -1 // Repeat indefinitely
+        frameRate: 30,
+        repeat: -1
     });
 
       }
 
-    update (time, delta) {
+    update (time) {
         if (time > 1000){
             this.scene.stop()
             this.scene.start('authenticate')
