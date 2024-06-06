@@ -32,7 +32,7 @@ const sender = nodemailer.createTransport({
     port: 587,
     auth: {
         user: '2dcspbl@gmail.com',
-        pass: 'pakx kcqr lbmk jrrf'
+        pass: 'mawx rgdf puqs kkmd'
     }
 });
 
@@ -135,7 +135,7 @@ io.on('connection', (socket) => {
         sender.sendMail(mailOptions, async (error, info) => {
             if (error) {
                     const client = await sql.connect()
-                    await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error.detail, error])
+                    await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
                     console.error('Error sending email:', error);
                     client.release()
             } else {
@@ -698,6 +698,11 @@ io.on('connection', (socket) => {
         }
     })
 
+    socket.on('gunAnimation', (data) => {
+        const {multiplayerId, playerId, animation, weapon} = data
+        io.to(multiplayerId).emit('updateGunAnimation', playerId, animation, weapon)
+    })
+
 });
 
 function calculateReadyPlayers(readyPlayers) {
@@ -845,8 +850,10 @@ app.get('/leaderboard', async (req, res) => {
         res.json(data)
     }
     catch (error) {
+        const client = await sql.connect()
         console.error('Error fetching leaderboard data:', error);
-        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error]) //CLIENTAS NEDEFINED
+        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+        client.release()
         res.status(500).json({ error: 'Internal server error' });
     }
 })
@@ -864,8 +871,10 @@ app.get('/get-info', async (req, res) => {
         
     }
     catch (error) {
+        const client = await sql.connect()
         console.error('Error fetching coins data:', error);
         await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
+        client.release()
         res.status(500).json({ error: 'Internal server error' });
     }
 })

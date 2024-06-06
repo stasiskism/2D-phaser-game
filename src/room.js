@@ -55,9 +55,6 @@ class Room extends Phaser.Scene {
             this.scene.stop()
         })
 
-
-        //NEGAUNU BACKENDPLAYERIU, GALIMAI NES REIKIA SERVER SIDE UPDATINT PLAAYERIUS ROOME
-        //PASTOVIAI NAUJINA NES YRA BACKENDE PLAYERIS
         socket.on('updateRoomPlayers', roomPlayers => {
             for (const playerIndex in roomPlayers) {
                 const playerData = roomPlayers[playerIndex];
@@ -84,7 +81,6 @@ class Room extends Phaser.Scene {
         });
 
         socket.on('countdownEnd', () => {
-            //REIKIA PALEIST MULTIPLAYERI TIK SU PLAYERIAIS ESANCIAIS SITAM ROOM
             this.scene.start('Multiplayer', {multiplayerId: this.roomId, mapSize: this.mapSize})
             this.scene.stop()
             
@@ -162,7 +158,7 @@ class Room extends Phaser.Scene {
             }
         })
 
-        this.exitButton = this.add.sprite(100, 60, 'exit').setScale(0.2)
+        this.exitButton = this.add.sprite(150, 80, 'exit').setScale(0.4)
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
             const exitPromptContainer = document.getElementById('exit-prompt-container');
@@ -213,42 +209,21 @@ class Room extends Phaser.Scene {
 
         this.readyPlayersText = this.add.text((1920 / 2), (1080 / 2) - 400, `READY PLAYERS: 0`, {fontFamily: 'Berlin Sans FB Demi', fontSize: '32px', fill: '#ffffff' }).setOrigin(0.5).setScale(2);
 
-        // this.objects = this.physics.add.staticGroup();
-        // this.singleplayerObject = this.objects.create(720, 653, 'singleplayer')
-        // this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer')
-        // this.marketplaceObject = this.objects.create(1290, 653, 'marketplace')
-        // this.tutorialObject = this.objects.create(1290, 453, 'tutorial')
+        if (this.frontendPlayers[socket.id]) {
+            const invisibleWalls = [
+                { x: 336, y: 959, width: 1250, height: 10 }, // Wall 1
+                { x: 326, y: 315, width: 10, height: 650 }, // Wall 2
+                { x: 1580, y: 315, width: 10, height: 650 }, // Wall 3
+                { x: 326, y: 315, width: 1250, height: 10 }, // Wall 4
+            ];
 
-        // this.objects.getChildren().forEach(object => {
-        //     object.setScale(0.2);
-        // });
+            invisibleWalls.forEach(wall => {
+                const invisibleWall = this.physics.add.sprite(wall.x + wall.width / 2, wall.y + wall.height / 2, 'invisible-wall').setVisible(false).setSize(wall.width, wall.height);
+                this.physics.add.collider(this.frontendPlayers[socket.id], invisibleWall);
+            });
+        }
 
-        // const invisibleWalls = [
-        //     { x: 336, y: 959, width: 1250, height: 10 }, // Wall 1
-        //     { x: 326, y: 315, width: 10, height: 650 }, // Wall 2
-        //     { x: 1580, y: 315, width: 10, height: 650 }, // Wall 3
-        //     { x: 326, y: 315, width: 1250, height: 10 }, // Wall 4
-        // ];
-
-        // invisibleWalls.forEach(wall => {
-        //     const invisibleWall = this.physics.add.sprite(wall.x + wall.width / 2, wall.y + wall.height / 2, 'invisible-wall').setVisible(false).setSize(wall.width, wall.height);
-        //     invisibleWall.body.setAllowGravity(false);
-        //     invisibleWall.body.setImmovable(true);
-        //     this.physics.add.collider(this.frontendPlayers[socket.id], invisibleWall);
-        // });
-
-        // this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-
-        // this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
-        // this.popupText.setVisible(false);
-
-        //this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
-        const chatButton = this.add.text(100, 100, 'Chat', {
-            fontSize: '32px',
-            fill: '#ffffff',
-            backgroundColor: '#333333',
-            padding: { x: 10, y: 10 },
-        }).setInteractive();
+        const chatButton = this.add.image(100, 150, 'chat').setInteractive({ useHandCursor: true }).setScale(0.1)
 
         chatButton.on('pointerdown', () => {
             this.chatDisplay.visible = !this.chatDisplay.visible;
@@ -261,7 +236,7 @@ class Room extends Phaser.Scene {
             fill: '#ffffff',
             backgroundColor: '#333333',
             padding: { x: 10, y: 10 },
-        }).setInteractive();
+        }).setInteractive({ useHandCursor: true });
 
         closeButton.on('pointerdown', () => {
             this.chatDisplay.visible = false;

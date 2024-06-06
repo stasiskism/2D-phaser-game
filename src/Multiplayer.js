@@ -49,40 +49,37 @@ class Multiplayer extends Phaser.Scene {
     create() {
         this.setupScene();
         this.setupInputEvents();
+        this.gunAnimation()
     }
 
-    gunAnimation(weaponId) {
-        if (!weaponId) return
-        const weapon = weaponId.name
-        console.log(weapon)
-        const start = weaponId.start
-        const end = weaponId.end
-
-        //weapon yra ginklo pavadinimas, weapon ateina is 320eilutes, 319 eilutej gali pakeist weapono pavadinima ir testuot
-        // kad paimt framus
-        this.animationKeys
-        this.anims.create({
-            key: 'singleShot',
-            frames: this.anims.generateFrameNumbers('shoot' + weapon, { start, end }),
-            frameRate: 20,
-            repeat: 0 // Play once
-        });
-
-        // Define animations for reload
-        this.anims.create({
-            key: 'reloads',
-            frames: this.anims.generateFrameNumbers('reload' + weapon, { start, end }),
-            frameRate: 13,
-            repeat: 0 // Play once
-        });
-
-        // Define animations for emptying
-        this.anims.create({
-            key: 'emptying',
-            frames: this.anims.generateFrameNumbers('empty' + weapon, { start, end }),
-            frameRate: 20,
-            repeat: 0 // Play once
-        });
+    gunAnimation() {
+        for (const weaponId in this.animationKeys) {
+            const weaponData = this.animationKeys[weaponId];
+            const weapon = weaponData.name;
+            const start = weaponData.start;
+            const end = weaponData.end;
+    
+            this.anims.create({
+                key: `singleShot_${weapon}`,
+                frames: this.anims.generateFrameNumbers(`shoot${weapon}`, { start, end }),
+                frameRate: 20,
+                repeat: 0 // Play once
+            });
+    
+            this.anims.create({
+                key: `reloads_${weapon}`,
+                frames: this.anims.generateFrameNumbers(`reload${weapon}`, { start, end }),
+                frameRate: 13,
+                repeat: 0 // Play once
+            });
+    
+            this.anims.create({
+                key: `emptying_${weapon}`,
+                frames: this.anims.generateFrameNumbers(`empty${weapon}`, { start, end }),
+                frameRate: 20,
+                repeat: 0 // Play once
+            });
+        }
     }
 
     setupScene() {
@@ -177,7 +174,8 @@ class Multiplayer extends Phaser.Scene {
 
         this.input.keyboard.on('keydown-R', () => {
             if (!this.weaponDetails || !canReload) return;
-            this.frontendWeapons[socket.id].anims.play('reloads', true);
+            this.frontendWeapons[socket.id].anims.play(`reloads_${this.weapon[socket.id]}`, true);
+            socket.emit('gunAnimation', {multiplayerId: this.multiplayerId, playerId: socket.id, animation: 'reloads', weapon: this.weapon[socket.id]})
             canShoot = false;
             const reloadTime = this.weaponDetails.reload;
             canReload = false;
@@ -284,20 +282,28 @@ class Multiplayer extends Phaser.Scene {
             }
         })
 
+        socket.on('updateGunAnimation', (playerId, animation, weapon) => {
+            if (this.frontendWeapons[playerId]) {
+                this.frontendWeapons[playerId].anims.play(`${animation}_${weapon}`, true);
+                this.sound.play(weapon + 'Sound', { volume: 0.5 });
+            }
+        }) 
     }
 
     startShooting(firerate) {
         if (!this.frontendPlayers[socket.id] || !this.crosshair) return;
-        this.frontendWeapons[socket.id].anims.play('singleShot', true);
+        this.frontendWeapons[socket.id].anims.play(`singleShot_${this.weapon[socket.id]}`, true);
         this.sound.play(this.weapon[socket.id] + 'Sound', { volume: 0.5 })
         const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
         socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
+        socket.emit('gunAnimation', {multiplayerId: this.multiplayerId, playerId: socket.id, animation: 'singleShot', weapon: this.weapon[socket.id]})
         this.shootingInterval = setInterval(() => {
             if (this.ammo === 0) return
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
             this.sound.play(this.weapon[socket.id] + 'Sound', { volume: 0.5 })
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
-            this.frontendWeapons[socket.id].anims.play('singleShot', true);
+            socket.emit('gunAnimation', {multiplayerId: this.multiplayerId, playerId: socket.id, animation: 'singleShot', weapon: this.weapon[socket.id]})
+            this.frontendWeapons[socket.id].anims.play(`singleShot_${this.weapon[socket.id]}`, true);
         }, firerate); // fire rate based on weapon
 
     }
@@ -332,7 +338,7 @@ class Multiplayer extends Phaser.Scene {
             this.playerAmmo = this.add.text(playerData.x, playerData.y + 750, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             this.weaponDetails = { fire_rate: playerData.firerate, ammo: playerData.bullets, reload: playerData.reload, radius: playerData.radius };
             this.ammoFixed = playerData.bullets
-            this.gunAnimation(this.animationKeys[playerData.weaponId]);
+            // this.gunAnimation(this.animationKeys[playerData.weaponId]);
         }
 
         this.weapon[id] = this.animationKeys[playerData.weaponId].name;
@@ -594,7 +600,7 @@ class Multiplayer extends Phaser.Scene {
                     grenade.destroy();
                     delete this.frontendExplosion[id];
                 });
-            }, 400); //2000
+            }, 400);
         }
     }
 
@@ -604,7 +610,7 @@ class Multiplayer extends Phaser.Scene {
             if (!smoke) continue;
             const smokeBounds = smoke.getBounds();
 
-            // Check intersection with each side of the smoke bounding box
+            // Check intersection with each side of the smoke bounds
             if (Phaser.Geom.Intersects.LineToRectangle(new Phaser.Geom.Line(x1, y1, x2, y2), smokeBounds)) {
                 return true;
             }

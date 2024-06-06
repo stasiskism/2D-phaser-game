@@ -95,6 +95,7 @@ class Scene1 extends Phaser.Scene {
         this.load.image('create', 'assets/Room_Button.png');
         this.load.image('exit', 'assets/Exit_Button.png');
         this.load.image('plus', 'assets/Plus_Button.png');
+        this.load.image('chat', 'assets/chat.png')
     }
 
     create () {
