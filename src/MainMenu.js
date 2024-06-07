@@ -1,4 +1,3 @@
-
 class MainMenu extends Phaser.Scene {
   constructor() {
     super({ key: 'mainMenu' });
@@ -8,158 +7,79 @@ class MainMenu extends Phaser.Scene {
     this.popupText = null;
     this.singleplayerObject = null;
     this.multiplayerObject = null;
+    this.login = true;
+    this.coinsText = null;
+    this.plusButton = null;
+    this.progressBar = null;
+    this.progressBarBackground = null;
+    this.currentLevelText = null;
+    this.nextLevelText = null;
+    this.percentageText = null;
+  }
+
+  init(data) {
+    this.username = data.username;
   }
 
   preload() {
-    this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png')
-    this.load.image('WwalkUp2', 'assets/8-dir-chars/WwalkUp2.png')
-    this.load.image('WwalkUp3', 'assets/8-dir-chars/WwalkUp3.png')
-    this.load.image('WwalkRight1', 'assets/8-dir-chars/WwalkRight1.png')
-    this.load.image('WwalkRight2', 'assets/8-dir-chars/WwalkRight2.png')
-    this.load.image('WwalkRight3', 'assets/8-dir-chars/WwalkRight3.png')
-    this.load.image('WwalkUpRight1', 'assets/8-dir-chars/WwalkUpRight1.png')
-    this.load.image('WwalkUpRight2', 'assets/8-dir-chars/WwalkUpRight2.png')
-    this.load.image('WwalkUpRight3', 'assets/8-dir-chars/WwalkUpRight3.png')
-    this.load.image('WwalkDownRight1', 'assets/8-dir-chars/WwalkDownRight1.png')
-    this.load.image('WwalkDownRight2', 'assets/8-dir-chars/WwalkDownRight2.png')
-    this.load.image('WwalkDownRight3', 'assets/8-dir-chars/WwalkDownRight3.png')
-    this.load.image('WwalkDown1', 'assets/8-dir-chars/WwalkDown1.png')
-    this.load.image('WwalkDown2', 'assets/8-dir-chars/WwalkDown2.png')
-    this.load.image('WwalkDown3', 'assets/8-dir-chars/WwalkDown3.png')
-    this.load.image('WwalkDownLeft1', 'assets/8-dir-chars/WwalkDownLeft1.png')
-    this.load.image('WwalkDownLeft2', 'assets/8-dir-chars/WwalkDownLeft2.png')
-    this.load.image('WwalkDownLeft3', 'assets/8-dir-chars/WwalkDownLeft3.png')
-    this.load.image('WwalkLeft1', 'assets/8-dir-chars/WwalkLeft1.png')
-    this.load.image('WwalkLeft2', 'assets/8-dir-chars/WwalkLeft2.png')
-    this.load.image('WwalkLeft3', 'assets/8-dir-chars/WwalkLeft3.png')
-    this.load.image('WwalkUpLeft1', 'assets/8-dir-chars/WwalkUpLeft1.png')
-    this.load.image('WwalkUpLeft2', 'assets/8-dir-chars/WwalkUpLeft2.png')
-    this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
-    this.load.image('player', 'assets/player_23.png');
-    this.load.image('multiplayer', 'assets/multiplayer.png');
-    this.load.image('singleplayer', 'assets/singleplayer.png');
-    this.load.image('marketplace', 'assets/marketplace.png');
-    this.load.image("tiles", 'assets/assetas.png')
-    this.load.tilemapTiledJSON('map', 'assets/maps.json');
   }
 
   create() {
+    this.fetchLeaderboardData();
+    this.setupScene();
+    this.setupInputEvents();
+    this.fetchInfo();
+    this.setupPaymentListener();
+    this.setupProgressBar();
+  }
 
-    let centerX = this.cameras.main.width / 2;
-    let centerY = this.cameras.main.height / 2;
+  setupInputEvents() {
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+  }
 
-    const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32});
+  setupScene() {
+    this.centerX = this.cameras.main.width / 2;
+    this.centerY = this.cameras.main.height / 2;
+
+    const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32 });
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
-
-    this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3); // 'WwalkDown2' is the idle frame
-
-      this.anims.create({
-        key: 'WwalkUp',
-        frames: [
-            { key: 'WwalkUp1' },
-            { key: 'WwalkUp2' },
-            { key: 'WwalkUp3' }
-        ],
-        frameRate: 10,
-        repeat: -1
-    });
-
-    this.anims.create({
-      key: 'WwalkUpRight',
-      frames: [
-          { key: 'WwalkUpRight1' },
-          { key: 'WwalkUpRight2' },
-          { key: 'WwalkUpRight3' }
-      ],
-      frameRate: 10,
-      repeat: -1
-  });
-
-    this.anims.create({
-      key: 'WwalkRight',
-      frames: [
-          { key: 'WwalkRight1' },
-          { key: 'WwalkRight2' },
-          { key: 'WwalkRight3' }
-      ],
-      frameRate: 10,
-      repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkDownRight',
-    frames: [
-        { key: 'WwalkDownRight1' },
-        { key: 'WwalkDownRight2' },
-        { key: 'WwalkDownRight3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkDown',
-    frames: [
-        { key: 'WwalkDown1' },
-        { key: 'WwalkDown2' },
-        { key: 'WwalkDown3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkDownLeft',
-    frames: [
-        { key: 'WwalkDownLeft1' },
-        { key: 'WwalkDownLeft2' },
-        { key: 'WwalkDownLeft3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkLeft',
-    frames: [
-        { key: 'WwalkLeft1' },
-        { key: 'WwalkLeft2' },
-        { key: 'WwalkLeft3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
-  this.anims.create({
-    key: 'WwalkUpLeft',
-    frames: [
-        { key: 'WwalkUpLeft1' },
-        { key: 'WwalkUpLeft2' },
-        { key: 'WwalkUpLeft3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-  });
-
     
+    this.add.sprite(430, 430, 'wasd').setScale(0.2);
+    this.add.text(375, 350, 'Movement').setScale(1.5);
 
+    this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3);
 
+    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1);
+    this.fullscreenButton.setInteractive({ useHandCursor: true });
+    this.fullscreenButton.on('pointerdown', () => {
+      document.getElementById('phaser-example');
+      if (this.scale.isFullscreen) {
+        this.scale.stopFullscreen();
+      } else {
+        this.scale.startFullscreen();
+      }
+    });
 
     this.objects = this.physics.add.staticGroup();
     this.singleplayerObject = this.objects.create(720, 653, 'singleplayer');
     this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer');
     this.marketplaceObject = this.objects.create(1290, 653, 'marketplace');
+    this.tutorialObject = this.objects.create(1290, 453, 'tutorial');
 
     this.objects.getChildren().forEach(object => {
       object.setScale(0.2);
     });
 
     const invisibleWalls = [
-      { x: 336, y: 959, width: 1250, height: 10 }, // Wall 1
-      { x: 326, y: 315, width: 10, height: 650 }, // Wall 2
-      { x: 1580, y: 315, width: 10, height: 650 }, // Wall 3
-      { x: 326, y: 315, width: 1250, height: 10 }, // Wall 4
+      { x: 336, y: 959, width: 1250, height: 10 },
+      { x: 326, y: 315, width: 10, height: 650 },
+      { x: 1580, y: 315, width: 10, height: 650 },
+      { x: 326, y: 315, width: 1250, height: 10 },
     ];
 
     invisibleWalls.forEach(wall => {
@@ -169,60 +89,320 @@ class MainMenu extends Phaser.Scene {
       this.physics.add.collider(this.player, invisibleWall);
     });
 
-    // from 576x 872y to 1344x 872y
-
     this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-
     this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
     this.popupText.setVisible(false);
 
     this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
+
+    this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
+      <div id="displayLeaderboard">
+        <div>Leaderboard</div>
+        <div id="playerLabels"></div>
+      </div>
+    `);
+
+    this.leaderboard.setPosition(100, 100).setScrollFactor(0);
+    this.document = this.leaderboard.node.querySelector(`#playerLabels`);
+
+    this.logoutButton = this.add.sprite(100, 30, 'quitButton').setDepth(1).setScale(0.2);
+    this.logoutButton.setInteractive({ useHandCursor: true });
+    this.logoutButton.on('pointerdown', () => {
+      this.showLogout();
+    });
+
+    this.coinsText = this.add.text(1500, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
+    this.plusButton.on('pointerdown', () => {
+      this.showCoinPurchaseOptions(this.username);
+    });
+  }
+
+  setupProgressBar() {
+    this.barWidth = 200;
+    this.barHeight = 20;
+    this.barX = 1500;
+    this.barY = 70;
+
+    this.progressBarBackground = this.add.graphics();
+    this.progressBarBackground.fillStyle(0x000000, 1);
+    this.progressBarBackground.fillRect(this.barX, this.barY, this.barWidth, this.barHeight);
+
+    this.progressBar = this.add.graphics();
+
+    this.currentLevelText = this.add.text(this.barX - 80, this.barY - 2, 'Level ', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    });
+
+    this.nextLevelText = this.add.text(this.barX + this.barWidth + 10, this.barY - 2, 'Level ', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    });
+
+    this.percentageText = this.add.text(this.barX + this.barWidth / 2, this.barY - 2, '0%', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0);
+
+    this.updateProgressBar(0, 1); //default
+  }
+
+  updateProgressBar(percentage, level) {
+    this.progressBar.clear();
+    this.progressBar.fillStyle(0x00ff00, 1);
+    this.progressBar.fillRect(this.barX, this.barY, this.barWidth * percentage, this.barHeight);
+
+    this.currentLevelText.setText(`Level ${level}`);
+    this.nextLevelText.setText(`Level ${level + 1}`);
+    this.percentageText.setText(`${Math.round(percentage * 100)}%`);
+  }
+
+  showLogout() {
+    const promptContainer = document.getElementById('prompt-container');
+    promptContainer.style.display = 'block';
+
+    const yesButton = document.getElementById('yesButton');
+    const noButton = document.getElementById('noButton');
+
+    const handleYesClick = () => {
+      socket.emit('logout');
+      socket.removeAllListeners();
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+      this.scene.start('authenticate');
+      this.scene.stop();
+      promptContainer.style.display = 'none';
+      yesButton.removeEventListener('click', handleYesClick);
+      noButton.removeEventListener('click', handleNoClick);
+    };
+
+    const handleNoClick = () => {
+      promptContainer.style.display = 'none';
+      yesButton.removeEventListener('click', handleYesClick);
+      noButton.removeEventListener('click', handleNoClick);
+    };
+
+    yesButton.addEventListener('click', handleYesClick);
+    noButton.addEventListener('click', handleNoClick);
+  }
+
+  setupPaymentListener() {
+    window.addEventListener('payment-success', (event) => {
+      const { username, amount } = event.detail;
+      this.handlePaymentSuccess(username, amount);
+      this.clearPaymentForm();
+    });
+  }
+
+  showCoinPurchaseOptions(username) {
+    const options = [
+      { label: '100 Coins - €1', amount: 100, cost: 1 },
+      { label: '500 Coins - €4', amount: 500, cost: 4 },
+      { label: '1000 Coins - €7', amount: 1000, cost: 7 },
+    ];
+
+    const coinPurchaseContainer = document.getElementById('coin-purchase-container');
+    const coinOptions = document.getElementById('coin-options');
+    coinOptions.innerHTML = ''; // Clear previous options
+
+    options.forEach(option => {
+      const optionButton = document.createElement('div');
+      optionButton.className = 'prompt-button';
+      optionButton.textContent = option.label;
+      optionButton.addEventListener('click', async () => {
+        try {
+          const response = await fetch('/create-payment-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: option.amount, username })
+          });
+          const { clientSecret } = await response.json();
+          const coins = option.amount;
+          const cost = option.cost;
+          this.showPaymentForm(clientSecret, coins, cost);
+          coinPurchaseContainer.style.display = 'none'; // Hide the prompt after selection
+        } catch (err) {
+          console.error('Error creating payment intent:', err);
+        }
+      });
+      coinOptions.appendChild(optionButton);
+    });
+
+    const coinCancelButton = document.getElementById('coinCancelButton');
+    coinCancelButton.addEventListener('click', () => {
+      coinPurchaseContainer.style.display = 'none';
+    });
+
+    coinPurchaseContainer.style.display = 'block';
+  }
+
+  showPaymentForm(clientSecret, coins, cost) {
+    // Clear any previous instances of the payment form
+    const existingForm = document.getElementById('payment-form');
+    if (existingForm) {
+      existingForm.remove();
+    }
+
+    const formHtml = `
+      <div id="payment-form">
+        <form id="payment-element-form">
+          <div id="coin-details" style="margin-bottom: 10px; font-size: 24px;">
+            <div>Coins: ${coins}</div>
+            <div>Cost: €${cost.toFixed(2)}</div>
+          </div>
+          <div id="payment-element"></div>
+          <button id="submit-button" class="prompt-button">Pay</button>
+          <button id="cancel-button" class="prompt-button" type="button">Cancel</button>
+          <div id="error-message"></div>
+        </form>
+      </div>
+    `;
+    const paymentForm = this.add.dom(400, 300).createFromHTML(formHtml);
+
+    this.time.delayedCall(100, () => {
+      this.setupStripeElements(clientSecret, coins);
+    });
+
+    const cancelButton = document.getElementById('cancel-button');
+    cancelButton.addEventListener('click', () => {
+      this.clearPaymentForm();
+    });
+  }
+
+  setupStripeElements(clientSecret, amount) {
+    const stripe = Stripe('pk_test_51PJtjWP7nzuSu7T7Q211oUu5LICFrh0QjI6hx4KiOAjZSXXhe0HgNlImYdEdPDAa5OGKG4y8hyR1B0SuiiP3okTP00OOp963M1');
+    const options = {
+      layout: {
+        type: 'accordion',
+        defaultCollapsed: false,
+        radios: false,
+        spacedAccordionItems: true
+      },
+      wallets: {
+        applePay: 'never',
+        googlePay: 'never'
+      }
+    };
+    const appearance = {
+      theme: 'stripe',
+    };
+    const elements = stripe.elements({ clientSecret, appearance });
+    const paymentElement = elements.create('payment', options);
+
+    // Clear any child nodes in the payment element container
+    const paymentElementContainer = document.getElementById('payment-element');
+    while (paymentElementContainer.firstChild) {
+      paymentElementContainer.removeChild(paymentElementContainer.firstChild);
+    }
+
+    paymentElement.mount('#payment-element');
+
+    const form = document.getElementById('payment-element-form');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {},
+        redirect: 'if_required' // Avoids automatic redirect
+      });
+
+      if (error) {
+        document.getElementById('error-message').textContent = error.message;
+      } else {
+        const event = new CustomEvent('payment-success', { detail: { username: this.username, amount } });
+        window.dispatchEvent(event);
+      }
+    });
+  }
+
+  async handlePaymentSuccess(username, amount) {
+    console.log(`Payment successful for user: ${username}`);
+    try {
+      const response = await fetch('/update-coins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, amount })
+      });
+      const data = await response.json();
+      if (data.success) {
+        this.coinsText.setText(`Coins: ${data.coins}`);
+      } else {
+        console.error('Failed to update coins.');
+      }
+    } catch (error) {
+      console.error('Error updating coins:', error);
+    }
+  }
+
+  clearPaymentForm() {
+    const paymentForm = document.getElementById('payment-form');
+    if (paymentForm) {
+      paymentForm.style.display = 'none';
+      const paymentElementForm = document.getElementById('payment-element-form');
+      if (paymentElementForm) {
+        paymentElementForm.reset();
+      }
+    }
+  }
+
+  fetchInfo() {
+    fetch(`get-info?username=${encodeURIComponent(this.username)}`)
+      .then(response => response.json())
+      .then(data => {
+        this.coinsText.setText(`Coins: ${data.coins}`);
+        
+        const experiencePercentage = data.xp / (data.level * 100);
+        this.updateProgressBar(experiencePercentage, data.level);
+      })
+      .catch(error => console.error('Error fetching info:', error));
   }
 
   update() {
+    this.updatePlayerMovement();
+  }
 
-    console.log('Player Position:', this.player.x, this.player.y);
+  updatePlayerMovement() {
+    if (!this.player) return;
+    const player = this.player;
+    let moving = false;
+    let direction = '';
 
-    const cursors = this.input.keyboard.createCursorKeys();
-    const wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    const aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    const sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    const dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-
-    // Reset player velocity
-    this.player.setVelocity(0);
-
-    // Horizontal movement
-    if (cursors.left.isDown || aKey.isDown) {
-        this.player.setVelocityX(-160);
-        this.player.anims.play('WwalkLeft', true);
-    } else if (cursors.right.isDown || dKey.isDown) {
-        this.player.setVelocityX(160);
-        this.player.anims.play('WwalkRight', true);
+    if (this.w.isDown) {
+      moving = true;
+      direction += 'Up';
+      player.y -= 2;
+    } else if (this.s.isDown) {
+      moving = true;
+      direction += 'Down';
+      player.y += 2;
     }
 
-    // Vertical movement
-    if (cursors.up.isDown || wKey.isDown) {
-        this.player.setVelocityY(-160);
-        this.player.anims.play('WwalkUp', true);
-    } else if (cursors.down.isDown || sKey.isDown) {
-        this.player.setVelocityY(160);
-        this.player.anims.play('WwalkDown', true);
+    if (this.a.isDown) {
+      moving = true;
+      direction += 'Left';
+      player.x -= 2;
+    } else if (this.d.isDown) {
+      moving = true;
+      direction += 'Right';
+      player.x += 2;
     }
 
-    // Normalize diagonal movement
-    if ((cursors.up.isDown || wKey.isDown) && (cursors.left.isDown || aKey.isDown)) {
-        this.player.body.velocity.normalize().scale(160);
-        this.player.anims.play('WwalkUpLeft', true);
-    } else if ((cursors.up.isDown || wKey.isDown) && (cursors.right.isDown || dKey.isDown)) {
-        this.player.body.velocity.normalize().scale(160);
-        this.player.anims.play('WwalkUpRight', true);
-    } else if ((cursors.down.isDown || sKey.isDown) && (cursors.left.isDown || aKey.isDown)) {
-        this.player.body.velocity.normalize().scale(160);
-        this.player.anims.play('WwalkDownLeft', true);
-    } else if ((cursors.down.isDown || sKey.isDown) && (cursors.right.isDown || dKey.isDown)) {
-        this.player.body.velocity.normalize().scale(160);
-        this.player.anims.play('WwalkDownRight', true);
+    if (moving) {
+      if (player && player.anims) {
+        const animationName = `Wwalk${direction}`;
+        player.anims.play(animationName, true);
+      }
+    } else {
+      if (player && player.anims) {
+        player.anims.play('idle', true);
+      }
     }
   }
 
@@ -230,34 +410,55 @@ class MainMenu extends Phaser.Scene {
     const distance = Phaser.Math.Distance.Between(player.x, player.y, object.x, object.y);
 
     if (distance < 50) {
-        let message = '';
-        if (object === this.singleplayerObject) {
-            message = 'Press E to start singleplayer';
-        } else if (object === this.multiplayerObject) {
-            message = 'Press E to start multiplayer';
-        } else if (object === this.marketplaceObject) {
-            message = 'Press E to enter marketplace';
-        }
+      let message = '';
+      if (object === this.singleplayerObject) {
+        message = 'Press E to start singleplayer';
+      } else if (object === this.multiplayerObject) {
+        message = 'Press E to start multiplayer';
+      } else if (object === this.tutorialObject) {
+        message = 'Press E to start tutorial';
+      }
 
-        this.popupText.setPosition(object.x - 100, object.y - 50);
-        this.popupText.setText(message);
-        this.popupText.setVisible(true);
+      this.popupText.setPosition(object.x - 100, object.y - 50);
+      this.popupText.setText(message);
+      this.popupText.setVisible(true);
     } else {
-        this.popupText.setVisible(false);
+      this.popupText.setVisible(false);
     }
 
     if (this.eKey.isDown && distance < 50) {
-        if (object === this.singleplayerObject) {
-            this.scene.start('Singleplayer');
-        } else if (object === this.multiplayerObject) {
-            this.scene.start('Multiplayer');
-        } else if (object === this.marketplaceObject) {
-          this.scene.stop();
-          console.log('yes')
-            this.scene.start('Marketplace');
-        }
+      if (object === this.singleplayerObject) {
+        this.scene.start('Singleplayer', { login: this.login });
+        this.scene.stop();
+      } else if (object === this.multiplayerObject) {
+        this.scene.start('lobby');
+        this.scene.stop();
+      } else if (object === this.marketplaceObject) {
+        // Handle marketplace object interaction
+      } else if (object === this.tutorialObject) {
+        this.scene.start('tutorial');
+        this.scene.stop();
+      }
     }
-}
+  }
+
+  fetchLeaderboardData() {
+    fetch('/leaderboard')
+      .then(response => response.json())
+      .then(data => {
+        this.document.innerHTML = '';
+        data.forEach((player, index) => {
+          const playerDiv = document.createElement('div');
+          playerDiv.textContent = `${index + 1}. ${player.user_name}: ${player.high_score}`;
+          playerDiv.style.fontFamily = 'Arial';
+          playerDiv.style.fontSize = '24px';
+          playerDiv.style.color = '#ffffff';
+          playerDiv.style.marginBottom = '8px';
+          this.document.appendChild(playerDiv);
+        });
+      })
+      .catch(error => console.error('Error fetching leaderboard data:', error));
+  }
 }
 
 export default MainMenu;

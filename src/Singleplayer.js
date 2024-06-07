@@ -6,318 +6,300 @@ class Singleplayer extends Phaser.Scene {
       super({ key: 'Singleplayer'});
       this.score = 0
       this.scoreText
+      this.weapon
   }
 
   init (data) {
-      this.cameras.main.setBackgroundColor('#ffffff')
+    this.cameras.main.setBackgroundColor('#000000');
+    this.login = data.login
   }
 
   preload () {
-      this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png')
-      this.load.image('WwalkUp2', 'assets/8-dir-chars/WwalkUp2.png')
-      this.load.image('WwalkUp3', 'assets/8-dir-chars/WwalkUp3.png')
-      this.load.image('WwalkRight1', 'assets/8-dir-chars/WwalkRight1.png')
-      this.load.image('WwalkRight2', 'assets/8-dir-chars/WwalkRight2.png')
-      this.load.image('WwalkRight3', 'assets/8-dir-chars/WwalkRight3.png')
-      this.load.image('WwalkUpRight1', 'assets/8-dir-chars/WwalkUpRight1.png')
-      this.load.image('WwalkUpRight2', 'assets/8-dir-chars/WwalkUpRight2.png')
-      this.load.image('WwalkUpRight3', 'assets/8-dir-chars/WwalkUpRight3.png')
-      this.load.image('WwalkDownRight1', 'assets/8-dir-chars/WwalkDownRight1.png')
-      this.load.image('WwalkDownRight2', 'assets/8-dir-chars/WwalkDownRight2.png')
-      this.load.image('WwalkDownRight3', 'assets/8-dir-chars/WwalkDownRight3.png')
-      this.load.image('WwalkDown1', 'assets/8-dir-chars/WwalkDown1.png')
-      this.load.image('WwalkDown2', 'assets/8-dir-chars/WwalkDown2.png')
-      this.load.image('WwalkDown3', 'assets/8-dir-chars/WwalkDown3.png')
-      this.load.image('WwalkDownLeft1', 'assets/8-dir-chars/WwalkDownLeft1.png')
-      this.load.image('WwalkDownLeft2', 'assets/8-dir-chars/WwalkDownLeft2.png')
-      this.load.image('WwalkDownLeft3', 'assets/8-dir-chars/WwalkDownLeft3.png')
-      this.load.image('WwalkLeft1', 'assets/8-dir-chars/WwalkLeft1.png')
-      this.load.image('WwalkLeft2', 'assets/8-dir-chars/WwalkLeft2.png')
-      this.load.image('WwalkLeft3', 'assets/8-dir-chars/WwalkLeft3.png')
-      this.load.image('WwalkUpLeft1', 'assets/8-dir-chars/WwalkUpLeft1.png')
-      this.load.image('WwalkUpLeft2', 'assets/8-dir-chars/WwalkUpLeft2.png')
-      this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
-      this.load.image('mapas', 'assets/mapas.png')
-      this.load.image('player', 'assets/player_23.png')
-      this.load.image('bullet', 'assets/Bullets/bullet.png')
-      this.load.image('enemy', 'assets/enemy.png')
-      this.load.image('shotgun', 'assets/Weapons/tile001.png')
-      this.load.image('crosshair', 'assets/crosshair008.png');
+      this.graphics = this.add.graphics()
     }
 
   create () {
 
-    let orbitRadius = 85; // Radius of the orbit (adjust as needed)
-    let weapon;
+    this.setupScene();
+    this.setupInputEvents();
+    this.setupPlayer();
+    this.gunAnimation();
+    this.time.delayedCall(500, this.spawnEnemies, [], this);
+    this.score = 0;
+    this.intervalID
+    this.enemies = []
+    this.bullets = []
 
+  }
+
+  gunAnimation(){
+    this.anims.create({
+        key: 'singleShot',
+        frames: this.anims.generateFrameNumbers('shootAR', { start: 0, end: 10 }),
+        frameRate: 60,
+        repeat: 0 // Play once
+    });
+  }
+
+  setupScene() {
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
-
     this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
-    this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
+    this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' }).setPosition(100, 100).setScrollFactor(0);
 
-    this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setCollideWorldBounds(true);
+    this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair');
+    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+    this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
+    this.fullscreenButton.setInteractive({ useHandCursor: true })
+    this.fullscreenButton.on('pointerdown', () => {
+        document.getElementById('phaser-example');
+        if (this.scale.isFullscreen) {
+            this.scale.stopFullscreen();
+        } else {
+            this.scale.startFullscreen();
+        }
+    })
 
-    this.anims.create({
-      key: 'WwalkUp',
-      frames: [
-          { key: 'WwalkUp1' },
-          { key: 'WwalkUp2' },
-          { key: 'WwalkUp3' }
-      ],
-      frameRate: 10,
-      repeat: -1
+    this.graphics.lineStyle(10, 0xff0000);
+    this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+
+  }
+
+  setupInputEvents() {
+    
+  this.input.on('pointerdown', () => {
+    this.input.mouse.requestPointerLock();
   });
 
-  this.anims.create({
-    key: 'WwalkUpRight',
-    frames: [
-        { key: 'WwalkUpRight1' },
-        { key: 'WwalkUpRight2' },
-        { key: 'WwalkUpRight3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-});
+  this.input.on('pointermove', pointer => {
+      if (this.input.mouse.locked) {
+          this.crosshair.x += pointer.movementX;
+          this.crosshair.y += pointer.movementY;
+      }
+  });
 
-  this.anims.create({
-    key: 'WwalkRight',
-    frames: [
-        { key: 'WwalkRight1' },
-        { key: 'WwalkRight2' },
-        { key: 'WwalkRight3' }
-    ],
-    frameRate: 10,
-    repeat: -1
-});
+  this.input.on('pointerdown', pointer => {
+      if (pointer.leftButtonDown()) {
+        this.sound.play('ARSound', { volume: 0.5})
+        this.fireBullet(pointer)
+      }
+  });
 
-this.anims.create({
-  key: 'WwalkDownRight',
-  frames: [
-      { key: 'WwalkDownRight1' },
-      { key: 'WwalkDownRight2' },
-      { key: 'WwalkDownRight3' }
-  ],
-  frameRate: 10,
-  repeat: -1
-});
-
-this.anims.create({
-  key: 'WwalkDown',
-  frames: [
-      { key: 'WwalkDown1' },
-      { key: 'WwalkDown2' },
-      { key: 'WwalkDown3' }
-  ],
-  frameRate: 10,
-  repeat: -1
-});
-
-this.anims.create({
-  key: 'WwalkDownLeft',
-  frames: [
-      { key: 'WwalkDownLeft1' },
-      { key: 'WwalkDownLeft2' },
-      { key: 'WwalkDownLeft3' }
-  ],
-  frameRate: 10,
-  repeat: -1
-});
-
-this.anims.create({
-  key: 'WwalkLeft',
-  frames: [
-      { key: 'WwalkLeft1' },
-      { key: 'WwalkLeft2' },
-      { key: 'WwalkLeft3' }
-  ],
-  frameRate: 10,
-  repeat: -1
-});
-
-this.anims.create({
-  key: 'WwalkUpLeft',
-  frames: [
-      { key: 'WwalkUpLeft1' },
-      { key: 'WwalkUpLeft2' },
-      { key: 'WwalkUpLeft3' }
-  ],
-  frameRate: 10,
-  repeat: -1
-});
-
-
-
-    //player movement
-    this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+  this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+
+  }
+
+  setupPlayer() {
     this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'WwalkDown2')
     this.player.setScale(4);
     this.player.setCollideWorldBounds(true);
-
-    this.interval
-    this.intervalID
-    this.bullets = []
-    this.enemies = []
-    //for everything else to load we need to delay the spawning of enemies
-    
-    this.time.delayedCall(500, this.spawnEnemies, [], this);
-    this.input.on('pointerdown', this.fireBullet, this);
-
-    // Create the weapon sprite and position it relative to the player
-    this.weapon = this.physics.add.sprite(this.player.x + orbitRadius, this.player.y, 'shotgun');
-    this.weapon.setScale(4);
-
-    // Update the weapon's position based on the mouse cursor
-    this.input.on('pointermove', function(pointer) {
-        let angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
-        let weaponX = this.player.x + orbitRadius * Math.cos(angle);
-        let weaponY = this.player.y + orbitRadius * Math.sin(angle);
-        weapon.setPosition(weaponX, weaponY);
-    }, this);
+    this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'AR');
+    this.weapon.setScale(2);
   }
 
   update () {
+    this.updatePlayerMovement();
+    this.updateCameraPosition();
+    this.updateCrosshairPosition();
+    this.updateBullet()
+    this.detectCollision()
 
-    //player movement
-    let keyInputs = this.input.keyboard.createCursorKeys();
-     // Get the horizontal and vertical velocity components
-     let velocityX = 0;
-     let velocityY = 0;
+    this.enemies.forEach(enemy => {
+      const angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+      const velocityX = Math.cos(angleToPlayer) * 350;
+      const velocityY = Math.sin(angleToPlayer) * 350;
+      enemy.setVelocity(velocityX, velocityY);
+  });
+  }
 
-     this.crosshair.x = this.input.mousePointer.x;
-     this.crosshair.y = this.input.mousePointer.y;
- 
-     if (keyInputs.left.isDown || this.a.isDown) {
-         velocityX = -300;
-     } else if (keyInputs.right.isDown || this.d.isDown) {
-         velocityX = 300;
-     }
- 
-     if (keyInputs.up.isDown || this.w.isDown) {
-         velocityY = -300;
-     } else if (keyInputs.down.isDown || this.s.isDown) {
-         velocityY = 300;
-     }
- 
-     // Set the player's velocity
-     this.player.setVelocityX(velocityX);
-     this.player.setVelocityY(velocityY);
+updatePlayerMovement() {
+  const player = this.player;
+  const weapon = this.weapon;
+  let moving = false;
+  let direction = '';
 
-     const orbitRadius = 85; // Adjust as needed
-     const angle = Phaser.Math.Angle.BetweenPoints(this.player, this.input.activePointer);
-     const weaponX = this.player.x + orbitRadius * Math.cos(angle);
-     const weaponY = this.player.y + orbitRadius * Math.sin(angle);
-     this.weapon.setPosition(weaponX, weaponY);
-     this.weapon.setRotation(angle);
- 
-     // Determine the animation based on the combined velocity components
-     if (velocityX < 0 && velocityY < 0) {
-         this.player.anims.play('WwalkUpLeft', true);
-     } else if (velocityX > 0 && velocityY < 0) {
-         this.player.anims.play('WwalkUpRight', true);
-     } else if (velocityX < 0 && velocityY > 0) {
-         this.player.anims.play('WwalkDownLeft', true);
-     } else if (velocityX > 0 && velocityY > 0) {
-         this.player.anims.play('WwalkDownRight', true);
-     } else if (velocityX < 0) {
-         this.player.anims.play('WwalkLeft', true);
-     } else if (velocityX > 0) {
-         this.player.anims.play('WwalkRight', true);
-     } else if (velocityY < 0) {
-         this.player.anims.play('WwalkUp', true);
-     } else if (velocityY > 0) {
-         this.player.anims.play('WwalkDown', true);
-     } else {
-         this.player.anims.stop();
-     }
+  if (this.w.isDown) {
+      moving = true;
+      direction += 'Up';
+      player.y -= 2;
+  } else if (this.s.isDown) {
+      moving = true;
+      direction += 'Down';
+      player.y += 2;
+  }
 
-     const player = this.player;
+  if (this.a.isDown) {
+      moving = true;
+      direction += 'Left';
+      player.x -= 2;
+  } else if (this.d.isDown) {
+      moving = true;
+      direction += 'Right';
+      player.x += 2;
+  }
 
-     if (!player || !this.crosshair) return;
- 
-     const avgX = (player.x + this.crosshair.x) / 2 - this.cameras.main.width / 2;
-     const avgY = (player.y + this.crosshair.y) / 2 - this.cameras.main.height / 2;
- 
-     this.cameras.main.scrollX = avgX;
-     this.cameras.main.scrollY = avgY;
+  if (moving) {
+      const animationName = `Wwalk${direction}`;
+      player.anims.play(animationName, true);
+  } else {
+      player.anims.stop();
+  }
 
-    //bullets should be deleted that go out of the screen
-    for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
-        const bullet = this.bullets[bulletIndex]
-
-        if (bullet.x < 0 ||
-            bullet.x > this.cameras.main.width ||
-            bullet.y  < 0 ||
-            bullet.y  > this.cameras.main.height) 
-            {
-            this.bullets.splice(bulletIndex, 1)
-            bullet.destroy()
-            }
-
-    }
-
-
-    //Player and enemy collision
-    for (let enemyIndex = this.enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
-      const enemy = this.enemies[enemyIndex]
-      const distance = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y)
-      //player dies end game change distance for more accurate collision
-      if (distance < 50) {
-          clearInterval(this.intervalID)
-          this.scene.start('Restart', {score: this.score})
-          }
-    
-
-    //player bullet and enemy collision
-    for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
-      const bullet = this.bullets[bulletIndex]
-      const distance = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y)
-      
-      if (distance < 50) {    
-      this.score += 1
-      this.scoreText.setText('Score: ' + this.score);
-      this.enemies.splice(enemyIndex, 1);
-      enemy.destroy()
-      this.bullets.splice(bulletIndex, 1);
-      bullet.destroy()
-     }
+  if (player && weapon) {
+      const angleToPointer = Phaser.Math.Angle.Between(player.x, player.y, this.crosshair.x, this.crosshair.y);
+      weapon.setRotation(angleToPointer);
+      const orbitDistance = 85;
+      const weaponX = player.x + Math.cos(angleToPointer) * orbitDistance;
+      const weaponY = player.y + Math.sin(angleToPointer) * orbitDistance;
+      weapon.setPosition(weaponX, weaponY);
   }
 }
+
+updateCameraPosition() {
+  const avgX = (this.player.x + this.crosshair.x) / 2 - 1920 / 2;
+  const avgY = (this.player.y + this.crosshair.y) / 2 - 1080 / 2;
+  this.cameras.main.scrollX = avgX;
+  this.cameras.main.scrollY = avgY;
 }
 
-fireBullet() {
-  const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x, this.input.activePointer.y);
-  const velocity = new Phaser.Math.Vector2(600 * Math.cos(angle), 600 * Math.sin(angle));
-  
-  // Calculate the position for the bullet to spawn from the end of the weapon
-  const bulletSpawnX = this.weapon.x + this.weapon.displayWidth / 2 * Math.cos(angle);
-  const bulletSpawnY = this.weapon.y + this.weapon.displayHeight / 2 * Math.sin(angle);
-  
-  this.bullet = this.physics.add.sprite(bulletSpawnX, bulletSpawnY, 'bullet');
-  this.bullet.setScale(2);
-  this.bullet.setVelocity(velocity.x, velocity.y);
-  this.bullet.setRotation(angle);
-  this.bullets.push(this.bullet);
+updateCrosshairPosition() {
+  this.crosshair.body.velocity.x = this.player.body.velocity.x;
+  this.crosshair.body.velocity.y = this.player.body.velocity.y;
+  this.constrainReticle(this.crosshair, 550);
+}
+
+constrainReticle(reticle, radius) {
+  const distX = reticle.x - this.player.x;
+  const distY = reticle.y - this.player.y;
+
+  if (distX > 1920) reticle.x = this.player.x + 1920;
+  else if (distX < -1920) reticle.x = this.player.x - 1920;
+
+  if (distY > 1080) reticle.y = this.player.y + 1080;
+  else if (distY < -1080) reticle.y = this.player.y - 1080;
+
+  const distBetween = Phaser.Math.Distance.Between(this.player.x, this.player.y, reticle.x, reticle.y);
+  if (distBetween > radius) {
+      const scale = distBetween / radius;
+      reticle.x = this.player.x + (reticle.x - this.player.x) / scale;
+      reticle.y = this.player.y + (reticle.y - this.player.y) / scale;
+  }
+}
+
+updateBullet() {
+  //bullets should be deleted that go out of the screen
+  for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
+    const bullet = this.bullets[bulletIndex]
+
+    if (bullet.x < 0 ||
+        bullet.x > this.cameras.main.width ||
+        bullet.y  < 0 ||
+        bullet.y  > this.cameras.main.height) 
+        {
+        this.bullets.splice(bulletIndex, 1)
+        bullet.destroy()
+        }
+
+}
+}
+
+detectCollision() {
+    // Player and enemy collision
+    for (let enemyIndex = this.enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
+        const enemy = this.enemies[enemyIndex];
+        const distance = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
+        // Player dies, end game. Change distance for more accurate collision.
+        if (distance < 50) {
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+          this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+            clearInterval(this.intervalID);
+            this.scene.start('Restart', { score: this.score, login: this.login });
+            this.scene.stop();
+
+        }
+
+        // Player bullet and enemy collision
+        for (let bulletIndex = this.bullets.length - 1; bulletIndex >= 0; bulletIndex--) {
+            const bullet = this.bullets[bulletIndex];
+            const distance = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y);
+
+            if (distance < 50) {
+                this.score += 1;
+                this.scoreText.setText('Score: ' + this.score);
+                this.enemies.splice(enemyIndex, 1);
+                enemy.destroy();
+                this.bullets.splice(bulletIndex, 1);
+                bullet.destroy();
+            }
+        }
+    }
+}
+
+
+
+fireBullet(pointer) {
+  const direction = Math.atan((this.crosshair.x - this.player.x) / (this.crosshair.y - this.player.y));
+        if (!pointer.leftButtonDown()) return;
+        this.weapon.anims.play('singleShot', true);
+        // Create a projectile
+        const bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(2);
+        bullet.setRotation(direction);
+
+        let x, y
+        //Calculate X and y velocity of bullet to move it from shooter to target
+        if (this.crosshair.y >= this.player.y)
+        {
+            x = 30 * Math.sin(direction);
+            y = 30 * Math.cos(direction);
+        }
+        else
+        {
+            x = -30 * Math.sin(direction);
+            y = -30 * Math.cos(direction);
+        }
+
+        // Calculate velocity based on direction
+        bullet.velocity = { x, y };
+
+        // Add the projectile to the list
+        this.bullets.push(bullet);
+}
+
+updateBullet() {
+  this.bullets.forEach((bullet, index) => {
+      bullet.x += bullet.velocity.x;
+      bullet.y += bullet.velocity.y;
+      if (bullet.x < 0 || bullet.x > this.cameras.main.width || bullet.y < 0 || bullet.y > this.cameras.main.height) {
+          bullet.destroy();
+          this.bullets.splice(index, 1);
+      }
+  });
 }
 
   spawnEnemies() {
     this.intervalID = setInterval(() => {
+    const numEnemies = Phaser.Math.Between(1, 4);
+    for(let i = 0; i < numEnemies; i++) {
       const spawnPoints = [
-          { x: 0, y: Phaser.Math.Between(0, 1080) },  // Left border
-          { x: 1920, y: Phaser.Math.Between(0, 1080) }, // Right border
-          { x: Phaser.Math.Between(0, 1920), y: 0 },   // Top border
-          { x: Phaser.Math.Between(0, 1920), y: 1080 } // Bottom border
+        { x: 0, y: Phaser.Math.Between(0, 1080) },  // Left border
+        { x: 1920, y: Phaser.Math.Between(0, 1080) }, // Right border
+        { x: Phaser.Math.Between(0, 1920), y: 0 },   // Top border
+        { x: Phaser.Math.Between(0, 1920), y: 1080 } // Bottom border
       ];
       const spawnPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
-      const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemy');
-      enemy.setScale(0.1)
+      const enemy = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, 'enemiess');
+      enemy.anims.play('enemiess', true);
+      enemy.setScale(2)
       enemy.setCollideWorldBounds(false)
       const angle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x)
       enemy.setVelocity(300 * Math.cos(angle), 300 * Math.sin(angle))
       this.enemies.push(enemy)
+    }
     }, 1000)
   }
 

@@ -7,39 +7,45 @@ class Respawn extends Phaser.Scene {
 
     init (data) {
         this.cameras.main.setBackgroundColor('#ffffff')
+        this.multiplayerId = data.multiplayerId
+        this.mapSize = data.mapSize
     }
 
     preload () {
-        this.load.image('dead', 'assets/dead.jpg')
-        this.load.image('respawnButton', 'assets/pngegg.png')
-        this.load.image('quitButton', 'assets/quit.png')
     }
 
     create () {
+      this.input.mouse.releasePointerLock();
       const centerX = this.cameras.main.width / 2;
       const centerY = this.cameras.main.height / 2;
       this.add.sprite(centerX, centerY, 'dead');
-      this.respawnButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'respawnButton')
-      this.respawnButton.setInteractive({ useHandCursor: true })
-      this.respawnButton.on('pointerdown', () => this.clickRespawnButton())
-      this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) - 400, 'quitButton')
+      this.spectateButton = this.add.sprite(1920 / 2 , (1080 / 2) + 200, 'spectateButton')
+      this.spectateButton.setInteractive({ useHandCursor: true })
+      this.spectateButton.on('pointerdown', () => this.clickspectateButton())
+        this.spectateButton.on('pointerover', () => this.spectateButton.setTint(0xf1c40f)) // Change color on mouse over
+        this.spectateButton.on('pointerout', () => this.spectateButton.clearTint()) // Reset color when mouse leaves
+      this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'quitButton')
       this.quitButton.setInteractive({useHandCursor: true})
       this.quitButton.on('pointerdown', () => this.clickQuitButton())
+        this.quitButton.on('pointerover', () => this.quitButton.setTint(0xf1c40f)); // Change color on mouse over
+        this.quitButton.on('pointerout', () => this.quitButton.clearTint()); // Reset color when mouse leaves
     }
 
     update () {
 
     }
-    clickRespawnButton() {
-        this.scene.restart('Multiplayer')
-        this.scene.start('Multiplayer')
+    clickspectateButton() {
+        this.scene.stop('Multiplayer')
+        this.scene.start('spectator', {multiplayerId: this.multiplayerId, mapSize: this.mapSize})
         this.scene.stop()
     }
 
     clickQuitButton() {
+        socket.emit('leaveRoom', this.multiplayerId)
         this.scene.start('mainMenu')
         this.scene.stop('multiplayer')
         this.scene.stop()
+        socket.removeAllListeners()
     }
 }
 

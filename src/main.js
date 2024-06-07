@@ -9,7 +9,10 @@ import Register from './register.js'
 import Login from './login.js'
 import Authenticate from './authenticate.js'
 import Respawn from './respawn.js'
-import marketplace from './marketplace.js'
+import Tutorial from './tutorial.js'
+import Lobby from './lobby.js'
+import Room from './room.js'
+import Spectator from './spectator.js'
 
 
 const config = {
@@ -31,9 +34,12 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     }
+    
 }
 
 const game = new Phaser.Game(config)
+
+
 
 game.scene.add('scene1', Scene1)
 game.scene.add('mainMenu', MainMenu)
@@ -45,6 +51,10 @@ game.scene.add('register', Register)
 game.scene.add('login', Login)
 game.scene.add('authenticate', Authenticate)
 game.scene.add('respawn', Respawn)
+game.scene.add('tutorial', Tutorial)
+game.scene.add('lobby', Lobby)
+game.scene.add('room', Room)
+game.scene.add('specator', Spectator)
 game.scene.start('scene1')
 //game.scene.start('Marketplace')
 //game.scene.start('Multiplayer')
