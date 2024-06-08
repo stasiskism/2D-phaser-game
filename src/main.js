@@ -13,6 +13,7 @@ import Tutorial from './tutorial.js'
 import Lobby from './lobby.js'
 import Room from './room.js'
 import Spectator from './spectator.js'
+import Marketplace from './marketplace.js'
 
 
 const config = {
@@ -45,7 +46,6 @@ game.scene.add('scene1', Scene1)
 game.scene.add('mainMenu', MainMenu)
 game.scene.add('Singleplayer', Singleplayer)
 game.scene.add('Multiplayer', Multiplayer)
-game.scene.add('Marketplace', marketplace)
 game.scene.add('Restart', Restart)
 game.scene.add('register', Register)
 game.scene.add('login', Login)
@@ -55,6 +55,7 @@ game.scene.add('tutorial', Tutorial)
 game.scene.add('lobby', Lobby)
 game.scene.add('room', Room)
 game.scene.add('specator', Spectator)
+game.scene.add('marketplace', Marketplace)
 game.scene.start('scene1')
 //game.scene.start('Marketplace')
 //game.scene.start('Multiplayer')

@@ -48,11 +48,12 @@ class MainMenu extends Phaser.Scene {
     const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32 });
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
-    
+
     this.add.sprite(430, 430, 'wasd').setScale(0.2);
     this.add.text(375, 350, 'Movement').setScale(1.5);
 
     this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3);
+    this.player.setCollideWorldBounds(true);
 
     this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1);
     this.fullscreenButton.setInteractive({ useHandCursor: true });
@@ -73,20 +74,6 @@ class MainMenu extends Phaser.Scene {
 
     this.objects.getChildren().forEach(object => {
       object.setScale(0.2);
-    });
-
-    const invisibleWalls = [
-      { x: 336, y: 959, width: 1250, height: 10 },
-      { x: 326, y: 315, width: 10, height: 650 },
-      { x: 1580, y: 315, width: 10, height: 650 },
-      { x: 326, y: 315, width: 1250, height: 10 },
-    ];
-
-    invisibleWalls.forEach(wall => {
-      const invisibleWall = this.physics.add.sprite(wall.x + wall.width / 2, wall.y + wall.height / 2, 'invisible-wall').setVisible(false).setSize(wall.width, wall.height);
-      invisibleWall.body.setAllowGravity(false);
-      invisibleWall.body.setImmovable(true);
-      this.physics.add.collider(this.player, invisibleWall);
     });
 
     this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
@@ -353,13 +340,15 @@ class MainMenu extends Phaser.Scene {
   }
 
   fetchInfo() {
-    fetch(`get-info?username=${encodeURIComponent(this.username)}`)
+    fetch(`/get-info?username=${encodeURIComponent(this.username)}`)
       .then(response => response.json())
       .then(data => {
-        this.coinsText.setText(`Coins: ${data.coins}`);
+        this.coins = data.coins
+        this.level = data.level
+        this.coinsText.setText(`Coins: ${this.coins}`);
         
         const experiencePercentage = data.xp / (data.level * 100);
-        this.updateProgressBar(experiencePercentage, data.level);
+        this.updateProgressBar(experiencePercentage, this.level);
       })
       .catch(error => console.error('Error fetching info:', error));
   }
@@ -417,6 +406,8 @@ class MainMenu extends Phaser.Scene {
         message = 'Press E to start multiplayer';
       } else if (object === this.tutorialObject) {
         message = 'Press E to start tutorial';
+      } else if (object == this.marketplaceObject) {
+        message = 'Press E to go to marketplace'
       }
 
       this.popupText.setPosition(object.x - 100, object.y - 50);
@@ -434,7 +425,7 @@ class MainMenu extends Phaser.Scene {
         this.scene.start('lobby');
         this.scene.stop();
       } else if (object === this.marketplaceObject) {
-        // Handle marketplace object interaction
+        this.scene.start('marketplace', {username: this.username})
       } else if (object === this.tutorialObject) {
         this.scene.start('tutorial');
         this.scene.stop();

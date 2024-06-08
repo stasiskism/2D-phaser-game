@@ -1,63 +1,38 @@
-
-
 class Marketplace extends Phaser.Scene {
-    constructor() {
-      super({ key: 'Marketplace' });
-      this.player = null;
-      this.eKey = null;
-      this.objects = null;
-      this.popupText = null;
-      this.map = null;
-    }
-  
-    preload() {
-      this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png');
-      this.load.image('WwalkUp2', 'assets/8-dir-chars/WwalkUp2.png');
-      this.load.image('WwalkUp3', 'assets/8-dir-chars/WwalkUp3.png');
-      this.load.image('WwalkRight1', 'assets/8-dir-chars/WwalkRight1.png');
-      this.load.image('WwalkRight2', 'assets/8-dir-chars/WwalkRight2.png');
-      this.load.image('WwalkRight3', 'assets/8-dir-chars/WwalkRight3.png');
-      this.load.image('WwalkUpRight1', 'assets/8-dir-chars/WwalkUpRight1.png');
-      this.load.image('WwalkUpRight2', 'assets/8-dir-chars/WwalkUpRight2.png');
-      this.load.image('WwalkUpRight3', 'assets/8-dir-chars/WwalkUpRight3.png');
-      this.load.image('WwalkDownRight1', 'assets/8-dir-chars/WwalkDownRight1.png');
-      this.load.image('WwalkDownRight2', 'assets/8-dir-chars/WwalkDownRight2.png');
-      this.load.image('WwalkDownRight3', 'assets/8-dir-chars/WwalkDownRight3.png');
-      this.load.image('WwalkDown1', 'assets/8-dir-chars/WwalkDown1.png');
-      this.load.image('WwalkDown2', 'assets/8-dir-chars/WwalkDown2.png');
-      this.load.image('WwalkDown3', 'assets/8-dir-chars/WwalkDown3.png');
-      this.load.image('WwalkDownLeft1', 'assets/8-dir-chars/WwalkDownLeft1.png');
-      this.load.image('WwalkDownLeft2', 'assets/8-dir-chars/WwalkDownLeft2.png');
-      this.load.image('WwalkDownLeft3', 'assets/8-dir-chars/WwalkDownLeft3.png');
-      this.load.image('WwalkLeft1', 'assets/8-dir-chars/WwalkLeft1.png');
-      this.load.image('WwalkLeft2', 'assets/8-dir-chars/WwalkLeft2.png');
-      this.load.image('WwalkLeft3', 'assets/8-dir-chars/WwalkLeft3.png');
-      this.load.image('WwalkUpLeft1', 'assets/8-dir-chars/WwalkUpLeft1.png');
-      this.load.image('WwalkUpLeft2', 'assets/8-dir-chars/WwalkUpLeft2.png');
-      this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png');
-      this.load.image('player', 'assets/player_23.png');
-      this.load.image('multiplayer', 'assets/multiplayer.png');
-      this.load.image('singleplayer', 'assets/singleplayer.png');
-      this.load.image('marketplace', 'assets/marketplace.png');
-      this.load.image("tiles1", 'assets/marketplace/TX Plant.png');
-      this.load.image("tiles2", 'assets/marketplace/TX Props.png');
-      this.load.image("tiles3", 'assets/marketplace/TX Struct.png');
-      this.load.image("tiles4", 'assets/marketplace/TX Tileset Grass.png');
-      this.load.image("tiles5", 'assets/marketplace/TX Tileset Stone Ground.png');
-      this.load.image("tiles6", 'assets/marketplace/TX Tileset Wall.png');
-      this.load.tilemapTiledJSON('map1', 'assets/marketplace/maps_marketplace.json');
-      this.load.image('gun1', 'assets/Weapons/tile001.png');
-      this.load.image('gun2', 'assets/Weapons/tile002.png');
-      this.load.image('gun3', 'assets/Weapons/tile003.png');
-      this.load.image('gun4', 'assets/Weapons/tile004.png');
-    }
-  
-    create() {
-  
-      let centerX = this.cameras.main.width / 2;
-      let centerY = this.cameras.main.height / 2;
-  
-    const map1 = this.make.tilemap({ key: "map1", tileWidth: 32, tileHeight: 32});
+  constructor() {
+    super({ key: 'marketplace' });
+    this.player = null;
+    this.objects = null;
+    this.popupText = null;
+    this.purchaseText = null;
+    this.map = null;
+    this.interactionCooldown = false;
+    this.currentObject = null;
+    this.isInteracting = false;
+    this.unlockedWeapons = [];
+    this.unlockedGrenades = [];
+  }
+
+  init(data) {
+    this.username = data.username;
+  }
+
+  preload() {
+  }
+
+  create() {
+    this.fetchInfo();
+    this.getUnlockedWeapons();
+    this.setupScene();
+    this.setupInputEvents();
+    this.setupProgressBar();
+  }
+
+  setupScene() {
+    this.centerX = this.cameras.main.width / 2;
+    this.centerY = this.cameras.main.height / 2;
+
+    const map1 = this.make.tilemap({ key: "map1", tileWidth: 32, tileHeight: 32 });
     const tileset4 = map1.addTilesetImage("TX Tileset Grass", "tiles4");
     const tileset1 = map1.addTilesetImage("TX Plant", "tiles1");
     const tileset3 = map1.addTilesetImage("TX Struct", "tiles3");
@@ -66,187 +41,358 @@ class Marketplace extends Phaser.Scene {
     const tileset2 = map1.addTilesetImage("TX Props", "tiles2");
     const layer1 = map1.createLayer("Tile Layer 1", [tileset1, tileset2, tileset3, tileset4, tileset5, tileset6], 0, 0);
 
+    this.player = this.physics.add.sprite(247, 517, 'WwalkDown2').setScale(3);
+    this.player.setCollideWorldBounds(true);
 
+    this.gunObjects = this.physics.add.staticGroup();
+    this.gun1Object = this.gunObjects.create(432, 400, 'Pistol');
+    this.gun2Object = this.gunObjects.create(785, 400, 'Shotgun');
+    this.gun3Object = this.gunObjects.create(1140, 400, 'AR');
+    this.gun4Object = this.gunObjects.create(1460, 400, 'Sniper');
 
+    this.gunObjects.getChildren().forEach(object => {
+      object.setScale(1.5);
+    });
 
+    this.grenadeObjects = this.physics.add.staticGroup()
+    this.grenade1Object = this.grenadeObjects.create(785, 650, 'smokeGrenade')
+    this.grenade2Object = this.grenadeObjects.create(1110, 650, 'grenade')
 
-      this.player = this.physics.add.sprite(247, 517, 'WwalkDown2').setScale(3); // 'WwalkDown2' is the idle frame
-  
-        this.anims.create({
-          key: 'WwalkUp',
-          frames: [
-              { key: 'WwalkUp1' },
-              { key: 'WwalkUp2' },
-              { key: 'WwalkUp3' }
-          ],
-          frameRate: 10,
-          repeat: -1
-      });
-  
-      this.anims.create({
-        key: 'WwalkUpRight',
-        frames: [
-            { key: 'WwalkUpRight1' },
-            { key: 'WwalkUpRight2' },
-            { key: 'WwalkUpRight3' }
-        ],
-        frameRate: 10,
-        repeat: -1
+    this.grenadeObjects.getChildren().forEach(object => {
+      object.setScale(3);
     });
-  
-      this.anims.create({
-        key: 'WwalkRight',
-        frames: [
-            { key: 'WwalkRight1' },
-            { key: 'WwalkRight2' },
-            { key: 'WwalkRight3' }
-        ],
-        frameRate: 10,
-        repeat: -1
+
+    this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.popupText.setVisible(false);
+
+    this.purchaseText = this.add.text(this.centerX, this.centerY, '', { fontFamily: 'Arial', fontSize: 64, color: '#ffffff', align: 'center' });
+    this.purchaseText.setOrigin(0.5, 0.5);
+    this.purchaseText.setVisible(false);
+
+    this.physics.add.overlap(this.player, this.gunObjects, this.interactWithObject, null, this);
+
+    this.physics.add.overlap(this.player, this.grenadeObjects, this.interactWithObject, null, this);
+
+    this.coinsText = this.add.text(1500, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+
+    this.exitButton = this.add.sprite(150, 80, 'exit').setScale(0.4)
+        this.exitButton.setInteractive({ useHandCursor: true })
+        this.exitButton.on('pointerdown', () => {
+            const exitPromptContainer = document.getElementById('exit-prompt-container');
+            const exitYesButton = document.getElementById('exitYesButton');
+            const exitNoButton = document.getElementById('exitNoButton');
+
+            const handleExitYes = () => {
+                this.scene.start('mainMenu');
+                this.scene.stop();
+                cleanupEventListeners();
+                hideExitPrompt();
+            };
+        
+            const handleExitNo = () => {
+                cleanupEventListeners();
+                hideExitPrompt();
+            };
+        
+            const cleanupEventListeners = () => {
+                exitYesButton.removeEventListener('click', handleExitYes);
+                exitNoButton.removeEventListener('click', handleExitNo);
+            };
+            const hideExitPrompt = () => {
+                overlay.style.display = 'none';
+                exitPromptContainer.style.display = 'none';
+            };
+            exitPromptContainer.style.display = 'block';
+            exitYesButton.addEventListener('click', handleExitYes);
+            exitNoButton.addEventListener('click', handleExitNo);
+        })
+  }
+
+  setupInputEvents() {
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    this.a = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+    this.s = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+    this.d = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+
+    socket.on('purchaseConfirmed', (data) => {
+      const { weaponId, grenadeId } = data;
+      if (weaponId) {
+        this.unlockedWeapons.push(weaponId);
+      } else if (grenadeId) {
+        this.unlockedGrenades.push(grenadeId);
+      }
+      this.showSuccessMessage();
     });
-  
-    this.anims.create({
-      key: 'WwalkDownRight',
-      frames: [
-          { key: 'WwalkDownRight1' },
-          { key: 'WwalkDownRight2' },
-          { key: 'WwalkDownRight3' }
-      ],
-      frameRate: 10,
-      repeat: -1
-    });
-  
-    this.anims.create({
-      key: 'WwalkDown',
-      frames: [
-          { key: 'WwalkDown1' },
-          { key: 'WwalkDown2' },
-          { key: 'WwalkDown3' }
-      ],
-      frameRate: 10,
-      repeat: -1
-    });
-  
-    this.anims.create({
-      key: 'WwalkDownLeft',
-      frames: [
-          { key: 'WwalkDownLeft1' },
-          { key: 'WwalkDownLeft2' },
-          { key: 'WwalkDownLeft3' }
-      ],
-      frameRate: 10,
-      repeat: -1
-    });
-  
-    this.anims.create({
-      key: 'WwalkLeft',
-      frames: [
-          { key: 'WwalkLeft1' },
-          { key: 'WwalkLeft2' },
-          { key: 'WwalkLeft3' }
-      ],
-      frameRate: 10,
-      repeat: -1
-    });
-  
-    this.anims.create({
-      key: 'WwalkUpLeft',
-      frames: [
-          { key: 'WwalkUpLeft1' },
-          { key: 'WwalkUpLeft2' },
-          { key: 'WwalkUpLeft3' }
-      ],
-      frameRate: 10,
-      repeat: -1
-    });
-  
-      
-  
-  
-  
-      this.objects = this.physics.add.staticGroup();
-      this.gun1Object = this.objects.create(432, 400, 'gun1');
-      this.gun2Object = this.objects.create(785, 400, 'gun2');
-      this.gun3Object = this.objects.create(1100, 400, 'gun3');
-    //   this.singleplayerObject = this.objects.create(720, 653, 'singleplayer');
-    //   this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer');
-    //   this.marketplaceObject = this.objects.create(1290, 653, 'marketplace');
-  
-      this.objects.getChildren().forEach(object => {
-        object.setScale(3);
-      });
-  
-      const invisibleWalls = [
-        { x: 2, y: 2, width: 1920, height: 10 }, // Wall 1
-        { x: 2, y: 2, width: 10, height: 1080 }, // Wall 2
-        { x: 1910, y: 10, width: 10, height: 1080 }, // Wall 3
-        { x: 10, y: 1060, width: 1920, height: 10 }, // Wall 4
-      ];
-  
-      invisibleWalls.forEach(wall => {
-        const invisibleWall = this.physics.add.sprite(wall.x + wall.width / 2, wall.y + wall.height / 2, 'invisible-wall').setVisible(false).setSize(wall.width, wall.height);
-        invisibleWall.body.setAllowGravity(false);
-        invisibleWall.body.setImmovable(true);
-        this.physics.add.collider(this.player, invisibleWall);
-      });
-  
-      // from 576x 872y to 1344x 872y
-  
-      this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-  
-      this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+  }
+
+  update() {
+    this.updatePlayerMovement();
+  }
+
+  updatePlayerMovement() {
+    if (!this.player) return;
+    const player = this.player;
+    let moving = false;
+    let direction = '';
+
+    if (this.w.isDown) {
+      moving = true;
+      direction += 'Up';
+      player.y -= 2;
+    } else if (this.s.isDown) {
+      moving = true;
+      direction += 'Down';
+      player.y += 2;
+    }
+
+    if (this.a.isDown) {
+      moving = true;
+      direction += 'Left';
+      player.x -= 2;
+    } else if (this.d.isDown) {
+      moving = true;
+      direction += 'Right';
+      player.x += 2;
+    }
+
+    if (moving) {
+      if (player && player.anims) {
+        const animationName = `Wwalk${direction}`;
+        player.anims.play(animationName, true);
+      }
+    } else {
+      if (player && player.anims) {
+        player.anims.play('idle', true);
+      }
+    }
+  }
+
+  interactWithObject(player, object) {
+    const distance = Phaser.Math.Distance.Between(player.x, player.y, object.x, object.y);
+    if (distance < 50 && !this.interactionCooldown) {
+      let requiredLevel = 0;
+      let itemName = '';
+      let cost = 0;
+      let weaponId = 0;
+      let grenadeId = 0;
+
+      if (object.texture.key === 'Pistol') {
+        weaponId = 1;
+        requiredLevel = 1;
+        itemName = 'Pistol';
+        cost = 1000;
+      } else if (object.texture.key === 'Shotgun') {
+        weaponId = 2;
+        requiredLevel = 2;
+        itemName = 'Shotgun';
+        cost = 2000;
+      } else if (object.texture.key === 'AR') {
+        weaponId = 3;
+        requiredLevel = 3;
+        itemName = 'AR';
+        cost = 3000;
+      } else if (object.texture.key === 'Sniper') {
+        weaponId = 4;
+        requiredLevel = 4;
+        itemName = 'Sniper';
+        cost = 4000;
+      } else if (object.texture.key === 'smokeGrenade') {
+        grenadeId = 1;
+        requiredLevel = 1;
+        itemName = 'Smoke Grenade';
+        cost = 2500;
+      } else if (object.texture.key === 'grenade') {
+        grenadeId = 2;
+        requiredLevel = 3;
+        itemName = 'Explosive Grenade';
+        cost = 4000;
+      }
+
+      this.currentObject = { weaponId, grenadeId, itemName, requiredLevel, cost };
+      this.isInteracting = true;
+
+      if (weaponId > 0 && this.unlockedWeapons.includes(weaponId)) {
+        this.popupText.setText(`${itemName} is already unlocked.`);
+      } else if (grenadeId > 0 && this.unlockedGrenades.includes(grenadeId)) {
+        this.popupText.setText(`${itemName} is already unlocked.`);
+      } else if (this.level >= requiredLevel) {
+        this.popupText.setText(`Unlock ${itemName} for ${cost} coins? Press E to buy.`);
+        if (this.eKey.isDown) {
+          this.showPurchasePrompt();
+        }
+      } else {
+        this.popupText.setText(`Level ${requiredLevel} required to unlock ${itemName}.`);
+      }
+
+      this.popupText.setPosition(player.x - 50, player.y - 50);
+      this.popupText.setVisible(true);
+    } else {
       this.popupText.setVisible(false);
-  
-      this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
+      this.currentObject = null;
+      this.isInteracting = false;
     }
-  
-    update() {
-  
-      console.log('Player Position:', this.player.x, this.player.y);
-  
-      const cursors = this.input.keyboard.createCursorKeys();
-      const wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-      const aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-      const sKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-      const dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-  
-      // Reset player velocity
-      this.player.setVelocity(0);
-  
-      // Horizontal movement
-      if (cursors.left.isDown || aKey.isDown) {
-          this.player.setVelocityX(-160);
-          this.player.anims.play('WwalkLeft', true);
-      } else if (cursors.right.isDown || dKey.isDown) {
-          this.player.setVelocityX(160);
-          this.player.anims.play('WwalkRight', true);
+  }
+
+
+  showPurchasePrompt() {
+    const promptContainer = document.getElementById('weapon-purchase-container');
+    promptContainer.style.display = 'block';
+
+    const yesButton = document.getElementById('purchaseYesButton');
+    const noButton = document.getElementById('purchaseNoButton');
+
+    const handleYesClick = () => {
+      this.buyItem();
+      promptContainer.style.display = 'none';
+      yesButton.removeEventListener('click', handleYesClick);
+      noButton.removeEventListener('click', handleNoClick);
+    };
+
+    const handleNoClick = () => {
+      promptContainer.style.display = 'none';
+      yesButton.removeEventListener('click', handleYesClick);
+      noButton.removeEventListener('click', handleNoClick);
+    };
+
+    yesButton.addEventListener('click', handleYesClick);
+    noButton.addEventListener('click', handleNoClick);
+  }
+
+  showSuccessMessage() {
+    const successContainer = document.getElementById('purchase-success-container');
+    successContainer.style.display = 'block';
+
+    const closeButton = document.getElementById('successCloseButton');
+    
+    const handleCloseClick = () => {
+      successContainer.style.display = 'none';
+      closeButton.removeEventListener('click', handleCloseClick);
+    };
+
+    closeButton.addEventListener('click', handleCloseClick);
+
+    this.time.addEvent({ delay: 2000, callback: () => {
+      if (successContainer.style.display !== 'none') {
+        successContainer.style.display = 'none';
+        closeButton.removeEventListener('click', handleCloseClick);
       }
-  
-      // Vertical movement
-      if (cursors.up.isDown || wKey.isDown) {
-          this.player.setVelocityY(-160);
-          this.player.anims.play('WwalkUp', true);
-      } else if (cursors.down.isDown || sKey.isDown) {
-          this.player.setVelocityY(160);
-          this.player.anims.play('WwalkDown', true);
-      }
-  
-      // Normalize diagonal movement
-      if ((cursors.up.isDown || wKey.isDown) && (cursors.left.isDown || aKey.isDown)) {
-          this.player.body.velocity.normalize().scale(160);
-          this.player.anims.play('WwalkUpLeft', true);
-      } else if ((cursors.up.isDown || wKey.isDown) && (cursors.right.isDown || dKey.isDown)) {
-          this.player.body.velocity.normalize().scale(160);
-          this.player.anims.play('WwalkUpRight', true);
-      } else if ((cursors.down.isDown || sKey.isDown) && (cursors.left.isDown || aKey.isDown)) {
-          this.player.body.velocity.normalize().scale(160);
-          this.player.anims.play('WwalkDownLeft', true);
-      } else if ((cursors.down.isDown || sKey.isDown) && (cursors.right.isDown || dKey.isDown)) {
-          this.player.body.velocity.normalize().scale(160);
-          this.player.anims.play('WwalkDownRight', true);
-      }
+    } });
+  }
+
+  buyItem() {
+    if (!this.isInteracting) return;
+    const { weaponId, grenadeId, itemName, requiredLevel, cost } = this.currentObject;
+
+    if (weaponId && this.unlockedWeapons.includes(weaponId)) {
+      this.popupText.setText(`${itemName} is already unlocked.`);
+      this.popupText.setVisible(true);
+      this.time.addEvent({ delay: 2000, callback: () => this.popupText.setVisible(false) });
+      return;
     }
-   }
-  
-  export default Marketplace;
-  
+
+    if (grenadeId && this.unlockedGrenades.includes(grenadeId)) {
+      this.popupText.setText(`${itemName} is already unlocked.`);
+      this.popupText.setVisible(true);
+      this.time.addEvent({ delay: 2000, callback: () => this.popupText.setVisible(false) });
+      return;
+    }
+
+    if (this.level < requiredLevel) {
+      this.popupText.setText(`Level ${requiredLevel} required to unlock ${itemName}.`);
+      this.popupText.setVisible(true);
+      this.time.addEvent({ delay: 2000, callback: () => this.popupText.setVisible(false) });
+      return;
+    }
+
+    if (this.coins >= cost) {
+      this.coins -= cost;
+      this.coinsText.setText(`Coins: ${this.coins}`);
+      if (weaponId) {
+        socket.emit('buyGun', { socket: socket.id, weaponId, cost });
+      } else if (grenadeId) {
+        socket.emit('buyGrenade', { socket: socket.id, grenadeId, cost });
+      }
+      this.showSuccessMessage();
+    } else {
+      this.purchaseText.setText(`Not enough coins to buy ${itemName}.`);
+      this.purchaseText.setStyle({ fontSize: '64px', fill: '#ff0000', align: 'center' });
+      this.purchaseText.setVisible(true);
+      this.time.addEvent({ delay: 2000, callback: () => this.purchaseText.setVisible(false) });
+    }
+
+    this.currentObject = null;
+    this.isInteracting = false;
+  }
+
+
+  setupProgressBar() {
+    this.barWidth = 200;
+    this.barHeight = 20;
+    this.barX = 1500;
+    this.barY = 70;
+
+    this.progressBarBackground = this.add.graphics();
+    this.progressBarBackground.fillStyle(0x000000, 1);
+    this.progressBarBackground.fillRect(this.barX, this.barY, this.barWidth, this.barHeight);
+
+    this.progressBar = this.add.graphics();
+
+    this.currentLevelText = this.add.text(this.barX - 80, this.barY - 2, 'Level ', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    });
+
+    this.nextLevelText = this.add.text(this.barX + this.barWidth + 10, this.barY - 2, 'Level ', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    });
+
+    this.percentageText = this.add.text(this.barX + this.barWidth / 2, this.barY - 2, '0%', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0);
+
+    this.updateProgressBar(0, 1); //default
+  }
+
+  updateProgressBar(percentage, level) {
+    this.progressBar.clear();
+    this.progressBar.fillStyle(0x00ff00, 1);
+    this.progressBar.fillRect(this.barX, this.barY, this.barWidth * percentage, this.barHeight);
+
+    this.currentLevelText.setText(`Level ${level}`);
+    this.nextLevelText.setText(`Level ${level + 1}`);
+    this.percentageText.setText(`${Math.round(percentage * 100)}%`);
+  }
+
+  fetchInfo() {
+    fetch(`/get-info?username=${encodeURIComponent(this.username)}`)
+      .then(response => response.json())
+      .then(data => {
+        this.coins = data.coins
+        this.level = data.level
+        this.coinsText.setText(`Coins: ${this.coins}`);
+        
+        const experiencePercentage = data.xp / (data.level * 100);
+        this.updateProgressBar(experiencePercentage, this.level);
+      })
+      .catch(error => console.error('Error fetching info:', error));
+  }
+
+  getUnlockedWeapons() {
+    fetch(`/get-weapons?username=${encodeURIComponent(this.username)}`)
+      .then(response => response.json())
+      .then(data => {
+        this.unlockedWeapons = data.weapons;
+        this.unlockedGrenades = data.grenades;
+      })
+      .catch(error => console.error('Error fetching available weapons:', error));
+  }
+}
+
+export default Marketplace;
