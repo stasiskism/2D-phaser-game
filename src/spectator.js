@@ -241,7 +241,7 @@ class Spectator extends Phaser.Scene {
             this.playerAmmo[id].destroy()
         }
 
-        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idle').setScale(4);
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idleDown').setScale(4);
         this.weapon[id] = this.animationKeys[playerData.weaponId].name;
         this.frontendWeapons[id] = this.physics.add.sprite(playerData.x, playerData.y, '' + this.weapon[id]).setScale(2);
 

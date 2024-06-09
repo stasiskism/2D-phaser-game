@@ -469,16 +469,27 @@ class Room extends Phaser.Scene {
         }
 
         if (moving) {
-            if (player && player.anims) {
-                const animationName = `Walk${direction}`;
-                player.anims.play(animationName, true);
-                socket.emit('playerAnimationChange', { playerId: socket.id, animation: animationName });
-            }
+            const animationName = `Walk${direction}`;
+            player.anims.play(animationName, true);
+            socket.emit('playerAnimationChange', { playerId: socket.id, animation: animationName });
+            this.lastDirection = direction;
         } else {
-            if (player && player.anims) {
-            player.anims.stop();
-            socket.emit('playerAnimationChange', { playerId: socket.id, animation: 'idle' });
+            let idleAnimationName;
+            if (this.lastDirection) {
+                if (this.lastDirection.includes('Up')) {
+                    idleAnimationName = 'IdleUp';
+                } else if (this.lastDirection.includes('Down')) {
+                    idleAnimationName = 'IdleDown';
+                } else if (this.lastDirection.includes('Left') || this.lastDirection.includes('Right')) {
+                    idleAnimationName = this.lastDirection.includes('Left') ? 'IdleLeft' : 'IdleRight';
+                } else {
+                    idleAnimationName = 'IdleDown';
+                }
+            } else {
+                idleAnimationName = 'IdleDown';
             }
+            player.anims.play(idleAnimationName, true);
+            socket.emit('playerAnimationChange', { playerId: socket.id, animation: idleAnimationName });
         }
     }
 

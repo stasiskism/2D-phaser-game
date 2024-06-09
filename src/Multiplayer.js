@@ -324,7 +324,7 @@ class Multiplayer extends Phaser.Scene {
             }
         }
 
-        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idle').setScale(5);
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idleDown').setScale(5);
         this.playerUsername[id] = this.add.text(playerData.x, playerData.y - 50, playerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
 
         const healthBarWidth = 100;
@@ -486,9 +486,24 @@ class Multiplayer extends Phaser.Scene {
             const animationName = `Walk${direction}`;
             player.anims.play(animationName, true);
             socket.emit('playerAnimationChange', { playerId: socket.id, animation: animationName });
+            this.lastDirection = direction;
         } else {
-            player.anims.stop();
-            socket.emit('playerAnimationChange', { playerId: socket.id, animation: 'idle' });
+            let idleAnimationName;
+            if (this.lastDirection) {
+                if (this.lastDirection.includes('Up')) {
+                    idleAnimationName = 'IdleUp';
+                } else if (this.lastDirection.includes('Down')) {
+                    idleAnimationName = 'IdleDown';
+                } else if (this.lastDirection.includes('Left') || this.lastDirection.includes('Right')) {
+                    idleAnimationName = this.lastDirection.includes('Left') ? 'IdleLeft' : 'IdleRight';
+                } else {
+                    idleAnimationName = 'IdleDown';
+                }
+            } else {
+                idleAnimationName = 'IdleDown';
+            }
+            player.anims.play(idleAnimationName, true);
+            socket.emit('playerAnimationChange', { playerId: socket.id, animation: idleAnimationName });
         }
 
         if (player && weapon) {

@@ -41,7 +41,7 @@ class Marketplace extends Phaser.Scene {
     const tileset2 = map1.addTilesetImage("TX Props", "tiles2");
     const layer1 = map1.createLayer("Tile Layer 1", [tileset1, tileset2, tileset3, tileset4, tileset5, tileset6], 0, 0);
 
-    this.player = this.physics.add.sprite(247, 517, 'idle').setScale(3);
+    this.player = this.physics.add.sprite(247, 517, 'idleDown').setScale(3);
     this.player.setCollideWorldBounds(true);
 
     this.gunObjects = this.physics.add.staticGroup();
@@ -158,15 +158,26 @@ class Marketplace extends Phaser.Scene {
     }
 
     if (moving) {
-      if (player && player.anims) {
-        const animationName = `Walk${direction}`;
-        player.anims.play(animationName, true);
-      }
+      const animationName = `Walk${direction}`;
+      player.anims.play(animationName, true);
+      this.lastDirection = direction;
     } else {
-      if (player && player.anims) {
-        player.anims.play('idle', true);
+      let idleAnimationName;
+      if (this.lastDirection) {
+          if (this.lastDirection.includes('Up')) {
+              idleAnimationName = 'IdleUp';
+          } else if (this.lastDirection.includes('Down')) {
+              idleAnimationName = 'IdleDown';
+          } else if (this.lastDirection.includes('Left') || this.lastDirection.includes('Right')) {
+              idleAnimationName = this.lastDirection.includes('Left') ? 'IdleLeft' : 'IdleRight';
+          } else {
+              idleAnimationName = 'IdleDown';
+          }
+      } else {
+          idleAnimationName = 'IdleDown';
       }
-    }
+      player.anims.play(idleAnimationName, true);
+   }
   }
 
   interactWithObject(player, object) {

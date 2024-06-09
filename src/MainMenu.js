@@ -52,7 +52,7 @@ class MainMenu extends Phaser.Scene {
     this.add.sprite(430, 430, 'wasd').setScale(0.2);
     this.add.text(375, 350, 'Movement').setScale(1.5);
 
-    this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3);
+    this.player = this.physics.add.sprite(864, 624, 'idleDown').setScale(3);
     this.player.setCollideWorldBounds(true);
 
     this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1);
@@ -384,16 +384,27 @@ class MainMenu extends Phaser.Scene {
     }
 
     if (moving) {
-      if (player && player.anims) {
-        const animationName = `Walk${direction}`;
-        player.anims.play(animationName, true);
-      }
+      const animationName = `Walk${direction}`;
+      player.anims.play(animationName, true);
+      this.lastDirection = direction;
     } else {
-      if (player && player.anims) {
-        player.anims.play('idle', true);
+      let idleAnimationName;
+      if (this.lastDirection) {
+          if (this.lastDirection.includes('Up')) {
+              idleAnimationName = 'IdleUp';
+          } else if (this.lastDirection.includes('Down')) {
+              idleAnimationName = 'IdleDown';
+          } else if (this.lastDirection.includes('Left') || this.lastDirection.includes('Right')) {
+              idleAnimationName = this.lastDirection.includes('Left') ? 'IdleLeft' : 'IdleRight';
+          } else {
+              idleAnimationName = 'IdleDown';
+          }
+      } else {
+          idleAnimationName = 'IdleDown';
       }
-    }
+      player.anims.play(idleAnimationName, true);
   }
+}
 
   interactWithObject(player, object) {
     const distance = Phaser.Math.Distance.Between(player.x, player.y, object.x, object.y);

@@ -25,7 +25,10 @@ class Scene1 extends Phaser.Scene {
         this.load.spritesheet('WalkUpRight', 'assets/Soldier/WALK/SMS_Soldier_WALK_UP_RIGHT_strip4.png', { frameWidth: 16, frameHeight: 24 });
         this.load.spritesheet('WalkDownRight', 'assets/Soldier/WALK/SMS_Soldier_WALK_DOWN_RIGHT_strip4.png', { frameWidth: 16, frameHeight: 24 });
         this.load.spritesheet('WalkDownLeft', 'assets/Soldier/WALK/SMS_Soldier_WALK_DOWN_LEFT_strip4.png', { frameWidth: 16, frameHeight: 24 });
-        this.load.spritesheet('idle', 'assets/Soldier/IDLE/SMS_Soldier_SOUTH_strip4.png', { frameWidth: 16, frameHeight: 24 });
+        this.load.spritesheet('idleUp', 'assets/SOLDIER/IDLE/SMS_Soldier_IDLE_NORTH_strip4.png', { frameWidth: 16, frameHeight: 24 });
+        this.load.spritesheet('idleLeft', 'assets/SOLDIER/IDLE/SMS_Soldier_IDLE_WEST_strip4.png', { frameWidth: 16, frameHeight: 24 });
+        this.load.spritesheet('idleRight', 'assets/SOLDIER/IDLE/SMS_Soldier_IDLE_EAST_strip4.png', { frameWidth: 16, frameHeight: 24 });
+        this.load.spritesheet('idleDown', 'assets/SOLDIER/IDLE/SMS_Soldier_SOUTH_strip4.png', { frameWidth: 16, frameHeight: 24 });
         // this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png')
         // this.load.image('WwalkUp2', 'assets/8-dir-chars/WwalkUp2.png')
         // this.load.image('WwalkUp3', 'assets/8-dir-chars/WwalkUp3.png')
@@ -133,7 +136,10 @@ class Scene1 extends Phaser.Scene {
             { key: 'WalkUpLeft', frames: { start: 0, end: 3 }, spriteSheet: 'WalkUpLeft' },
             { key: 'WalkDownRight', frames: { start: 0, end: 3 }, spriteSheet: 'WalkDownRight' },
             { key: 'WalkDownLeft', frames: { start: 0, end: 3 }, spriteSheet: 'WalkDownLeft' },
-            { key: 'idle', frames: { start: 0, end: 3 }, spriteSheet: 'idle' }
+            { key: 'IdleUp', frames: { start: 0, end: 3 }, spriteSheet: 'idleUp' },
+            { key: 'IdleLeft', frames: { start: 0, end: 3 }, spriteSheet: 'idleLeft' },
+            { key: 'IdleRight', frames: { start: 0, end: 3 }, spriteSheet: 'idleRight' },
+            { key: 'IdleDown', frames: { start: 0, end: 3 }, spriteSheet: 'idleDown' }
         ];
         animations.forEach(anim => this.anims.create({
             key: anim.key,
