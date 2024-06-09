@@ -50,9 +50,15 @@ class MainMenu extends Phaser.Scene {
     const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32 });
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
+
+    const textStyle = {
+      fontFamily: 'Arial',
+      fontSize: '30px',
+      align: 'center'
+  };
     
     this.add.sprite(430, 430, 'wasd').setScale(0.2);
-    this.add.text(375, 350, 'Movement').setScale(1.5);
+    this.add.text(365, 350, 'Movement', textStyle);
 
     this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3);
 
