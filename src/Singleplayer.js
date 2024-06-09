@@ -93,7 +93,7 @@ class Singleplayer extends Phaser.Scene {
   }
 
   setupPlayer() {
-    this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'WwalkDown2')
+    this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'idle')
     this.player.setScale(4);
     this.player.setCollideWorldBounds(true);
     this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'AR');
@@ -142,7 +142,7 @@ updatePlayerMovement() {
   }
 
   if (moving) {
-      const animationName = `Wwalk${direction}`;
+      const animationName = `Walk${direction}`;
       player.anims.play(animationName, true);
   } else {
       player.anims.stop();
@@ -248,7 +248,7 @@ fireBullet(pointer) {
         this.weapon.anims.play('singleShot', true);
         // Create a projectile
         const bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(2);
-        bullet.setRotation(direction);
+        bullet.setRotation(this.weapon.rotation);
 
         let x, y
         //Calculate X and y velocity of bullet to move it from shooter to target

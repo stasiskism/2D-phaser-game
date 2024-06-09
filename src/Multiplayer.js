@@ -324,7 +324,7 @@ class Multiplayer extends Phaser.Scene {
             }
         }
 
-        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(5);
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idle').setScale(5);
         this.playerUsername[id] = this.add.text(playerData.x, playerData.y - 50, playerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
 
         const healthBarWidth = 100;
@@ -483,7 +483,7 @@ class Multiplayer extends Phaser.Scene {
         }
 
         if (moving) {
-            const animationName = `Wwalk${direction}`;
+            const animationName = `Walk${direction}`;
             player.anims.play(animationName, true);
             socket.emit('playerAnimationChange', { playerId: socket.id, animation: animationName });
         } else {

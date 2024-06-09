@@ -41,7 +41,7 @@ class Marketplace extends Phaser.Scene {
     const tileset2 = map1.addTilesetImage("TX Props", "tiles2");
     const layer1 = map1.createLayer("Tile Layer 1", [tileset1, tileset2, tileset3, tileset4, tileset5, tileset6], 0, 0);
 
-    this.player = this.physics.add.sprite(247, 517, 'WwalkDown2').setScale(3);
+    this.player = this.physics.add.sprite(247, 517, 'idle').setScale(3);
     this.player.setCollideWorldBounds(true);
 
     this.gunObjects = this.physics.add.staticGroup();
@@ -159,7 +159,7 @@ class Marketplace extends Phaser.Scene {
 
     if (moving) {
       if (player && player.anims) {
-        const animationName = `Wwalk${direction}`;
+        const animationName = `Walk${direction}`;
         player.anims.play(animationName, true);
       }
     } else {

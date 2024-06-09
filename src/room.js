@@ -354,7 +354,7 @@ class Room extends Phaser.Scene {
         // }
         // Setup the respawned player
         //CIA ERRORAI KAI STARTINAM MULTIPLAYER GAME
-        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'WwalkDown2').setScale(4);
+        this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idle').setScale(4);
         this.playerUsername[id] = playerData.username
         if (id === socket.id) {
             this.weaponId = playerData.weaponId
@@ -369,7 +369,7 @@ class Room extends Phaser.Scene {
                 const otherPlayerData = this.frontendPlayers[playerId];
                 if (otherPlayerData) {
                     otherPlayerData.destroy()
-                    this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'WwalkDown2').setScale(4);
+                    this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'idle').setScale(4);
                 }
             }
         }
@@ -470,7 +470,7 @@ class Room extends Phaser.Scene {
 
         if (moving) {
             if (player && player.anims) {
-                const animationName = `Wwalk${direction}`;
+                const animationName = `Walk${direction}`;
                 player.anims.play(animationName, true);
                 socket.emit('playerAnimationChange', { playerId: socket.id, animation: animationName });
             }

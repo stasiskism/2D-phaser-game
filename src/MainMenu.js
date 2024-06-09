@@ -385,7 +385,7 @@ class MainMenu extends Phaser.Scene {
 
     if (moving) {
       if (player && player.anims) {
-        const animationName = `Wwalk${direction}`;
+        const animationName = `Walk${direction}`;
         player.anims.play(animationName, true);
       }
     } else {
@@ -427,7 +427,7 @@ class MainMenu extends Phaser.Scene {
       } else if (object === this.marketplaceObject) {
         this.scene.start('marketplace', {username: this.username})
       } else if (object === this.tutorialObject) {
-        this.scene.start('tutorial');
+        this.scene.start('tutorial', {username: this.username});
         this.scene.stop();
       }
     }
