@@ -35,16 +35,51 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             align: 'center'
         };
 
-        this.nameText = this.scene.add.text(-240, 20, 'OPTIONS', textStyle);
+        this.nameText = this.scene.add.text(-190, 20, 'OPTIONS', textStyle);
         this.nameText.setVisible(false);
 
-        this.volumeText = this.scene.add.text(-240, 50, 'Volume:', textStyle);
+        this.volumeText = this.scene.add.text(-200, 50, 'Volume:', textStyle);
         this.volumeText.setVisible(false);
 
-        this.volumeValue = this.scene.add.text(-240, 80, '100%', textStyle);
+        this.volumeValue = this.scene.add.text(-130, 50, '100%', textStyle);
         this.volumeValue.setVisible(false);
 
-        this.exitGameText = this.scene.add.text(-240, 130, 'Exit Game', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive();
+        this.sliderTrack = this.scene.add.rectangle(-200, 80, 120, 10, 0x888888);
+        this.sliderTrack.setOrigin(0, 0.5);
+        this.sliderTrack.setVisible(false);
+
+        this.sliderThumb = this.scene.add.rectangle(-200, 80, 10, 20, 0xffffff).setInteractive();
+        this.sliderThumb.setOrigin(0.5);
+        this.sliderThumb.setVisible(false);
+
+        this.scene.input.setDraggable(this.sliderThumb);
+
+        this.sliderThumb.on('drag', (pointer, dragX, dragY) => {
+            // Restrict the thumb within the track
+            dragX = Phaser.Math.Clamp(dragX, this.sliderTrack.x, this.sliderTrack.x + this.sliderTrack.width);
+            this.sliderThumb.x = dragX;
+
+            // Calculate the volume based on the thumb's position
+            const volume = (dragX - this.sliderTrack.x) / this.sliderTrack.width;
+            this.volumeValue.setText(`${Math.floor(volume * 100)}%`);
+            this.scene.sound.volume = volume;
+        });
+
+        // On/Off Checkbox
+        this.soundToggleText = this.scene.add.text(-200, 140, 'Sound Off:', textStyle);
+        this.soundToggleText.setVisible(false);
+
+        this.soundToggleBox = this.scene.add.rectangle(-100, 148, 20, 20, 0xffffff).setInteractive();
+        this.soundToggleBox.setStrokeStyle(2, 0x000000);
+        this.soundToggleBox.setVisible(false);
+
+        this.soundToggleBox.on('pointerdown', () => {
+            const isSoundOn = this.soundToggleBox.fillColor === 0x00ff00;
+            this.soundToggleBox.setFillStyle(isSoundOn ? 0xffffff : 0x00ff00);
+            this.scene.sound.mute = isSoundOn;
+        });
+
+        this.exitGameText = this.scene.add.text(-190, 260, 'Exit Game', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive();
         this.exitGameText.setVisible(false);
 
         this.exitGameText.on('pointerdown', () => {
@@ -80,21 +115,29 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             noButton.addEventListener('click', handleNoClick);
         });
 
-        this.add(this.nameText);
         this.add(this.shadow);
         this.add(this.panelBackground);
         this.add(this.volumeText);
+        this.add(this.nameText);
+        this.add(this.sliderTrack);
+        this.add(this.sliderThumb);
         this.add(this.volumeValue);
+        this.add(this.soundToggleText);
+        this.add(this.soundToggleBox);
         this.add(this.exitGameText);
     }
 
     toggleSettingsPanel() {
         const isVisible = this.panelBackground.visible;
-        this.nameText.setVisible(!isVisible);
         this.shadow.setVisible(!isVisible);
         this.panelBackground.setVisible(!isVisible);
         this.volumeText.setVisible(!isVisible);
+        this.nameText.setVisible(!isVisible);
+        this.sliderTrack.setVisible(!isVisible);
+        this.sliderThumb.setVisible(!isVisible);
         this.volumeValue.setVisible(!isVisible);
+        this.soundToggleText.setVisible(!isVisible);
+        this.soundToggleBox.setVisible(!isVisible);
         this.exitGameText.setVisible(!isVisible);
     }
 }
