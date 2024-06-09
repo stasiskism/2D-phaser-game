@@ -69,7 +69,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
         this.soundToggleBox.on('pointerdown', () => {
             const isSoundOn = this.soundToggleBox.fillColor === 0xffff00;
             this.soundToggleBox.setFillStyle(isSoundOn ? 0xffffff : 0xffff00);
-            this.scene.sound.mute = isSoundOn;
+            this.scene.sound.mute = !isSoundOn;
         });
 
         this.exitGameText = this.scene.add.text(-190, 160, 'Exit Game', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive();

@@ -103,7 +103,7 @@ class Scene1 extends Phaser.Scene {
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'vaizdas');
         this.setupAnimations()
 
-        this.music = this.sound.add('Music', { loop: true });
+        this.music = this.sound.add('Music', { loop: true, volume: 0.15 });
         this.music.play();
 
     }
