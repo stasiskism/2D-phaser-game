@@ -56,7 +56,7 @@ class MainMenu extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3);
 
-    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1);
+    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6);
     this.fullscreenButton.setInteractive({ useHandCursor: true });
     this.fullscreenButton.on('pointerdown', () => {
       document.getElementById('phaser-example');
@@ -98,59 +98,22 @@ class MainMenu extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
 
     this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
-      <div id="displayLeaderboard" style="position: absolute; padding: 8px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.5); color: white;">
-        <div style="margin-bottom: 8px">Leaderboard</div>
-        <div id="playerLabels"></div>
-      </div>
-    `);
+    <div id="displayLeaderboard" style="position: absolute; padding: 16px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.8); color: white; border: 2px solid #ffffff; border-radius: 15px;">
+      <div style="margin-bottom: 16px; text-align: center;">Leaderboard</div>
+      <div id="playerLabels"></div>
+    </div>
+  `);
 
-    this.leaderboard.setPosition(100, 100).setScrollFactor(0);
+    this.leaderboard.setPosition(50, 50).setScrollFactor(0);
     this.document = this.leaderboard.node.querySelector(`#playerLabels`);
 
-    this.logoutButton = this.add.sprite(100, 30, 'quitButton').setDepth(1).setScale(0.2);
-    this.logoutButton.setInteractive({ useHandCursor: true });
-    this.logoutButton.on('pointerdown', () => {
-      this.showLogout();
-    });
-
-    this.coinsText = this.add.text(1700, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
-    this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
+    this.coinsText = this.add.text(1650, 20, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.plusButton = this.add.sprite(1830, 30, 'plus').setScale(0.05).setInteractive({ useHandCursor: true });
     this.plusButton.on('pointerdown', () => {
       this.showCoinPurchaseOptions(this.username);
 
     });
   }
-
-  showLogout() {
-    const promptContainer = document.getElementById('prompt-container');
-    promptContainer.style.display = 'block';
-
-    const yesButton = document.getElementById('yesButton');
-    const noButton = document.getElementById('noButton');
-
-    const handleYesClick = () => {
-        socket.emit('logout');
-        socket.removeAllListeners();
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
-        this.scene.start('authenticate');
-        this.scene.stop();
-        promptContainer.style.display = 'none';
-        yesButton.removeEventListener('click', handleYesClick);
-        noButton.removeEventListener('click', handleNoClick);
-    };
-
-    const handleNoClick = () => {
-        promptContainer.style.display = 'none';
-        yesButton.removeEventListener('click', handleYesClick);
-        noButton.removeEventListener('click', handleNoClick);
-    };
-
-    yesButton.addEventListener('click', handleYesClick);
-    noButton.addEventListener('click', handleNoClick);
-}
 
 
   setupPaymentListener() {
