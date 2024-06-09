@@ -1,5 +1,7 @@
 /* global Phaser */
 
+import SettingsButtonWithPanel from './options.js'
+
 class Singleplayer extends Phaser.Scene {
 
   constructor() {

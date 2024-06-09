@@ -1,5 +1,7 @@
 /* global Phaser */
 
+import SettingsButtonWithPanel from './options.js'
+
 class Respawn extends Phaser.Scene {
     constructor() {
         super({ key: 'respawn'});

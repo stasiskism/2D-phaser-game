@@ -1,3 +1,5 @@
+import SettingsButtonWithPanel from './options.js'
+
 class Room extends Phaser.Scene {
     frontendPlayers = {};
     readyPlayers = {}

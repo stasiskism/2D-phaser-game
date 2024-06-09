@@ -1,3 +1,5 @@
+import SettingsButtonWithPanel from './options.js'
+
 class Lobby extends Phaser.Scene {
     createdSprites = {}
     searchBox;

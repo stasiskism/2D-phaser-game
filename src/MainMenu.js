@@ -1,3 +1,5 @@
+import SettingsButtonWithPanel from './options.js'
+
 class MainMenu extends Phaser.Scene {
   constructor() {
     super({ key: 'mainMenu' });

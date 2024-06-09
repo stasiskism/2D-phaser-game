@@ -1,4 +1,5 @@
 /* global Phaser, socket */
+import SettingsButtonWithPanel from './options.js'
 
 class Multiplayer extends Phaser.Scene {
     frontendPlayers = {}
