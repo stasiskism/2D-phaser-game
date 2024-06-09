@@ -133,7 +133,7 @@ class MainMenu extends Phaser.Scene {
 
     const coinPurchaseContainer = document.getElementById('coin-purchase-container');
     const coinOptions = document.getElementById('coin-options');
-    coinOptions.innerHTML = ''; // Clear previous options
+    coinOptions.innerHTML = '';
 
     options.forEach(option => {
       const optionButton = document.createElement('div');
@@ -148,7 +148,7 @@ class MainMenu extends Phaser.Scene {
           });
           const { clientSecret } = await response.json();
           this.showPaymentForm(clientSecret, option.amount);
-          coinPurchaseContainer.style.display = 'none'; // Hide the prompt after selection
+          coinPurchaseContainer.style.display = 'none';
         } catch (err) {
           console.error('Error creating payment intent:', err);
         }
@@ -210,7 +210,7 @@ class MainMenu extends Phaser.Scene {
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {},
-        redirect: 'if_required' // Avoids automatic redirect
+        redirect: 'if_required'
       });
 
       if (error) {
@@ -321,7 +321,6 @@ class MainMenu extends Phaser.Scene {
         this.scene.start('lobby');
         this.scene.stop();
       } else if (object === this.marketplaceObject) {
-        // Handle marketplace object interaction
       } else if (object === this.tutorialObject) {
         this.scene.start('tutorial');
         this.scene.stop();
