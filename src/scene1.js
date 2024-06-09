@@ -46,7 +46,7 @@ class Scene1 extends Phaser.Scene {
         this.load.image('mapas', 'assets/mapas.png')
         this.load.image('bullet', 'assets/bullet.png')
         this.load.image('crosshair', 'assets/crosshair008.png')
-        this.load.image('fullscreen', 'assets/full-screen.png')
+        this.load.image('fullscreen', 'assets/fullscreen.png')
         this.load.image('multiplayer', 'assets/multiplayer.png');
         this.load.image('singleplayer', 'assets/singleplayer.png');
         this.load.image('marketplace', 'assets/marketplace.png');
@@ -93,6 +93,7 @@ class Scene1 extends Phaser.Scene {
         this.load.audio('ShotgunSound', 'assets/sounds/shotgun.mp3')
         this.load.audio('grenadeSound', 'assets/sounds/grenade.mp3')
         this.load.image('settingsButton', 'assets/settings_button.png');
+        this.load.audio('Music', 'assets/sounds/Jeremy Blake - Powerup!  NO COPYRIGHT 8-bit Music.mp3');
     }
 
     create (data) {
@@ -101,6 +102,9 @@ class Scene1 extends Phaser.Scene {
 
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'vaizdas');
         this.setupAnimations()
+
+        this.music = this.sound.add('Music', { loop: true });
+        this.music.play();
 
     }
 
@@ -124,10 +128,10 @@ class Scene1 extends Phaser.Scene {
       }));
 
       this.anims.create({
-        key: 'enemiess', // Animation key
+        key: 'enemiess',
         frames: this.anims.generateFrameNumbers('enemiess', { start: 0, end: 7 /* total number of frames - 1 */ }),
-        frameRate: 30 /* frame rate */,
-        repeat: -1 // Repeat indefinitely
+        frameRate: 30
+        repeat: -1
     });
 
       }
