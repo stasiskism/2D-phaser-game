@@ -130,7 +130,7 @@ class Scene1 extends Phaser.Scene {
       this.anims.create({
         key: 'enemiess',
         frames: this.anims.generateFrameNumbers('enemiess', { start: 0, end: 7 /* total number of frames - 1 */ }),
-        frameRate: 30
+        frameRate: 30,
         repeat: -1
     });
 
