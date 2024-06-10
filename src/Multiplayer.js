@@ -1,3 +1,6 @@
+/* global Phaser, socket */
+import SettingsButtonWithPanel from './options.js'
+
 class Multiplayer extends Phaser.Scene {
     frontendPlayers = {}
     frontendWeapons = {}
@@ -49,6 +52,7 @@ class Multiplayer extends Phaser.Scene {
     create() {
         this.setupScene();
         this.setupInputEvents();
+        this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
         this.gunAnimation()
     }
 

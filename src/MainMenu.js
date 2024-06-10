@@ -1,3 +1,5 @@
+import SettingsButtonWithPanel from './options.js'
+
 class MainMenu extends Phaser.Scene {
   constructor() {
     super({ key: 'mainMenu' });
@@ -30,6 +32,7 @@ class MainMenu extends Phaser.Scene {
     this.setupInputEvents();
     this.fetchInfo();
     this.setupPaymentListener();
+    this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
     this.setupProgressBar();
   }
 
@@ -49,13 +52,19 @@ class MainMenu extends Phaser.Scene {
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
 
+    const textStyle = {
+      fontFamily: 'Arial',
+      fontSize: '30px',
+      align: 'center'
+  };
+    
     this.add.sprite(430, 430, 'wasd').setScale(0.2);
-    this.add.text(375, 350, 'Movement').setScale(1.5);
+    this.add.text(365, 350, 'Movement', textStyle);
 
     this.player = this.physics.add.sprite(864, 624, 'idleDown').setScale(3);
     this.player.setCollideWorldBounds(true);
 
-    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1);
+    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6);
     this.fullscreenButton.setInteractive({ useHandCursor: true });
     this.fullscreenButton.on('pointerdown', () => {
       document.getElementById('phaser-example');
@@ -83,23 +92,17 @@ class MainMenu extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
 
     this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
-      <div id="displayLeaderboard">
-        <div>Leaderboard</div>
-        <div id="playerLabels"></div>
-      </div>
-    `);
+    <div id="displayLeaderboard" style="position: absolute; padding: 16px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.8); color: white; border: 2px solid #ffffff; border-radius: 15px;">
+      <div style="margin-bottom: 16px; text-align: center;">Leaderboard</div>
+      <div id="playerLabels"></div>
+    </div>
+  `);
 
-    this.leaderboard.setPosition(100, 100).setScrollFactor(0);
+    this.leaderboard.setPosition(50, 50).setScrollFactor(0);
     this.document = this.leaderboard.node.querySelector(`#playerLabels`);
 
-    this.logoutButton = this.add.sprite(100, 30, 'quitButton').setDepth(1).setScale(0.2);
-    this.logoutButton.setInteractive({ useHandCursor: true });
-    this.logoutButton.on('pointerdown', () => {
-      this.showLogout();
-    });
-
-    this.coinsText = this.add.text(1500, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
-    this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
+    this.coinsText = this.add.text(1650, 20, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.plusButton = this.add.sprite(1830, 30, 'plus').setScale(0.05).setInteractive({ useHandCursor: true });
     this.plusButton.on('pointerdown', () => {
       this.showCoinPurchaseOptions(this.username);
     });
@@ -196,7 +199,7 @@ class MainMenu extends Phaser.Scene {
 
     const coinPurchaseContainer = document.getElementById('coin-purchase-container');
     const coinOptions = document.getElementById('coin-options');
-    coinOptions.innerHTML = ''; // Clear previous options
+    coinOptions.innerHTML = '';
 
     options.forEach(option => {
       const optionButton = document.createElement('div');
@@ -297,7 +300,7 @@ class MainMenu extends Phaser.Scene {
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {},
-        redirect: 'if_required' // Avoids automatic redirect
+        redirect: 'if_required'
       });
 
       if (error) {

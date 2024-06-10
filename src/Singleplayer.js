@@ -1,5 +1,7 @@
 /* global Phaser */
 
+import SettingsButtonWithPanel from './options.js'
+
 class Singleplayer extends Phaser.Scene {
 
   constructor() {
@@ -29,6 +31,7 @@ class Singleplayer extends Phaser.Scene {
     this.intervalID
     this.enemies = []
     this.bullets = []
+    this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
 
   }
 

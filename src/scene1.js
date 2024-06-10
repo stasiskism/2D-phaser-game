@@ -58,7 +58,7 @@ class Scene1 extends Phaser.Scene {
         this.load.image('mapas', 'assets/mapas.png')
         this.load.image('bullet', 'assets/bullet.png')
         this.load.image('crosshair', 'assets/crosshair008.png')
-        this.load.image('fullscreen', 'assets/full-screen.png')
+        this.load.image('fullscreen', 'assets/fullscreen.png')
         this.load.image('multiplayer', 'assets/multiplayer.png');
         this.load.image('singleplayer', 'assets/singleplayer.png');
         this.load.image('marketplace', 'assets/marketplace.png');
@@ -104,6 +104,8 @@ class Scene1 extends Phaser.Scene {
         this.load.audio('SniperSound', 'assets/sounds/sniper.mp3')
         this.load.audio('ShotgunSound', 'assets/sounds/shotgun.mp3')
         this.load.audio('grenadeSound', 'assets/sounds/grenade.mp3')
+        this.load.image('settingsButton', 'assets/settings_button.png');
+        this.load.audio('Music', 'assets/sounds/Jeremy Blake - Powerup!  NO COPYRIGHT 8-bit Music.mp3');
         this.load.image('create', 'assets/Room_Button.png');
         this.load.image('exit', 'assets/Exit_Button.png');
         this.load.image('plus', 'assets/Plus_Button.png');
@@ -123,6 +125,9 @@ class Scene1 extends Phaser.Scene {
 
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'vaizdas');
         this.setupAnimations()
+
+        this.music = this.sound.add('Music', { loop: true, volume: 0.15 });
+        this.music.play();
 
     }
 
@@ -148,10 +153,19 @@ class Scene1 extends Phaser.Scene {
             repeat: -1
         }));
 
+<<<<<<< src/scene1.js
+      this.anims.create({
+        key: 'enemiess',
+        frames: this.anims.generateFrameNumbers('enemiess', { start: 0, end: 7 /* total number of frames - 1 */ }),
+        frameRate: 30,
+        repeat: -1
+    });
+=======
         // this.createDiagonalAnimation('WalkUp', 'WalkRight', 'WalkUpRight');
         // this.createDiagonalAnimation('WalkUp', 'WalkLeft', 'WalkUpLeft');
         // this.createDiagonalAnimation('WalkDown', 'WalkRight', 'WalkDownRight');
         // this.createDiagonalAnimation('WalkDown', 'WalkLeft', 'WalkDownLeft');
+>>>>>>> src/scene1.js
 
         this.anims.create({
             key: 'enemiess',

@@ -1,3 +1,5 @@
+import SettingsButtonWithPanel from './options.js'
+
 class Lobby extends Phaser.Scene {
     createdSprites = {}
     searchBox;
@@ -15,6 +17,7 @@ class Lobby extends Phaser.Scene {
     }
 
     create() {
+        this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
         this.input.mouse.releasePointerLock();
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
