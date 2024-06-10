@@ -52,15 +52,12 @@ class MainMenu extends Phaser.Scene {
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
 
-<<<<<<< src/MainMenu.js
     const textStyle = {
       fontFamily: 'Arial',
       fontSize: '30px',
       align: 'center'
   };
     
-=======
->>>>>>> src/MainMenu.js
     this.add.sprite(430, 430, 'wasd').setScale(0.2);
     this.add.text(365, 350, 'Movement', textStyle);
 
@@ -95,43 +92,22 @@ class MainMenu extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
 
     this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
-<<<<<<< src/MainMenu.js
     <div id="displayLeaderboard" style="position: absolute; padding: 16px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.8); color: white; border: 2px solid #ffffff; border-radius: 15px;">
       <div style="margin-bottom: 16px; text-align: center;">Leaderboard</div>
       <div id="playerLabels"></div>
     </div>
   `);
-=======
-      <div id="displayLeaderboard">
-        <div>Leaderboard</div>
-        <div id="playerLabels"></div>
-      </div>
-    `);
->>>>>>> src/MainMenu.js
 
     this.leaderboard.setPosition(50, 50).setScrollFactor(0);
     this.document = this.leaderboard.node.querySelector(`#playerLabels`);
 
-<<<<<<< src/MainMenu.js
     this.coinsText = this.add.text(1650, 20, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
     this.plusButton = this.add.sprite(1830, 30, 'plus').setScale(0.05).setInteractive({ useHandCursor: true });
-=======
-    this.logoutButton = this.add.sprite(100, 30, 'quitButton').setDepth(1).setScale(0.2);
-    this.logoutButton.setInteractive({ useHandCursor: true });
-    this.logoutButton.on('pointerdown', () => {
-      this.showLogout();
-    });
-
-    this.coinsText = this.add.text(1500, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
-    this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
->>>>>>> src/MainMenu.js
     this.plusButton.on('pointerdown', () => {
       this.showCoinPurchaseOptions(this.username);
     });
   }
 
-<<<<<<< src/MainMenu.js
-=======
   setupProgressBar() {
     this.barWidth = 200;
     this.barHeight = 20;
@@ -205,7 +181,6 @@ class MainMenu extends Phaser.Scene {
     yesButton.addEventListener('click', handleYesClick);
     noButton.addEventListener('click', handleNoClick);
   }
->>>>>>> src/MainMenu.js
 
   setupPaymentListener() {
     window.addEventListener('payment-success', (event) => {
@@ -238,15 +213,10 @@ class MainMenu extends Phaser.Scene {
             body: JSON.stringify({ amount: option.amount, username })
           });
           const { clientSecret } = await response.json();
-<<<<<<< src/MainMenu.js
-          this.showPaymentForm(clientSecret, option.amount);
-          coinPurchaseContainer.style.display = 'none';
-=======
           const coins = option.amount;
           const cost = option.cost;
           this.showPaymentForm(clientSecret, coins, cost);
           coinPurchaseContainer.style.display = 'none'; // Hide the prompt after selection
->>>>>>> src/MainMenu.js
         } catch (err) {
           console.error('Error creating payment intent:', err);
         }
@@ -469,10 +439,7 @@ class MainMenu extends Phaser.Scene {
         this.scene.start('lobby');
         this.scene.stop();
       } else if (object === this.marketplaceObject) {
-<<<<<<< src/MainMenu.js
-=======
         this.scene.start('marketplace', {username: this.username})
->>>>>>> src/MainMenu.js
       } else if (object === this.tutorialObject) {
         this.scene.start('tutorial', {username: this.username});
         this.scene.stop();
