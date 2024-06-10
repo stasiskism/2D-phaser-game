@@ -94,7 +94,7 @@ class Tutorial extends Phaser.Scene {
         this.centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(this.centerX, this.centerY, 'mapas');
         this.crosshair = this.physics.add.sprite(this.centerX, this.centerY, 'crosshair').setCollideWorldBounds(true);
-        this.player = this.physics.add.sprite(this.centerX, this.centerY, 'WwalkDown2').setScale(4).setCollideWorldBounds(true).setDepth(1);
+        this.player = this.physics.add.sprite(this.centerX, this.centerY, 'idleDown').setScale(4).setCollideWorldBounds(true).setDepth(1);
         this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
         this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
         this.fullscreenButton.setInteractive({ useHandCursor: true })
@@ -113,7 +113,7 @@ class Tutorial extends Phaser.Scene {
         if (!pointer.leftButtonDown()) return;
 
         const projectile = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(2);
-        projectile.setRotation(direction);
+        projectile.setRotation(this.weapon.rotation);
 
         let x, y
         if (this.crosshair.y >= this.player.y)
@@ -185,10 +185,25 @@ class Tutorial extends Phaser.Scene {
         }
 
         if (moving) {
-            const animationName = `Wwalk${direction}`;
+            const animationName = `Walk${direction}`;
             player.anims.play(animationName, true);
+            this.lastDirection = direction;
         } else {
-            player.anims.stop();
+            let idleAnimationName;
+            if (this.lastDirection) {
+                if (this.lastDirection.includes('Up')) {
+                    idleAnimationName = 'IdleUp';
+                } else if (this.lastDirection.includes('Down')) {
+                    idleAnimationName = 'IdleDown';
+                } else if (this.lastDirection.includes('Left') || this.lastDirection.includes('Right')) {
+                    idleAnimationName = this.lastDirection.includes('Left') ? 'IdleLeft' : 'IdleRight';
+                } else {
+                    idleAnimationName = 'IdleDown';
+                }
+            } else {
+                idleAnimationName = 'IdleDown';
+            }
+            player.anims.play(idleAnimationName, true);
         }
 
         if (player && weapon) {

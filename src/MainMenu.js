@@ -12,27 +12,28 @@ class MainMenu extends Phaser.Scene {
     this.login = true;
     this.coinsText = null;
     this.plusButton = null;
+    this.progressBar = null;
+    this.progressBarBackground = null;
+    this.currentLevelText = null;
+    this.nextLevelText = null;
+    this.percentageText = null;
   }
 
   init(data) {
-    this.username = data.username
+    this.username = data.username;
   }
 
   preload() {
-    this.load.image('create', 'assets/Room_Button.png');
-    this.load.image('join', 'assets/join.png');
-    this.load.image('exit', 'assets/Exit_Button.png');
-    this.load.image('enemy', 'assets/enemy.png');
-    this.load.image('plus', 'assets/Plus_Button.png');
   }
 
   create() {
     this.fetchLeaderboardData();
     this.setupScene();
     this.setupInputEvents();
-    this.fetchCoins();
+    this.fetchInfo();
     this.setupPaymentListener();
     this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
+    this.setupProgressBar();
   }
 
   setupInputEvents() {
@@ -44,23 +45,27 @@ class MainMenu extends Phaser.Scene {
   }
 
   setupScene() {
-    let centerX = this.cameras.main.width / 2;
-    let centerY = this.cameras.main.height / 2;
+    this.centerX = this.cameras.main.width / 2;
+    this.centerY = this.cameras.main.height / 2;
 
     const map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32 });
     const tileset = map.addTilesetImage("asd", "tiles");
     const layer = map.createLayer("Tile Layer 1", tileset, 0, 0);
 
+<<<<<<< src/MainMenu.js
     const textStyle = {
       fontFamily: 'Arial',
       fontSize: '30px',
       align: 'center'
   };
     
+=======
+>>>>>>> src/MainMenu.js
     this.add.sprite(430, 430, 'wasd').setScale(0.2);
     this.add.text(365, 350, 'Movement', textStyle);
 
-    this.player = this.physics.add.sprite(864, 624, 'WwalkDown2').setScale(3);
+    this.player = this.physics.add.sprite(864, 624, 'idleDown').setScale(3);
+    this.player.setCollideWorldBounds(true);
 
     this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6);
     this.fullscreenButton.setInteractive({ useHandCursor: true });
@@ -83,20 +88,6 @@ class MainMenu extends Phaser.Scene {
       object.setScale(0.2);
     });
 
-    const invisibleWalls = [
-      { x: 336, y: 959, width: 1250, height: 10 },
-      { x: 326, y: 315, width: 10, height: 650 },
-      { x: 1580, y: 315, width: 10, height: 650 },
-      { x: 326, y: 315, width: 1250, height: 10 },
-    ];
-
-    invisibleWalls.forEach(wall => {
-      const invisibleWall = this.physics.add.sprite(wall.x + wall.width / 2, wall.y + wall.height / 2, 'invisible-wall').setVisible(false).setSize(wall.width, wall.height);
-      invisibleWall.body.setAllowGravity(false);
-      invisibleWall.body.setImmovable(true);
-      this.physics.add.collider(this.player, invisibleWall);
-    });
-
     this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
     this.popupText.setVisible(false);
@@ -104,37 +95,131 @@ class MainMenu extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.objects, this.interactWithObject, null, this);
 
     this.leaderboard = this.add.dom(-250, -250).createFromHTML(`
+<<<<<<< src/MainMenu.js
     <div id="displayLeaderboard" style="position: absolute; padding: 16px; font-size: 38px; user-select: none; background: rgba(0, 0, 0, 0.8); color: white; border: 2px solid #ffffff; border-radius: 15px;">
       <div style="margin-bottom: 16px; text-align: center;">Leaderboard</div>
       <div id="playerLabels"></div>
     </div>
   `);
+=======
+      <div id="displayLeaderboard">
+        <div>Leaderboard</div>
+        <div id="playerLabels"></div>
+      </div>
+    `);
+>>>>>>> src/MainMenu.js
 
     this.leaderboard.setPosition(50, 50).setScrollFactor(0);
     this.document = this.leaderboard.node.querySelector(`#playerLabels`);
 
+<<<<<<< src/MainMenu.js
     this.coinsText = this.add.text(1650, 20, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
     this.plusButton = this.add.sprite(1830, 30, 'plus').setScale(0.05).setInteractive({ useHandCursor: true });
+=======
+    this.logoutButton = this.add.sprite(100, 30, 'quitButton').setDepth(1).setScale(0.2);
+    this.logoutButton.setInteractive({ useHandCursor: true });
+    this.logoutButton.on('pointerdown', () => {
+      this.showLogout();
+    });
+
+    this.coinsText = this.add.text(1500, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.plusButton = this.add.sprite(1800, 30, 'plus').setScale(0.1).setInteractive({ useHandCursor: true });
+>>>>>>> src/MainMenu.js
     this.plusButton.on('pointerdown', () => {
       this.showCoinPurchaseOptions(this.username);
-
     });
   }
 
+<<<<<<< src/MainMenu.js
+=======
+  setupProgressBar() {
+    this.barWidth = 200;
+    this.barHeight = 20;
+    this.barX = 1500;
+    this.barY = 70;
+
+    this.progressBarBackground = this.add.graphics();
+    this.progressBarBackground.fillStyle(0x000000, 1);
+    this.progressBarBackground.fillRect(this.barX, this.barY, this.barWidth, this.barHeight);
+
+    this.progressBar = this.add.graphics();
+
+    this.currentLevelText = this.add.text(this.barX - 80, this.barY - 2, 'Level ', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    });
+
+    this.nextLevelText = this.add.text(this.barX + this.barWidth + 10, this.barY - 2, 'Level ', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    });
+
+    this.percentageText = this.add.text(this.barX + this.barWidth / 2, this.barY - 2, '0%', {
+      fontFamily: 'Arial',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0);
+
+    this.updateProgressBar(0, 1); //default
+  }
+
+  updateProgressBar(percentage, level) {
+    this.progressBar.clear();
+    this.progressBar.fillStyle(0x00ff00, 1);
+    this.progressBar.fillRect(this.barX, this.barY, this.barWidth * percentage, this.barHeight);
+
+    this.currentLevelText.setText(`Level ${level}`);
+    this.nextLevelText.setText(`Level ${level + 1}`);
+    this.percentageText.setText(`${Math.round(percentage * 100)}%`);
+  }
+
+  showLogout() {
+    const promptContainer = document.getElementById('prompt-container');
+    promptContainer.style.display = 'block';
+
+    const yesButton = document.getElementById('yesButton');
+    const noButton = document.getElementById('noButton');
+
+    const handleYesClick = () => {
+      socket.emit('logout');
+      socket.removeAllListeners();
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+      this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+      this.scene.start('authenticate');
+      this.scene.stop();
+      promptContainer.style.display = 'none';
+      yesButton.removeEventListener('click', handleYesClick);
+      noButton.removeEventListener('click', handleNoClick);
+    };
+
+    const handleNoClick = () => {
+      promptContainer.style.display = 'none';
+      yesButton.removeEventListener('click', handleYesClick);
+      noButton.removeEventListener('click', handleNoClick);
+    };
+
+    yesButton.addEventListener('click', handleYesClick);
+    noButton.addEventListener('click', handleNoClick);
+  }
+>>>>>>> src/MainMenu.js
 
   setupPaymentListener() {
     window.addEventListener('payment-success', (event) => {
       const { username, amount } = event.detail;
-      console.log('usernam', event.detail)
       this.handlePaymentSuccess(username, amount);
+      this.clearPaymentForm();
     });
   }
 
   showCoinPurchaseOptions(username) {
     const options = [
-      { label: '100 Coins - $1', amount: 100 },
-      { label: '500 Coins - $4', amount: 500 },
-      { label: '1000 Coins - $7', amount: 1000 },
+      { label: '100 Coins - €1', amount: 100, cost: 1 },
+      { label: '500 Coins - €4', amount: 500, cost: 4 },
+      { label: '1000 Coins - €7', amount: 1000, cost: 7 },
     ];
 
     const coinPurchaseContainer = document.getElementById('coin-purchase-container');
@@ -153,8 +238,15 @@ class MainMenu extends Phaser.Scene {
             body: JSON.stringify({ amount: option.amount, username })
           });
           const { clientSecret } = await response.json();
+<<<<<<< src/MainMenu.js
           this.showPaymentForm(clientSecret, option.amount);
           coinPurchaseContainer.style.display = 'none';
+=======
+          const coins = option.amount;
+          const cost = option.cost;
+          this.showPaymentForm(clientSecret, coins, cost);
+          coinPurchaseContainer.style.display = 'none'; // Hide the prompt after selection
+>>>>>>> src/MainMenu.js
         } catch (err) {
           console.error('Error creating payment intent:', err);
         }
@@ -170,13 +262,23 @@ class MainMenu extends Phaser.Scene {
     coinPurchaseContainer.style.display = 'block';
   }
 
+  showPaymentForm(clientSecret, coins, cost) {
+    // Clear any previous instances of the payment form
+    const existingForm = document.getElementById('payment-form');
+    if (existingForm) {
+      existingForm.remove();
+    }
 
-  showPaymentForm(clientSecret, amount) {
     const formHtml = `
       <div id="payment-form">
         <form id="payment-element-form">
-          <div id="payment-element"><!-- Stripe.js will insert the Payment Element here --></div>
-          <button id="submit-button">Pay</button>
+          <div id="coin-details" style="margin-bottom: 10px; font-size: 24px;">
+            <div>Coins: ${coins}</div>
+            <div>Cost: €${cost.toFixed(2)}</div>
+          </div>
+          <div id="payment-element"></div>
+          <button id="submit-button" class="prompt-button">Pay</button>
+          <button id="cancel-button" class="prompt-button" type="button">Cancel</button>
           <div id="error-message"></div>
         </form>
       </div>
@@ -184,7 +286,12 @@ class MainMenu extends Phaser.Scene {
     const paymentForm = this.add.dom(400, 300).createFromHTML(formHtml);
 
     this.time.delayedCall(100, () => {
-      this.setupStripeElements(clientSecret, amount);
+      this.setupStripeElements(clientSecret, coins);
+    });
+
+    const cancelButton = document.getElementById('cancel-button');
+    cancelButton.addEventListener('click', () => {
+      this.clearPaymentForm();
     });
   }
 
@@ -207,6 +314,13 @@ class MainMenu extends Phaser.Scene {
     };
     const elements = stripe.elements({ clientSecret, appearance });
     const paymentElement = elements.create('payment', options);
+
+    // Clear any child nodes in the payment element container
+    const paymentElementContainer = document.getElementById('payment-element');
+    while (paymentElementContainer.firstChild) {
+      paymentElementContainer.removeChild(paymentElementContainer.firstChild);
+    }
+
     paymentElement.mount('#payment-element');
 
     const form = document.getElementById('payment-element-form');
@@ -237,7 +351,6 @@ class MainMenu extends Phaser.Scene {
         body: JSON.stringify({ username, amount })
       });
       const data = await response.json();
-      console.log('data', data)
       if (data.success) {
         this.coinsText.setText(`Coins: ${data.coins}`);
       } else {
@@ -248,13 +361,29 @@ class MainMenu extends Phaser.Scene {
     }
   }
 
-  fetchCoins() {
-    fetch(`get-coins?username=${encodeURIComponent(this.username)}`)
+  clearPaymentForm() {
+    const paymentForm = document.getElementById('payment-form');
+    if (paymentForm) {
+      paymentForm.style.display = 'none';
+      const paymentElementForm = document.getElementById('payment-element-form');
+      if (paymentElementForm) {
+        paymentElementForm.reset();
+      }
+    }
+  }
+
+  fetchInfo() {
+    fetch(`/get-info?username=${encodeURIComponent(this.username)}`)
       .then(response => response.json())
       .then(data => {
-        this.coinsText.setText(`Coins: ${data.coins}`);
+        this.coins = data.coins
+        this.level = data.level
+        this.coinsText.setText(`Coins: ${this.coins}`);
+        
+        const experiencePercentage = data.xp / (data.level * 100);
+        this.updateProgressBar(experiencePercentage, this.level);
       })
-      .catch(error => console.error('Error fetching coins:', error));
+      .catch(error => console.error('Error fetching info:', error));
   }
 
   update() {
@@ -288,16 +417,27 @@ class MainMenu extends Phaser.Scene {
     }
 
     if (moving) {
-      if (player && player.anims) {
-        const animationName = `Wwalk${direction}`;
-        player.anims.play(animationName, true);
-      }
+      const animationName = `Walk${direction}`;
+      player.anims.play(animationName, true);
+      this.lastDirection = direction;
     } else {
-      if (player && player.anims) {
-        player.anims.play('idle', true);
+      let idleAnimationName;
+      if (this.lastDirection) {
+          if (this.lastDirection.includes('Up')) {
+              idleAnimationName = 'IdleUp';
+          } else if (this.lastDirection.includes('Down')) {
+              idleAnimationName = 'IdleDown';
+          } else if (this.lastDirection.includes('Left') || this.lastDirection.includes('Right')) {
+              idleAnimationName = this.lastDirection.includes('Left') ? 'IdleLeft' : 'IdleRight';
+          } else {
+              idleAnimationName = 'IdleDown';
+          }
+      } else {
+          idleAnimationName = 'IdleDown';
       }
-    }
+      player.anims.play(idleAnimationName, true);
   }
+}
 
   interactWithObject(player, object) {
     const distance = Phaser.Math.Distance.Between(player.x, player.y, object.x, object.y);
@@ -310,6 +450,8 @@ class MainMenu extends Phaser.Scene {
         message = 'Press E to start multiplayer';
       } else if (object === this.tutorialObject) {
         message = 'Press E to start tutorial';
+      } else if (object == this.marketplaceObject) {
+        message = 'Press E to go to marketplace'
       }
 
       this.popupText.setPosition(object.x - 100, object.y - 50);
@@ -327,8 +469,12 @@ class MainMenu extends Phaser.Scene {
         this.scene.start('lobby');
         this.scene.stop();
       } else if (object === this.marketplaceObject) {
+<<<<<<< src/MainMenu.js
+=======
+        this.scene.start('marketplace', {username: this.username})
+>>>>>>> src/MainMenu.js
       } else if (object === this.tutorialObject) {
-        this.scene.start('tutorial');
+        this.scene.start('tutorial', {username: this.username});
         this.scene.stop();
       }
     }

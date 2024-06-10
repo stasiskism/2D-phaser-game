@@ -39,6 +39,19 @@ form input[type="submit"] {
     color: #ffeb3b;
 }
 
+#displayLeaderboard {
+  position: absolute;
+  padding: 8px;
+  font-size: 38px;
+  user-select: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+}
+
+#displayLeaderboard > div {
+  margin-bottom: 8px;
+}
+
 .prompt {
     font-family: 'Arial';
     font-size: 24px;
@@ -64,7 +77,8 @@ form input[type="submit"] {
     cursor: pointer;
     display: inline-block;
     text-align: center;
-    border-radius: 3px;
+    border-radius: 5px;
+    border: none;
   }
   
   .prompt-button-yes {

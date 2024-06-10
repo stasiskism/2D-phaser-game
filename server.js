@@ -32,7 +32,7 @@ const sender = nodemailer.createTransport({
     port: 587,
     auth: {
         user: '2dcspbl@gmail.com',
-        pass: 'pakx kcqr lbmk jrrf'
+        pass: 'mawx rgdf puqs kkmd'
     }
 });
 
@@ -65,9 +65,25 @@ const token = {}
 
 app.post('/create-payment-intent', async (req, res) => {
   const { amount, username } = req.body;
+
+  let cost;
+  switch (amount) {
+    case 100:
+      cost = 100; // 1 EUR
+      break;
+    case 500:
+      cost = 400; // 4 EUR
+      break;
+    case 1000:
+      cost = 700; // 7 EUR
+      break;
+    default:
+      return res.status(400).json({ error: 'Invalid amount of coins' });
+  }
+
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100,
+      amount: cost,
       currency: 'eur',
       metadata: { integration_check: 'accept_a_payment', username: username }
     });
@@ -119,7 +135,7 @@ io.on('connection', (socket) => {
         sender.sendMail(mailOptions, async (error, info) => {
             if (error) {
                     const client = await sql.connect()
-                    await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error.detail, error])
+                    await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
                     console.error('Error sending email:', error);
                     client.release()
             } else {
@@ -682,6 +698,52 @@ io.on('connection', (socket) => {
         }
     })
 
+    socket.on('gunAnimation', (data) => {
+        const {multiplayerId, playerId, animation, weapon} = data
+        io.to(multiplayerId).emit('updateGunAnimation', playerId, animation, weapon)
+    })
+
+    socket.on('buyGun', async (data) => {
+        try {
+            const { socket, weaponId, cost } = data;
+            const username = playerUsername[socket];
+            const client = await sql.connect();
+            const result = await client.query('SELECT user_id FROM user_profile WHERE user_name = $1', [username]);
+            const userId = result.rows[0].user_id;
+            console.log('id', userId, weaponId, cost, username);
+            await client.query('INSERT INTO user_weapons (user_id, user_name, weapon_id) VALUES ($1, $2, $3)', [userId, username, weaponId]);
+            await client.query('UPDATE user_profile SET coins = coins - $1 WHERE user_name = $2', [cost, username]);
+            io.to(socket).emit('purchaseConfirmed', { weaponId });
+            client.release();
+        } catch(error) {
+            const client = await sql.connect();
+            console.error('Error buying weapon:', error);
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error]);
+            client.release();
+        }
+    });
+    
+    socket.on('buyGrenade', async (data) => {
+        try {
+            const { socket, grenadeId, cost } = data;
+            const username = playerUsername[socket];
+            const client = await sql.connect();
+            const result = await client.query('SELECT user_id FROM user_profile WHERE user_name = $1', [username]);
+            const userId = result.rows[0].user_id;
+            console.log('id', userId, grenadeId, cost, username);
+            await client.query('INSERT INTO user_grenades (user_id, user_name, grenade_id) VALUES ($1, $2, $3)', [userId, username, grenadeId]);
+            await client.query('UPDATE user_profile SET coins = coins - $1 WHERE user_name = $2', [cost, username]);
+            io.to(socket).emit('purchaseConfirmed', { grenadeId });
+            client.release();
+        } catch(error) {
+            const client = await sql.connect();
+            console.error('Error buying grenade:', error);
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error]);
+            client.release();
+        }
+    });
+    
+
 });
 
 function calculateReadyPlayers(readyPlayers) {
@@ -829,28 +891,51 @@ app.get('/leaderboard', async (req, res) => {
         res.json(data)
     }
     catch (error) {
+        const client = await sql.connect()
         console.error('Error fetching leaderboard data:', error);
-        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error]) //CLIENTAS NEDEFINED
+        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+        client.release()
         res.status(500).json({ error: 'Internal server error' });
     }
 })
 
 
-app.get('/get-coins', async (req, res) => {
+app.get('/get-info', async (req, res) => {
     try {
         const username = req.query.username
         const client = await sql.connect()
-        console.log('userNAME', username) //NEUPDATINA USERNAMU IR SOCKETU
-        const result = await client.query(`SELECT coins FROM user_profile WHERE user_name = $1;`, [username])
+        const result = await client.query(`SELECT coins, level, xp FROM user_profile WHERE user_name = $1;`, [username])
         const data = result.rows[0]
-        res.json({coins: data.coins})
+
+        res.json({coins: data.coins, level: data.level, xp: data.xp})
         client.release()
         
     }
     catch (error) {
+        const client = await sql.connect()
         console.error('Error fetching coins data:', error);
         await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
+        client.release()
         res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+app.get('/get-weapons', async (req, res) => {
+    try {
+        const username = req.query.username
+        const client = await sql.connect()
+        const resultWeapons = await client.query('SELECT weapon_id FROM user_weapons WHERE user_name = $1', [username])
+        const resultGrenades = await client.query('SELECT grenade_id FROM user_grenades WHERE user_name = $1', [username])
+        client.release();
+        const userWeapons = resultWeapons.rows.map(row => row.weapon_id);
+        const userGrenades = resultGrenades.rows.map(row => row.grenade_id);
+        res.json({weapons: userWeapons, grenades: userGrenades})
+    } catch (error) {
+        const client = await sql.connect()
+        console.error('Error fetching weapons:', error)
+        await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
+        res.status(500).json({ error: 'Failed to fetch weapons' });
+        client.release()
     }
 })
 

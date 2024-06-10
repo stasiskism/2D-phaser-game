@@ -96,7 +96,7 @@ class Singleplayer extends Phaser.Scene {
   }
 
   setupPlayer() {
-    this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'WwalkDown2')
+    this.player = this.physics.add.sprite(1920 / 2, 1080 /2, 'idleDown')
     this.player.setScale(4);
     this.player.setCollideWorldBounds(true);
     this.weapon = this.physics.add.sprite(this.player.x + 70, this.player.y, 'AR');
@@ -118,47 +118,62 @@ class Singleplayer extends Phaser.Scene {
   });
   }
 
-updatePlayerMovement() {
-  const player = this.player;
-  const weapon = this.weapon;
-  let moving = false;
-  let direction = '';
+  updatePlayerMovement() {
+    const player = this.player;
+    const weapon = this.weapon;
+    let moving = false;
+    let direction = '';
 
-  if (this.w.isDown) {
-      moving = true;
-      direction += 'Up';
-      player.y -= 2;
-  } else if (this.s.isDown) {
-      moving = true;
-      direction += 'Down';
-      player.y += 2;
-  }
+    if (this.w.isDown) {
+        moving = true;
+        direction += 'Up';
+        player.y -= 2;
+    } else if (this.s.isDown) {
+        moving = true;
+        direction += 'Down';
+        player.y += 2;
+    }
 
-  if (this.a.isDown) {
-      moving = true;
-      direction += 'Left';
-      player.x -= 2;
-  } else if (this.d.isDown) {
-      moving = true;
-      direction += 'Right';
-      player.x += 2;
-  }
+    if (this.a.isDown) {
+        moving = true;
+        direction += 'Left';
+        player.x -= 2;
+    } else if (this.d.isDown) {
+        moving = true;
+        direction += 'Right';
+        player.x += 2;
+    }
 
-  if (moving) {
-      const animationName = `Wwalk${direction}`;
+    if (moving) {
+      const animationName = `Walk${direction}`;
       player.anims.play(animationName, true);
-  } else {
-      player.anims.stop();
+      this.lastDirection = direction;
+    } else {
+      let idleAnimationName;
+      if (this.lastDirection) {
+          if (this.lastDirection.includes('Up')) {
+              idleAnimationName = 'IdleUp';
+          } else if (this.lastDirection.includes('Down')) {
+              idleAnimationName = 'IdleDown';
+          } else if (this.lastDirection.includes('Left') || this.lastDirection.includes('Right')) {
+              idleAnimationName = this.lastDirection.includes('Left') ? 'IdleLeft' : 'IdleRight';
+          } else {
+              idleAnimationName = 'IdleDown';
+          }
+      } else {
+          idleAnimationName = 'IdleDown';
+      }
+      player.anims.play(idleAnimationName, true);
   }
 
-  if (player && weapon) {
-      const angleToPointer = Phaser.Math.Angle.Between(player.x, player.y, this.crosshair.x, this.crosshair.y);
-      weapon.setRotation(angleToPointer);
-      const orbitDistance = 85;
-      const weaponX = player.x + Math.cos(angleToPointer) * orbitDistance;
-      const weaponY = player.y + Math.sin(angleToPointer) * orbitDistance;
-      weapon.setPosition(weaponX, weaponY);
-  }
+    if (player && weapon) {
+        const angleToPointer = Phaser.Math.Angle.Between(player.x, player.y, this.crosshair.x, this.crosshair.y);
+        weapon.setRotation(angleToPointer);
+        const orbitDistance = 85;
+        const weaponX = player.x + Math.cos(angleToPointer) * orbitDistance;
+        const weaponY = player.y + Math.sin(angleToPointer) * orbitDistance;
+        weapon.setPosition(weaponX, weaponY);
+    }
 }
 
 updateCameraPosition() {
@@ -251,7 +266,7 @@ fireBullet(pointer) {
         this.weapon.anims.play('singleShot', true);
         // Create a projectile
         const bullet = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(2);
-        bullet.setRotation(direction);
+        bullet.setRotation(this.weapon.rotation);
 
         let x, y
         //Calculate X and y velocity of bullet to move it from shooter to target
