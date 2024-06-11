@@ -1,9 +1,10 @@
 class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
-    constructor(scene, x, y) {
+    constructor(scene, x, y, roomId) {
         super(scene, x, y);
         this.scene = scene;
+        this.roomId = roomId;
 
-        this.button = scene.add.image(0, 0, 'settingsButton').setInteractive().setScale(0.1);
+        this.button = scene.add.image(0, 0, 'settingsButton').setInteractive({ useHandCursor: true }).setScale(0.1);
         this.add(this.button);
 
         this.button.on('pointerdown', () => {
@@ -40,11 +41,11 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
         this.volumeValue = this.scene.add.text(-130, 50, '100%', textStyle);
         this.volumeValue.setVisible(false);
 
-        this.sliderTrack = this.scene.add.rectangle(-200, 80, 120, 10, 0x888888); // Width and height adjusted
+        this.sliderTrack = this.scene.add.rectangle(-200, 80, 120, 10, 0x888888).setInteractive({ useHandCursor: true });
         this.sliderTrack.setOrigin(0, 0.5);
         this.sliderTrack.setVisible(false);
 
-        this.sliderThumb = this.scene.add.rectangle(-200, 80, 10, 20, 0xffffff).setInteractive(); // Width and height adjusted
+        this.sliderThumb = this.scene.add.rectangle(-200, 80, 10, 20, 0xffffff).setInteractive({ useHandCursor: true });
         this.sliderThumb.setOrigin(0.5);
         this.sliderThumb.setVisible(false);
 
@@ -62,7 +63,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
         this.soundToggleText = this.scene.add.text(-200, 100, 'Sound Off:', textStyle);
         this.soundToggleText.setVisible(false);
 
-        this.soundToggleBox = this.scene.add.rectangle(-100, 110, 20, 20, 0xffffff).setInteractive();
+        this.soundToggleBox = this.scene.add.rectangle(-100, 110, 20, 20, 0xffffff).setInteractive({ useHandCursor: true });
         this.soundToggleBox.setStrokeStyle(2, 0x000000);
         this.soundToggleBox.setVisible(false);
 
@@ -72,7 +73,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             this.scene.sound.mute = !isSoundOn;
         });
 
-        this.exitGameText = this.scene.add.text(-190, 160, 'Exit Game', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive();
+        this.exitGameText = this.scene.add.text(-190, 160, 'Exit Game', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive({ useHandCursor: true });
         this.exitGameText.setVisible(false);
 
         this.exitGameText.on('pointerdown', () => {
@@ -83,19 +84,18 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             const noButton = document.getElementById('noButton');
 
             const handleYesClick = () => {
-                console.log("Yes button clicked");
                 socket.emit('logout');
+                if (this.roomId) {
+                    socket.emit('leaveRoom')
+                }
                 socket.removeAllListeners();
-                console.log("Socket emitted logout and listeners removed");
 
                 this.scene.scene.start('authenticate');
                 this.scene.scene.stop();
-                console.log("Scene switched to authenticate and stopped");
 
                 promptContainer.style.display = 'none';
                 yesButton.removeEventListener('click', handleYesClick);
                 noButton.removeEventListener('click', handleNoClick);
-                console.log("Event listeners removed and prompt container hidden");
             };
 
             const handleNoClick = () => {
@@ -121,6 +121,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
 
     toggleSettingsPanel() {
         const isVisible = this.panelBackground.visible;
+        this.scene.events.emit('settingsPanelOpened');
         this.panelBackground.setVisible(!isVisible);
         this.volumeText.setVisible(!isVisible);
         this.nameText.setVisible(!isVisible);

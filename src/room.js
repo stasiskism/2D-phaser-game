@@ -40,8 +40,16 @@ class Room extends Phaser.Scene {
             fontSize: '32px',
             fill: '#ffffff'
         }).setOrigin(0.5).setScale(2);
-        this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
+        this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90, this.roomId);
+        this.events.on('settingsPanelOpened', this.onSettingsPanelOpened, this);
     }
+
+    onSettingsPanelOpened() {
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+      }
 
     setupInputEvents() {
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -150,7 +158,7 @@ class Room extends Phaser.Scene {
         this.add.text(350, 540, 'Smoke grenade').setScale(1.5)
         this.add.image(420, 680, 'left-click').setScale(0.2)
         this.add.text(385, 610, 'Shoot').setScale(1.5)
-        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6)
         this.fullscreenButton.setInteractive({ useHandCursor: true })
         this.fullscreenButton.on('pointerdown', () => {
             document.getElementById('phaser-example');

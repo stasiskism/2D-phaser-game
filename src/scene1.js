@@ -29,30 +29,6 @@ class Scene1 extends Phaser.Scene {
         this.load.spritesheet('idleLeft', 'assets/SOLDIER/IDLE/SMS_Soldier_IDLE_WEST_strip4.png', { frameWidth: 16, frameHeight: 24 });
         this.load.spritesheet('idleRight', 'assets/SOLDIER/IDLE/SMS_Soldier_IDLE_EAST_strip4.png', { frameWidth: 16, frameHeight: 24 });
         this.load.spritesheet('idleDown', 'assets/SOLDIER/IDLE/SMS_Soldier_SOUTH_strip4.png', { frameWidth: 16, frameHeight: 24 });
-        // this.load.image('WwalkUp1', 'assets/8-dir-chars/WwalkUp1.png')
-        // this.load.image('WwalkUp2', 'assets/8-dir-chars/WwalkUp2.png')
-        // this.load.image('WwalkUp3', 'assets/8-dir-chars/WwalkUp3.png')
-        // this.load.image('WwalkRight1', 'assets/8-dir-chars/WwalkRight1.png')
-        // this.load.image('WwalkRight2', 'assets/8-dir-chars/WwalkRight2.png')
-        // this.load.image('WwalkRight3', 'assets/8-dir-chars/WwalkRight3.png')
-        // this.load.image('WwalkUpRight1', 'assets/8-dir-chars/WwalkUpRight1.png')
-        // this.load.image('WwalkUpRight2', 'assets/8-dir-chars/WwalkUpRight2.png')
-        // this.load.image('WwalkUpRight3', 'assets/8-dir-chars/WwalkUpRight3.png')
-        // this.load.image('WwalkDownRight1', 'assets/8-dir-chars/WwalkDownRight1.png')
-        // this.load.image('WwalkDownRight2', 'assets/8-dir-chars/WwalkDownRight2.png')
-        // this.load.image('WwalkDownRight3', 'assets/8-dir-chars/WwalkDownRight3.png')
-        // this.load.image('WwalkDown1', 'assets/8-dir-chars/WwalkDown1.png')
-        // this.load.image('WwalkDown2', 'assets/8-dir-chars/WwalkDown2.png')
-        // this.load.image('WwalkDown3', 'assets/8-dir-chars/WwalkDown3.png')
-        // this.load.image('WwalkDownLeft1', 'assets/8-dir-chars/WwalkDownLeft1.png')
-        // this.load.image('WwalkDownLeft2', 'assets/8-dir-chars/WwalkDownLeft2.png')
-        // this.load.image('WwalkDownLeft3', 'assets/8-dir-chars/WwalkDownLeft3.png')
-        // this.load.image('WwalkLeft1', 'assets/8-dir-chars/WwalkLeft1.png')
-        // this.load.image('WwalkLeft2', 'assets/8-dir-chars/WwalkLeft2.png')
-        // this.load.image('WwalkLeft3', 'assets/8-dir-chars/WwalkLeft3.png')
-        // this.load.image('WwalkUpLeft1', 'assets/8-dir-chars/WwalkUpLeft1.png')
-        // this.load.image('WwalkUpLeft2', 'assets/8-dir-chars/WwalkUpLeft2.png')
-        // this.load.image('WwalkUpLeft3', 'assets/8-dir-chars/WwalkUpLeft3.png')
         this.load.image('dead', 'assets/Dead_Screen.png')
         this.load.image('restartButton', 'assets/Restart_Button.png')
         this.load.image('mapas', 'assets/mapas.png')
@@ -68,18 +44,15 @@ class Scene1 extends Phaser.Scene {
         this.load.image('AR', 'assets/V1.00/PNG/ar.png')
         this.load.spritesheet('shootAR', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[SINGLE_SHOT] Assault_rifle_V1.00.png', { frameWidth: 128, frameHeight: 48 });
         this.load.spritesheet('reloadAR', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[RELOAD] Assault_rifle_V1.00 - Reload.png', { frameWidth: 96, frameHeight: 64 });
-        this.load.spritesheet('emptyAR', 'assets/V1.00/Sprite-sheets/Assault_rifle_V1.00/WEAPON/[EMPTYING] Assault_rifle_V1.00.png', { frameWidth: 96, frameHeight: 64 });
         this.load.image('Pistol', 'assets/V1.00/PNG/pistol.png')
-        this.load.spritesheet('shootPistol', 'assets/v1.00/Sprite-sheets/Pistol_V1.00/Weapon/pistolShoot.png', {frameWidth: 28, frameHeight: 28})
-        this.load.spritesheet('reloadPistol', 'assets/v1.00/Sprite-sheets/Pistol_V1.00/Weapon/pistolReload.png', {frameWidth: 28, frameHeight: 28})
-        this.load.spritesheet('emptyPistol', 'assets/v1.00/Sprite-sheets/Pistol_V1.00/Weapon/pistolEmpty.png', {frameWidth: 28, frameHeight: 28})
+        this.load.spritesheet('shootPistol', 'assets/v1.00/Sprite-sheets/Pistol_V1.00/Weapon/fullpistolshooy.png', {frameWidth: 64, frameHeight: 28})
+        this.load.spritesheet('reloadPistol', 'assets/v1.00/Sprite-sheets/Pistol_V1.00/Weapon/pistolReload.png', {frameWidth: 80, frameHeight: 48})
         this.load.image('Shotgun', 'assets/V1.00/PNG/shotgun.png')
-        this.load.spritesheet('shootShotgun', 'assets/v1.00/Sprite-sheets/Shotgun_V1.00/Weapon/shootShotgun.png', {frameWidth: 32, frameHeight: 32})
-        this.load.spritesheet('reloadShotgun', 'assets/v1.00/Sprite-sheets/Shotgun_V1.00/Weapon/shotgunReload.png', {frameWidth: 32, frameHeight: 32})
-        this.load.spritesheet('emptyShotgun', 'assets/v1.00/Sprite-sheets/Shotgun_V1.00/Weapon/shotgunEmpty.png', {frameWidth: 32, frameHeight: 32})
+        this.load.spritesheet('shootShotgun', 'assets/v1.00/Sprite-sheets/Shotgun_V1.00/Weapon/shootShotgun.png', {frameWidth: 157, frameHeight: 29})
+        this.load.spritesheet('reloadShotgun', 'assets/v1.00/Sprite-sheets/Shotgun_V1.00/Weapon/shotgunReload.png', {frameWidth: 127, frameHeight: 32})
         this.load.image('Sniper', 'assets/V1.00/PNG/sniper.png')
-        this.load.spritesheet('shootSniper', 'assets/v1.00/Sprite-sheets/sniper/WEAPON/sniperShoot.png', {frameWidth: 128, frameHeight: 64})
-        this.load.spritesheet('reloadSniper', 'assets/v1.00/Sprite-sheets/sniper/WEAPON/sniperReload.png', {frameWidth: 96, frameHeight: 64})
+        this.load.spritesheet('shootSniper', 'assets/v1.00/Sprite-sheets/sniper/WEAPON/sniperShoot.png', {frameWidth: 128, frameHeight: 32})
+        this.load.spritesheet('reloadSniper', 'assets/v1.00/Sprite-sheets/sniper/WEAPON/sniperReload.png', {frameWidth: 128, frameHeight: 32})
         this.load.spritesheet('reloadSniperBullets', 'assets/v1.00/Sprite-sheets/sniper/FX/reloadSniper.png', {frameWidth: 96, frameHeight: 64})
         this.load.spritesheet('smoke', 'assets/smoke.png', { frameWidth: 32, frameHeight: 32, endFrame: 33 });
         this.load.spritesheet('explosion', 'assets/explosion.png', { frameWidth: 32, frameHeight: 32})
@@ -153,20 +126,6 @@ class Scene1 extends Phaser.Scene {
             repeat: -1
         }));
 
-<<<<<<< src/scene1.js
-      this.anims.create({
-        key: 'enemiess',
-        frames: this.anims.generateFrameNumbers('enemiess', { start: 0, end: 7 /* total number of frames - 1 */ }),
-        frameRate: 30,
-        repeat: -1
-    });
-=======
-        // this.createDiagonalAnimation('WalkUp', 'WalkRight', 'WalkUpRight');
-        // this.createDiagonalAnimation('WalkUp', 'WalkLeft', 'WalkUpLeft');
-        // this.createDiagonalAnimation('WalkDown', 'WalkRight', 'WalkDownRight');
-        // this.createDiagonalAnimation('WalkDown', 'WalkLeft', 'WalkDownLeft');
->>>>>>> src/scene1.js
-
         this.anims.create({
             key: 'enemiess',
             frames: this.anims.generateFrameNumbers('enemiess', { start: 0, end: 7 }),
@@ -174,17 +133,6 @@ class Scene1 extends Phaser.Scene {
             repeat: -1
         });
     }
-
-    createDiagonalAnimation(direction1, direction2, newKey) {
-        // Instead of blending frames, duplicate one of the animations for simplicity
-        this.anims.create({
-            key: newKey,
-            frames: this.anims.generateFrameNumbers(direction1, { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: -1
-        });
-    }
-    
 
     update (time) {
         if (time > 1000){

@@ -34,6 +34,14 @@ class MainMenu extends Phaser.Scene {
     this.setupPaymentListener();
     this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
     this.setupProgressBar();
+    this.events.on('settingsPanelOpened', this.onSettingsPanelOpened, this);
+  }
+
+  onSettingsPanelOpened() {
+    this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+    this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+    this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+    this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
   }
 
   setupInputEvents() {

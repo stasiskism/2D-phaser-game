@@ -16,10 +16,10 @@ class Multiplayer extends Phaser.Scene {
     empty = false
     gameStop = false
     animationKeys = {
-        1: { name: 'Pistol', start: 0, end: 11 },
-        2: { name: 'Shotgun', start: 0, end: 11 },
-        3: { name: 'AR', start: 0, end: 11 },
-        4: { name: 'Sniper', start: 0, end: 11 },
+        1: { name: 'Pistol', startShoot: 0, endShoot: 11, startReload: 0, endReload: 22 },
+        2: { name: 'Shotgun', startShoot: 0, endShoot: 13, startReload: 0, endReload: 13 },
+        3: { name: 'AR', startShoot: 0, endShoot: 15, startReload: 0, endReload: 15 },
+        4: { name: 'Sniper', startShoot: 0, endShoot: 43, startReload: 0, endReload: 27 },
     }
     grenades = {
         1: 'smokeGrenade',
@@ -53,38 +53,41 @@ class Multiplayer extends Phaser.Scene {
         this.setupScene();
         this.setupInputEvents();
         this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
-        this.gunAnimation()
     }
 
     gunAnimation() {
         for (const weaponId in this.animationKeys) {
             const weaponData = this.animationKeys[weaponId];
             const weapon = weaponData.name;
-            const start = weaponData.start;
-            const end = weaponData.end;
+            const startShoot = weaponData.startShoot;
+            const endShoot = weaponData.endShoot;
+            const startReload = weaponData.startReload;
+            const endReload = weaponData.endReload;
     
-            this.anims.create({
-                key: `singleShot_${weapon}`,
-                frames: this.anims.generateFrameNumbers(`shoot${weapon}`, { start, end }),
-                frameRate: 20,
-                repeat: 0 // Play once
-            });
+            const reloadTime = this.weaponDetails.reload;
+            const reloadFrames = endReload - startReload + 1;
+            const reloadFrameRate = reloadFrames / (reloadTime / 1000);
     
-            this.anims.create({
-                key: `reloads_${weapon}`,
-                frames: this.anims.generateFrameNumbers(`reload${weapon}`, { start, end }),
-                frameRate: 13,
-                repeat: 0 // Play once
-            });
+            if (!this.anims.exists(`singleShot_${weapon}`)) {
+                this.anims.create({
+                    key: `singleShot_${weapon}`,
+                    frames: this.anims.generateFrameNumbers(`shoot${weapon}`, { start: startShoot, end: endShoot }),
+                    frameRate: 60,
+                    repeat: 0
+                });
+            }
     
-            this.anims.create({
-                key: `emptying_${weapon}`,
-                frames: this.anims.generateFrameNumbers(`empty${weapon}`, { start, end }),
-                frameRate: 20,
-                repeat: 0 // Play once
-            });
+            if (!this.anims.exists(`reloads_${weapon}`)) {
+                this.anims.create({
+                    key: `reloads_${weapon}`,
+                    frames: this.anims.generateFrameNumbers(`reload${weapon}`, { start: startReload, end: endReload }),
+                    frameRate: reloadFrameRate,
+                    repeat: 0
+                });
+            }
         }
     }
+    
 
     setupScene() {
         const centerX = this.cameras.main.width / 2;
@@ -142,7 +145,7 @@ class Multiplayer extends Phaser.Scene {
             key: 'explosion_anim',
             frames: explosionFrames,
             frameRate: 30,
-            repeat: 0, // No repeat
+            repeat: 0,
         });
 
     }
@@ -289,7 +292,9 @@ class Multiplayer extends Phaser.Scene {
         socket.on('updateGunAnimation', (playerId, animation, weapon) => {
             if (this.frontendWeapons[playerId]) {
                 this.frontendWeapons[playerId].anims.play(`${animation}_${weapon}`, true);
-                this.sound.play(weapon + 'Sound', { volume: 0.5 });
+                if (animation == 'singleShot') {
+                    this.sound.play(weapon + 'Sound', { volume: 0.5 });
+                }
             }
         }) 
     }
@@ -342,7 +347,7 @@ class Multiplayer extends Phaser.Scene {
             this.playerAmmo = this.add.text(playerData.x, playerData.y + 750, '', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' });
             this.weaponDetails = { fire_rate: playerData.firerate, ammo: playerData.bullets, reload: playerData.reload, radius: playerData.radius };
             this.ammoFixed = playerData.bullets
-            // this.gunAnimation(this.animationKeys[playerData.weaponId]);
+            this.gunAnimation()
         }
 
         this.weapon[id] = this.animationKeys[playerData.weaponId].name;
@@ -683,6 +688,7 @@ class Multiplayer extends Phaser.Scene {
         const currentPlayerId = socket.id;
         players.forEach(playerId => {
             const currentPlayer = this.frontendPlayers[playerId];
+            if (!currentPlayer || !playerId) return
             const isVisible = visibilityState[currentPlayerId][playerId];
             currentPlayer.setVisible(isVisible);
             this.playerHealth[playerId].container.setVisible(isVisible);
