@@ -36,6 +36,7 @@ class Singleplayer extends Phaser.Scene {
   }
 
   gunAnimation(){
+    if (this.anims.exists('singleShot')) return
     this.anims.create({
         key: 'singleShot',
         frames: this.anims.generateFrameNumbers('shootAR', { start: 0, end: 15}),

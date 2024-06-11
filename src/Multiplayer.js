@@ -108,45 +108,48 @@ class Multiplayer extends Phaser.Scene {
         this.graphics.lineStyle(10, 0xff0000);
         this.graphics.strokeRect(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize);
 
-        const smoke = [
-            { key: 'smoke', frame: 1, duration: 200 },
-            { key: 'smoke', frame: 2, duration: 200 },
-            { key: 'smoke', frame: 4, duration: 200 },
-            { key: 'smoke', frame: 8, duration: 500 },
-            { key: 'smoke', frame: 12, duration: 500 },
-            { key: 'smoke', frame: 13, duration: 2000 },
-            { key: 'smoke', frame: 14, duration: 2000 },
-            { key: 'smoke', frame: 15, duration: 2000 },
-            { key: 'smoke', frame: 16, duration: 3000 },
-            { key: 'smoke', frame: 17, duration: 2000 },
-            { key: 'smoke', frame: 18, duration: 1000 },
-            { key: 'smoke', frame: 20, duration: 500 },
-            { key: 'smoke', frame: 22, duration: 500 },
-            { key: 'smoke', frame: 26, duration: 200 },
-            { key: 'smoke', frame: 30, duration: 200 },
-            { key: 'smoke', frame: 31, duration: 200 },
-        ];
+        if (!this.anims.exists('smokeExplode')) {
+            const smoke = [
+                { key: 'smoke', frame: 1, duration: 200 },
+                { key: 'smoke', frame: 2, duration: 200 },
+                { key: 'smoke', frame: 4, duration: 200 },
+                { key: 'smoke', frame: 8, duration: 500 },
+                { key: 'smoke', frame: 12, duration: 500 },
+                { key: 'smoke', frame: 13, duration: 2000 },
+                { key: 'smoke', frame: 14, duration: 2000 },
+                { key: 'smoke', frame: 15, duration: 2000 },
+                { key: 'smoke', frame: 16, duration: 3000 },
+                { key: 'smoke', frame: 17, duration: 2000 },
+                { key: 'smoke', frame: 18, duration: 1000 },
+                { key: 'smoke', frame: 20, duration: 500 },
+                { key: 'smoke', frame: 22, duration: 500 },
+                { key: 'smoke', frame: 26, duration: 200 },
+                { key: 'smoke', frame: 30, duration: 200 },
+                { key: 'smoke', frame: 31, duration: 200 },
+            ];
 
-        const config = {
-            key: 'smokeExplode',
-            frames: smoke,
-            frameRate: 20,
-            repeat: 0,
-        };
-
-        this.anims.create(config);
-
-        const explosionFrames = [];
-        for (let i = 3; i <= 21; i++) {
-            explosionFrames.push({ key: `explosion_${i}` });
+            const config = {
+                key: 'smokeExplode',
+                frames: smoke,
+                frameRate: 20,
+                repeat: 0,
+            };
+            this.anims.create(config);
         }
 
-        this.anims.create({
-            key: 'explosion_anim',
-            frames: explosionFrames,
-            frameRate: 30,
-            repeat: 0,
-        });
+        if (!this.anims.exists('explosion_anim')) {
+            const explosionFrames = [];
+            for (let i = 3; i <= 21; i++) {
+                explosionFrames.push({ key: `explosion_${i}` });
+            }
+
+            this.anims.create({
+                key: 'explosion_anim',
+                frames: explosionFrames,
+                frameRate: 30,
+                repeat: 0,
+            });
+        }
 
     }
 
@@ -232,6 +235,18 @@ class Multiplayer extends Phaser.Scene {
                 alivePlayers[id] = true;
             }
 
+            const alivePlayerCount = Object.keys(alivePlayers).length;
+            if (alivePlayerCount === 1) {
+                this.gameStop = true
+                const id = Object.keys(alivePlayers)[0]
+                this.gameWon(backendPlayers[id].username)
+                this.playerAmmo.destroy()
+                this.playerHealth[id].container.destroy()
+                this.playerUsername[id].destroy()
+                this.stopShooting()
+                socket.off('updatePlayers')
+            }
+
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {
                     this.removePlayer(id);
@@ -308,6 +323,7 @@ class Multiplayer extends Phaser.Scene {
         socket.emit('gunAnimation', {multiplayerId: this.multiplayerId, playerId: socket.id, animation: 'singleShot', weapon: this.weapon[socket.id]})
         this.shootingInterval = setInterval(() => {
             if (this.ammo === 0) return
+            if (!this.crosshair || !this.frontendPlayers[socket.id]) return
             const direction = Math.atan((this.crosshair.x - this.frontendPlayers[socket.id].x) / (this.crosshair.y - this.frontendPlayers[socket.id].y))
             this.sound.play(this.weapon[socket.id] + 'Sound', { volume: 0.5 })
             socket.emit('shoot', this.frontendPlayers[socket.id], this.crosshair, direction, this.multiplayerId);
@@ -686,15 +702,35 @@ class Multiplayer extends Phaser.Scene {
         }
 
         const currentPlayerId = socket.id;
+
+        if (!this.frontendPlayers || !visibilityState) {
+            return;
+        }
+
         players.forEach(playerId => {
             const currentPlayer = this.frontendPlayers[playerId];
-            if (!currentPlayer || !playerId) return
-            const isVisible = visibilityState[currentPlayerId][playerId];
+            if (!currentPlayer || !playerId) return;
+
+            const playerVisibilityState = visibilityState[currentPlayerId];
+            if (!playerVisibilityState) {
+                return;
+            }
+            const isVisible = playerVisibilityState[playerId];
             currentPlayer.setVisible(isVisible);
-            this.playerHealth[playerId].container.setVisible(isVisible);
-            this.playerUsername[playerId].setVisible(isVisible);
-            this.frontendWeapons[playerId].setVisible(isVisible);
+
+            if (this.playerHealth[playerId]) {
+                this.playerHealth[playerId].container.setVisible(isVisible);
+            }
+
+            if (this.playerUsername[playerId]) {
+                this.playerUsername[playerId].setVisible(isVisible);
+            }
+
+            if (this.frontendWeapons[playerId]) {
+                this.frontendWeapons[playerId].setVisible(isVisible);
+            }
         });
+
     }
 
     isInGrenade() {

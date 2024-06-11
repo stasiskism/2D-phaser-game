@@ -615,6 +615,11 @@ io.on('connection', (socket) => {
 
     socket.on('gameWon', async (multiplayerId, username) => {
         if (!multiplayerId || !username) return
+        const fallingObjectsIntervals = rooms[multiplayerId]?.fallingObjectsIntervals;
+        if (fallingObjectsIntervals) {
+            clearInterval(fallingObjectsIntervals.createInterval);
+            clearInterval(fallingObjectsIntervals.updateInterval);
+        }
         delete filterPlayersByMultiplayerId(multiplayerId)
         delete filterProjectilesByMultiplayerId(multiplayerId)
         const client = await sql.connect()
@@ -627,8 +632,13 @@ io.on('connection', (socket) => {
     socket.on('detect', (multiplayerId, playerId) => {
         let mapSize = 250
         let maxPlayers = null
-        if (rooms[multiplayerId].players.find(player => player.id === playerId)) {
-            maxPlayers = rooms[multiplayerId].maxPlayers * 250
+        if (rooms[multiplayerId] && Array.isArray(rooms[multiplayerId].players)) {
+            if (rooms[multiplayerId].players.find(player => player.id === playerId)) {
+                maxPlayers = rooms[multiplayerId].maxPlayers * 250;
+            }
+        } else {
+            console.error(`Room with ID ${multiplayerId} does not exist or has no players array.`);
+            return;
         }
 
         if (maxPlayers) {
@@ -791,7 +801,6 @@ function initFallingObjects(roomId) {
     let fallingObjects = {};
     let objectId = 0;
 
-    // Function to create new falling objects
     function createFallingObjects() {
         const numObjects = Math.floor(Math.random() * (8 - 2) + 2);
         for (let i = 0; i < numObjects; i++) {
@@ -802,7 +811,6 @@ function initFallingObjects(roomId) {
         }
     }
 
-    // Function to update the positions of falling objects
     function updateFallingObjects() {
         for (let id in fallingObjects) {
             if (fallingObjects.hasOwnProperty(id)) {
@@ -815,15 +823,14 @@ function initFallingObjects(roomId) {
         io.to(roomId).emit('updateFallingObjects', fallingObjects);
     }
 
-    // Create new objects immediately
     createFallingObjects();
 
-    // Set interval to create new objects at random intervals
-    setInterval(createFallingObjects, Math.floor(Math.random() * (5000 - 4000) + 4000));
+    const createInterval = setInterval(createFallingObjects, Math.floor(Math.random() * (5000 - 4000) + 4000));
+    const updateInterval = setInterval(updateFallingObjects, 15);
 
-    // Set interval to update the positions of falling objects continuously
-    setInterval(updateFallingObjects, 15); // Update at 60 FPS
+    return { createInterval, updateInterval };
 }
+
 
 function startGame(multiplayerId) {
     if (rooms[multiplayerId] && rooms[multiplayerId].players) {
@@ -868,7 +875,8 @@ function startGame(multiplayerId) {
             weaponId
         };
     });
-    initFallingObjects(multiplayerId)
+    const fallingObjectsIntervals = initFallingObjects(multiplayerId);
+    rooms[multiplayerId].fallingObjectsIntervals = fallingObjectsIntervals;
 }
 }
 
@@ -945,6 +953,7 @@ setInterval(async () => {
         backendProjectiles[id].y += backendProjectiles[id].velocity.y;
 
         let mapSize = 250;
+        let lastHit = ''
 
         for (const roomId in rooms) {
             const maxPlayers = rooms[roomId].maxPlayers;
@@ -973,13 +982,13 @@ setInterval(async () => {
             );
             if (distance < 30 && backendProjectiles[id].playerId !== playerId) {
                 const damage = weaponDetails[backendProjectiles[id].playerId].damage;
+                lastHit = backendPlayers[backendProjectiles[id].playerId].username
                 backendPlayers[playerId].health -= damage;
                 if (backendPlayers[playerId].health <= 0) {
                     if (backendPlayers[backendProjectiles[id].playerId]) {
                         const client = await sql.connect();
-                        if (!backendPlayers[backendProjectiles[id].playerId].username) return
                         await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
-                           backendPlayers[backendProjectiles[id].playerId].username
+                           lastHit
                         ]);
                         client.release();
                     }

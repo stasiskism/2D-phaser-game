@@ -121,6 +121,7 @@ class Lobby extends Phaser.Scene {
         this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
         this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
         this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.E);
     
         roomCodeButton.addEventListener('click', handleRoomCodeSubmit);
         roomCodeInput.addEventListener('keyup', handleEnterKey);

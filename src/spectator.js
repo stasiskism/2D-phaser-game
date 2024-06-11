@@ -159,13 +159,13 @@ class Spectator extends Phaser.Scene {
                 alivePlayers[id] = true;
             }
 
-            // const alivePlayerCount = Object.keys(alivePlayers).length;
-            // if (alivePlayerCount === 1) {
-            //     this.gameStop = true
-            //     const id = Object.keys(alivePlayers)[0]
-            //     this.gameWon(backendPlayers[id].username)
-            //     socket.off('updatePlayers')
-            // }
+            const alivePlayerCount = Object.keys(alivePlayers).length;
+            if (alivePlayerCount === 1) {
+                this.gameStop = true
+                const id = Object.keys(alivePlayers)[0]
+                this.gameWon(backendPlayers[id].username)
+                socket.off('updatePlayers')
+            }
 
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {

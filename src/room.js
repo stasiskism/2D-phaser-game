@@ -49,7 +49,8 @@ class Room extends Phaser.Scene {
         this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
         this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
         this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
-      }
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.E);
+    }
 
     setupInputEvents() {
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -210,8 +211,8 @@ class Room extends Phaser.Scene {
 
         this.readyButton = this.add.sprite(1920 / 2, (1080 / 2) - 300, 'ready')
         this.readyButton.setInteractive({useHandCursor: true})
-        this.readyButton.on('pointerover', () => this.readyButton.setTint(0xf1c40f)); // Change color on mouse over
-        this.readyButton.on('pointerout', () => this.readyButton.clearTint()); // Reset color when mouse leaves
+        this.readyButton.on('pointerover', () => this.readyButton.setTint(0xf1c40f));
+        this.readyButton.on('pointerout', () => this.readyButton.clearTint()); 
         this.readyButton.on('pointerdown', () => {
             let isReady = !this.readyPlayers[socket.id];
             this.readyPlayers[socket.id] = isReady
@@ -222,10 +223,10 @@ class Room extends Phaser.Scene {
 
         if (this.frontendPlayers[socket.id]) {
             const invisibleWalls = [
-                { x: 336, y: 959, width: 1250, height: 10 }, // Wall 1
-                { x: 326, y: 315, width: 10, height: 650 }, // Wall 2
-                { x: 1580, y: 315, width: 10, height: 650 }, // Wall 3
-                { x: 326, y: 315, width: 1250, height: 10 }, // Wall 4
+                { x: 336, y: 959, width: 1250, height: 10 },
+                { x: 326, y: 315, width: 10, height: 650 },
+                { x: 1580, y: 315, width: 10, height: 650 },
+                { x: 326, y: 315, width: 1250, height: 10 },
             ];
 
             invisibleWalls.forEach(wall => {
@@ -359,12 +360,6 @@ class Room extends Phaser.Scene {
     }
 
     setupPlayer(id, playerData) {
-        // Cleanup existing player sprites if they exist
-        // if (this.frontendPlayers[id]) {
-        //     this.frontendPlayers[id].destroy();
-        // }
-        // Setup the respawned player
-        //CIA ERRORAI KAI STARTINAM MULTIPLAYER GAME
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idle').setScale(4);
         this.playerUsername[id] = playerData.username
         if (id === socket.id) {
