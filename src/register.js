@@ -12,33 +12,17 @@ class Register extends Phaser.Scene {
     }
 
     create() {
-        const centerX = this.cameras.main.width / 2;
-        const centerY = this.cameras.main.height / 2;
-        this.vaizdasImage = this.add.sprite(centerX, centerY, 'background');
+        this.centerX = this.cameras.main.width / 2;
+        this.centerY = this.cameras.main.height / 2;
+        this.vaizdasImage = this.add.sprite(this.centerX, this.centerY, 'background');
 
-        const register = this.add.dom(centerX, centerY).createFromHTML(`
-            <style>
-                #register {
-                    background-color: rgba(255, 255, 255, 0.5);
-                    padding: 20px;
-                    border-radius: 5px;
-                    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
-                    text-align: center;
-                }
-                #register input[type="text"],
-                #register input[type="password"] {
-                    width: 80%;
-                    padding: 10px;
-                    margin: 10px auto;
-                    border-radius: 5px;
-                    border: 1px solid #ccc;
-                    display: block;
-                }
-            </style>
-
+        this.register = this.add.dom(this.centerX, this.centerY).createFromHTML(`
             <form id="register">
                 <div>
                     <input type="text" id="uname" placeholder="Username" name="username" class="forminput" required><br>
+                </div>
+                <div>
+                    <input type="text" id="email" placeholder="Email" name="email" class="forminput" required><br>
                 </div>
                 <div>
                     <input type="password" id="pswd" placeholder="Password" required><br>
@@ -47,46 +31,73 @@ class Register extends Phaser.Scene {
                     <input type="password" id="repeatpswd" placeholder="Confirm Password" required><br>
                 </div>
                 <div>
-                <input type="submit" value="Register account" style="width: 80%; padding: 10px; border-radius: 5px; border: none; color: white; background-color: #5C6BC0;">
+                    <input type="submit" value="Register account">
                 </div>
             </form>
-            <p style="color:white">Already have an account? <a href="#" id="login">Sign in</a></p>
+            <p style="color:white">Already have an account? <span class="link-like" id="login">Sign in</span></p>
+            <p style="color:white">Want to go back? <span class="link-like" id="back">Go back</span></p>
         `);
 
-        const password = register.getChildByID('pswd');
-        const confirmPassword = register.getChildByID('repeatpswd');
-        const login = register.getChildByID('login')
+        const password = this.register.getChildByID('pswd');
+        const confirmPassword = this.register.getChildByID('repeatpswd');
+        const login = this.register.getChildByID('login');
 
         password.addEventListener('change', () => this.checkPassword(password, confirmPassword));
         confirmPassword.addEventListener('keyup', () => this.checkPassword(password, confirmPassword));
         login.addEventListener('click', this.loadLogin.bind(this));
 
-        const registerForm = register.getChildByID('register')
+        this.register.getChildByID('back').addEventListener('click', () => {
+            this.scene.start('authenticate')
+            this.scene.stop()
+        })
+
+        const registerForm = this.register.getChildByID('register');
         registerForm.addEventListener('submit', (event) => {
-            event.preventDefault()
+            event.preventDefault();
 
-            const username = document.getElementById('uname').value
-            const password = document.getElementById('pswd').value
-            const repeatPassword = document.getElementById('repeatpswd').value
+            const emailPattern = /\S+@\S+\.\S+/
+            const username = document.getElementById('uname').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pswd').value;
+            const repeatPassword = document.getElementById('repeatpswd').value;
 
-            if (username.trim() === '' || password.trim() === '') {
-                alert('Please enter username and password')
+            if (username.trim() === '' || email.trim() === '' || password.trim() === '') {
+                alert('Please enter username, email, and password');
+                this.removeInputs();
                 return;
             }
 
-            //REIKIA PACHEKINT AR NERA TOKIO USERNAME JAU DATABASE
+            if (username.length > 20 || password.length > 20) {
+                alert('Password and username cannot exceed 20 characters');
+                this.removeInputs();
+                return;
+            }
+
+            if (!emailPattern.test(email)) {
+                alert('Please enter a valid email address');
+                this.removeInputs();
+                return;
+            }
+
             if (password !== repeatPassword) {
                 alert('Passwords do not match');
+                this.removeInputs();
                 return;
             }
-
-            this.sendData(username, password)
-
-        })
+            this.register.setVisible(false)
+            this.sendVerificationEmail(username, email, password);
+        });
     }
 
     update() {
 
+    }
+
+    removeInputs() {
+        document.getElementById('uname').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('pswd').value = '';
+        document.getElementById('repeatpswd').value = '';
     }
 
     checkPassword(password, confirmPassword) {
@@ -98,22 +109,64 @@ class Register extends Phaser.Scene {
     }
 
     loadLogin() {
-        this.scene.start('login')
-        this.scene.stop()
+        this.scene.start('login');
+        this.scene.stop();
     }
 
-    sendData(username, password) {
-        const data = {username, password}
-        socket.emit('register', data)
-        socket.on('registerResponse', (response) => {
+    sendVerificationEmail(username, email, password) {
+        socket.emit('sendVerificationEmail', email)
+        this.verificationForm = this.add.dom(this.centerX, this.centerY).createFromHTML(`
+            <form id="verification">
+                <div>
+                    <input type="text" id="verificationCode" placeholder="Verification Code" required><br>
+                </div>
+                <div>
+                    <input type="submit" value="Submit Verification Code">
+                </div>
+            </form>
+            <p style="color:white">Did not get an email? <span class="link-like" id="resendCode">Resend code</span></p>
+            <p style="color:white">Want to go back to registration form? <span class="link-like" id="back">Go back</span></p>
+        `);
+
+        this.verificationForm.getChildByID('resendCode').addEventListener('click', (event) => {
+            event.preventDefault()
+            socket.emit('sendVerificationEmail', email)
+        })
+
+        this.verificationForm.getChildByID('back').addEventListener('click', (event) => {
+            event.preventDefault()
+            this.removeInputs();
+            this.verificationForm.setVisible(false)
+            this.register.setVisible(true)
+        })
+
+        const verify = this.verificationForm.getChildByID('verification')
+        verify.addEventListener('submit', (event) => {
+            event.preventDefault()
+            const code = document.getElementById('verificationCode').value
+            if (code.trim() === '') {
+                alert('Please enter code')
+                document.getElementById('verificationCode').value = ''
+            }
+            this.verificationForm.setVisible(false)
+            this.sendData(username, email, password, code)
+        })
+    }
+
+    sendData(username, email, password, code) {
+        const data = { username, email, password, code };
+        socket.emit('register', data);
+        socket.once('registerResponse', (response) => {
             if (response.success) {
                 alert('Registration successful');
                 this.scene.start('login');
-                this.scene.stop()
+                this.scene.stop();
             } else {
-                alert('Registration failed');
+                alert('Registration failed: ' + response.error);
+                this.removeInputs()
+                this.verificationForm.setVisible(true)
             }
-        })
+        });
     }
 
 }

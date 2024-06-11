@@ -13,6 +13,7 @@ class Tutorial extends Phaser.Scene {
   
     init(data) {
         this.cameras.main.setBackgroundColor('#000000');
+        this.username = data.username
     }
 
     preload() {
@@ -21,10 +22,10 @@ class Tutorial extends Phaser.Scene {
 
     create() {
         this.setupScene();
-        this.setupAnimations();
-        this.setupPopupText('Hello, this is tutorial');
+        this.setupPopupText(`Hello, ${this.username} this is tutorial`);
         this.setupNextText();
         this.setupInputEvents();
+        this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
     }
     
     setupPopupText(text) {
@@ -50,9 +51,6 @@ class Tutorial extends Phaser.Scene {
                 this.crosshair.y += pointer.movementY;
             }
         });
-        // if (this.step === 2) {
-        //     this.input.on('pointerdown', this.shootProjectile, this);
-        // }
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.w = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -65,13 +63,10 @@ class Tutorial extends Phaser.Scene {
     }
 
     nextStep() {
-        // Increment step
         this.step++;
-        // Remove popup text
         this.popupText.destroy();
         this.nextText.destroy();
         this.input.keyboard.off('keydown-E', this.nextStep, this);
-        // Handle next step
         switch (this.step) {
             case 1:
                 this.setupPopupText('To move the player press W to go up, A to go left, D to go right and S to go down.\nGo to the yellow square.')
@@ -79,20 +74,15 @@ class Tutorial extends Phaser.Scene {
                 this.physics.add.existing(this.yellowRectangle);
                 break;
             case 2:
-                //GALIMA PRIDETI NICKNAME
                 this.setupPopupText('Good job, now you can have a weapon.\nIt can be fired with left mouse click.\nIt shoots in the direction of the crosshair.\nTry shooting the target.')
-                this.weapon = this.physics.add.sprite(this.player.x + 80, this.player.y, 'shotgun').setScale(3);
-                this.enemy = this.physics.add.sprite(100, 200, 'enemy').setScale(0.1);
+                this.weapon = this.physics.add.sprite(this.player.x + 80, this.player.y, 'AR').setScale(2);
+                this.enemy = this.physics.add.sprite(100, 200, 'enemiess').setScale(2);
                 this.input.on('pointerdown', this.shootProjectile, this);
                 break;
-            //case 3:
-                
-
-
             default:
                 this.setupPopupText('Congratulations! You have completed the tutorial! Good luck and have fun!')
                 setTimeout(() => {
-                    this.scene.start('mainMenu');
+                    this.scene.start('mainMenu', {username: this.username});
                     this.scene.stop()
                 }, 5000);
                 break;
@@ -104,7 +94,7 @@ class Tutorial extends Phaser.Scene {
         this.centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(this.centerX, this.centerY, 'mapas');
         this.crosshair = this.physics.add.sprite(this.centerX, this.centerY, 'crosshair').setCollideWorldBounds(true);
-        this.player = this.physics.add.sprite(this.centerX, this.centerY, 'WwalkDown2').setScale(4).setCollideWorldBounds(true).setDepth(1);
+        this.player = this.physics.add.sprite(this.centerX, this.centerY, 'idleDown').setScale(4).setCollideWorldBounds(true).setDepth(1);
         this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
         this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
         this.fullscreenButton.setInteractive({ useHandCursor: true })
@@ -118,36 +108,14 @@ class Tutorial extends Phaser.Scene {
         })
     }
 
-    setupAnimations() {
-        const animations = [
-            { key: 'WwalkUp', frames: ['WwalkUp1', 'WwalkUp2', 'WwalkUp3'] },
-            { key: 'WwalkRight', frames: ['WwalkRight1', 'WwalkRight2', 'WwalkRight3'] },
-            { key: 'WwalkUpRight', frames: ['WwalkUpRight1', 'WwalkUpRight2', 'WwalkUpRight3'] },
-            { key: 'WwalkDownRight', frames: ['WwalkDownRight1', 'WwalkDownRight2', 'WwalkDownRight3'] },
-            { key: 'WwalkDown', frames: ['WwalkDown1', 'WwalkDown2', 'WwalkDown3'] },
-            { key: 'WwalkDownLeft', frames: ['WwalkDownLeft1', 'WwalkDownLeft2', 'WwalkDownLeft3'] },
-            { key: 'WwalkLeft', frames: ['WwalkLeft1', 'WwalkLeft2', 'WwalkLeft3'] },
-            { key: 'WwalkUpLeft', frames: ['WwalkUpLeft1', 'WwalkUpLeft2', 'WwalkUpLeft3'] },
-            { key: 'idle', frames: ['WwalkDown2'] }
-        ];
-        animations.forEach(anim => this.anims.create({
-            key: anim.key,
-            frames: anim.frames.map(frame => ({ key: frame })),
-            frameRate: 10,
-            repeat: -1
-        }));
-    }
-
     shootProjectile(pointer) {
         const direction = Math.atan((this.crosshair.x - this.player.x) / (this.crosshair.y - this.player.y));
         if (!pointer.leftButtonDown()) return;
 
-        // Create a projectile
-        const projectile = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(4);
-        projectile.setRotation(direction);
+        const projectile = this.physics.add.sprite(this.player.x, this.player.y, 'bullet').setScale(2);
+        projectile.setRotation(this.weapon.rotation);
 
         let x, y
-        //Calculate X and y velocity of bullet to move it from shooter to target
         if (this.crosshair.y >= this.player.y)
         {
             x = 30 * Math.sin(direction);
@@ -158,11 +126,7 @@ class Tutorial extends Phaser.Scene {
             x = -30 * Math.sin(direction);
             y = -30 * Math.cos(direction);
         }
-
-        // Calculate velocity based on direction
         projectile.velocity = { x, y };
-
-        // Add the projectile to the list
         this.projectiles.push(projectile);
     }
 
@@ -221,10 +185,25 @@ class Tutorial extends Phaser.Scene {
         }
 
         if (moving) {
-            const animationName = `Wwalk${direction}`;
+            const animationName = `Walk${direction}`;
             player.anims.play(animationName, true);
+            this.lastDirection = direction;
         } else {
-            player.anims.stop();
+            let idleAnimationName;
+            if (this.lastDirection) {
+                if (this.lastDirection.includes('Up')) {
+                    idleAnimationName = 'IdleUp';
+                } else if (this.lastDirection.includes('Down')) {
+                    idleAnimationName = 'IdleDown';
+                } else if (this.lastDirection.includes('Left') || this.lastDirection.includes('Right')) {
+                    idleAnimationName = this.lastDirection.includes('Left') ? 'IdleLeft' : 'IdleRight';
+                } else {
+                    idleAnimationName = 'IdleDown';
+                }
+            } else {
+                idleAnimationName = 'IdleDown';
+            }
+            player.anims.play(idleAnimationName, true);
         }
 
         if (player && weapon) {

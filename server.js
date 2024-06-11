@@ -5,9 +5,11 @@ const {Server} = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {pingInterval: 2000, pingTimeout: 7000});
-
 const bodyParser = require('body-parser')
 const { Pool } = require('pg');
+const nodemailer = require('nodemailer')
+const crypto = require('crypto')
+const stripe = require('stripe')('sk_test_51PJtjWP7nzuSu7T74zo0oHgD8swBsZMkud51DKwRHzgza3bPnRcHppcxfiqIiLhU35brBlqe3gJgjEv3NkU31GWb00dKn9t344');
 
 app.use(express.static('src'));
 
@@ -25,6 +27,15 @@ const sql = new Pool({
     port: 8182
 })
 
+const sender = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    auth: {
+        user: '2dcspbl@gmail.com',
+        pass: 'mawx rgdf puqs kkmd'
+    }
+});
+
 sql.on('connect', () => {
     console.log('Connected to PostgreSQL database')
 });
@@ -33,26 +44,78 @@ sql.on('error', (err) => {
     console.error('Error connecting to PostgreSQL database:', err);
 });
 
-
-//SUKURTI USERIO PROFILIUS
-
-
 const backendPlayers = {}
 const backendProjectiles = {}
 let projectileId = 0
 let grenadeId = 0
 const playerUsername = {}
 const activeSessions = {}
+const weaponIds = {}
+const grenadeIds = {}
 const rooms = {}
 const readyPlayers = {}
 let countdownInterval
 const weaponDetails = {}
+const grenadeDetails = {}
 const reloadingStatus = {}
 const backendGrenades = {}
+const availableWeapons = []
+const availableGrenades = []
+const token = {}
 
+app.post('/create-payment-intent', async (req, res) => {
+  const { amount, username } = req.body;
 
+  let cost;
+  switch (amount) {
+    case 100:
+      cost = 100; // 1 EUR
+      break;
+    case 500:
+      cost = 400; // 4 EUR
+      break;
+    case 1000:
+      cost = 700; // 7 EUR
+      break;
+    default:
+      return res.status(400).json({ error: 'Invalid amount of coins' });
+  }
 
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: cost,
+      currency: 'eur',
+      metadata: { integration_check: 'accept_a_payment', username: username }
+    });
 
+    res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    console.error('Error creating Payment Intent:', error);
+    res.status(500).json({ error: 'Failed to create Payment Intent' });
+  }
+});
+
+app.post('/update-coins', async (req, res) => {
+    const { username, amount } = req.body;
+
+    try {
+        const client = await sql.connect();
+        console.log('amount', amount, username)
+        await client.query('UPDATE user_profile SET coins = coins + $1 WHERE user_name = $2', [amount, username]);
+
+        console.log(`Updating ${amount} coins for user ${username}`);
+        
+        const result = await client.query('SELECT coins FROM user_profile WHERE user_name = $1', [username]);
+        const data = result.rows[0];
+        console.log('cia', data)
+
+        res.json({ success: true, coins: data.coins });
+        client.release();
+    } catch (error) {
+        console.error('Error updating coins:', error);
+        res.status(500).json({ success: false, error: 'Failed to update coins' });
+    }
+});
 
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
@@ -61,59 +124,138 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
     }
 
+    socket.on('sendVerificationEmail', (email) => {
+        token[socket.id] = crypto.randomBytes(6).toString('hex')
+        const mailOptions = {
+            from: '2dcspbl@gmail.com',
+            to: email,
+            subject: '2DCS Verification',
+            text: `Your verification code is: ${token[socket.id]}`
+        }
+        sender.sendMail(mailOptions, async (error, info) => {
+            if (error) {
+                    const client = await sql.connect()
+                    await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
+                    console.error('Error sending email:', error);
+                    client.release()
+            } else {
+                console.log('email sent', info.response)
+            }
+        })
+    })
+
     socket.on('register', async (data) => {
-        const { username, password } = data;
+        const { username, email, password, code } = data;
+        if (username === '', email === '', password === '', code === '') {
+            socket.emit('registerResponse', { success: false, error: 'Provided blank input' });
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1, )', ['Blank input while registering.'])
+            return;
+        }
+
+        if (username.length > 20 || password.length > 20) {
+            socket.emit('registerResponse', { success: false, error: 'Username and password must be 20 characters or less.' });
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Username and password must be 20 characters or less.'])
+            return;
+        }
+
+        if (code !== token[socket.id]) {
+            socket.emit('registerResponse', { success: false, error: 'Verification code is wrong.' });
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Verification code is wrong.'])
+            return;
+        }
         try {
             const client = await sql.connect();
             const encryptedPassword = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [password]);
             const hashedPassword = encryptedPassword.rows[0].encrypted_password;
-            const values = [username, hashedPassword];
-            const result = await client.query('INSERT INTO user_authentication (user_name, user_password) VALUES ($1, $2) RETURNING user_id', values);
+            const values = [username, hashedPassword, email];
+            const result = await client.query('INSERT INTO user_authentication (user_name, user_password, email) VALUES ($1, $2, $3) RETURNING user_id', values);
             const id = result.rows[0].user_id;
             await client.query('INSERT INTO user_profile (user_id, user_name) VALUES ($1, $2)', [id, username]);
+            await client.query('INSERT INTO user_weapons (user_id, user_name) VALUES ($1, $2)', [id, username])
+            await client.query('INSERT INTO user_grenades (user_id, user_name) VALUES ($1, $2)', [id, username])
             client.release();
             socket.emit('registerResponse', { success: true });
         } catch (error) {
             console.error('Error inserting data into database:', error);
-            socket.emit('registerResponse', { success: false });
+            socket.emit('registerResponse', { success: false, error: error.detail});
         }
     })
 
     socket.on('login', async (data) => {
         const {username, password} = data
+        let weaponId
         try {
             const client = await sql.connect()
             const result = await client.query(`SELECT user_id, first_login from user_authentication WHERE user_name = $1 and user_password = crypt($2, user_password);`, [username, password])
             if (result.rows.length === 0 || activeSessions[username]) {
-                socket.emit('loginResponse', { success: false });
+                socket.emit('loginResponse', { success: false, error: 'Wrong username or password.' });
+                await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Wrong username or password.'])
             } else {
                 const firstLogin = result.rows[0].first_login
                 if (firstLogin) {
-                    await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1;', [username]);
+                    weaponResult = await client.query('SELECT weapon from user_profile WHERE user_name = $1', [username])
+                    weaponId = weaponResult.rows[0].weapon
+                    grenadeResult = await client.query('SELECT grenade from user_profile WHERE user_name = $1', [username])
+                    grenadeId = grenadeResult.rows[0].grenade
+                    await client.query('UPDATE user_authentication SET first_login = FALSE WHERE user_name = $1', [username]);
                     socket.emit('loginResponse', { success: true, firstLogin });
                 }
                 else {
-                // Authentication successful
+                weaponResult = await client.query('SELECT weapon from user_profile WHERE user_name = $1', [username])
+                weaponId = weaponResult.rows[0].weapon
+                grenadeResult = await client.query('SELECT grenade from user_profile WHERE user_name = $1', [username])
+                grenadeId = grenadeResult.rows[0].grenade
+
                 socket.emit('loginResponse', { success: true });
                 }
                 playerUsername[socket.id] = username
                 activeSessions[username] = socket.id
+                weaponIds[socket.id] = weaponId
+                grenadeIds[socket.id] = grenadeId
             }
             
             client.release();
         } catch (error) {
             console.error('Error authenticating user:', error);
-            socket.emit('loginResponse', { success: false });
+            socket.emit('loginResponse', { success: false, error });
+            await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+            
         }
-    })
+    });
 
-    socket.on('createRoom', ({ roomName, maxPlayers }) => {
+    socket.on('resetPassword', async (data) => {
+        const {email, code, newPassword} = data
+        if (code !== token[socket.id]) {
+            socket.emit('resetResponse', { success: false, error: 'Verification code is wrong.' });
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Verification code is wrong.'])
+            return;
+        }
+        try {
+            const client = await sql.connect()
+            const result = await client.query(`SELECT user_id from user_authentication WHERE email = $1`, [email])
+            if (result.rows.length === 0) {
+                socket.emit('resetResponse', { success: false, error: 'Email does not exist. Please provide a valid email.' });
+                await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Email does not exist.'])
+            } else {
+                const userId = result.rows[0].user_id
+                const pswResult = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [newPassword]);
+                const encryptedPassword = pswResult.rows[0].encrypted_password
+                await client.query(`UPDATE user_authentication SET user_password = $1 WHERE user_id = $2`, [encryptedPassword, userId])
+                socket.emit('resetResponse', { success: true })
+            }
+        } catch (error) {
+            console.error('Error reseting password:', error);
+            socket.emit('resetResponse', { success: false, error });
+            await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+        }
+    });
+
+    socket.on('createRoom', ({ roomName, maxPlayers, isPrivate }) => {
         const roomId = Math.random().toString(36).substring(7);
-        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false, maxPlayers };
+        rooms[roomId] = { name: roomName, host: socket.id, players: [socket.id], gameStarted: false, maxPlayers, isPrivate };
         const mapSize = 250 * maxPlayers
         console.log('Created roomId: ', roomId);
         socket.emit('roomCreated', roomId, mapSize);
-        io.emit('updateRooms', rooms);
     });
 
     socket.on('checkRoom', (roomId) => {
@@ -124,11 +266,23 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('joinRoom', (roomId) => {
+    socket.on('searchRoom', () => {
+        for (const roomId in rooms) {
+            if (rooms[roomId].players.length < rooms[roomId].maxPlayers && !rooms[roomId].gameStarted && !rooms[roomId].isPrivate) {
+                socket.emit('roomJoined', roomId)
+            } else {
+                socket.emit('roomJoinFailed', 'There are no rooms available')
+            }
+        }
+    })
+
+    socket.on('joinRoom', async (roomId) => {
         if (rooms[roomId]) {
             projectileId = 0
             const username = playerUsername[socket.id];
-            rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username });
+            const weaponId = weaponIds[socket.id]
+            const grenadeId = grenadeIds[socket.id]
+            rooms[roomId].players.push({ id: socket.id, roomId, x: 1920 / 2, y: 1080 / 2, username, weaponId, grenadeId });
             console.log('room joined', roomId)
             socket.join(roomId);
             rooms[roomId].players = rooms[roomId].players.filter(player => player.id);
@@ -136,6 +290,21 @@ io.on('connection', (socket) => {
                 readyPlayers[roomId] = {}
             }
             readyPlayers[roomId][socket.id] = false
+            try {
+                const client = await sql.connect()
+                const resultGrenades = await client.query('SELECT grenade_id FROM user_grenades WHERE user_name = $1', [username])
+                const resultWeapons = await client.query('SELECT weapon_id FROM user_weapons WHERE user_name = $1', [username])
+                for (const row of resultGrenades.rows) {
+                    availableGrenades.push(row.grenade_id)
+                }
+                for (const row of resultWeapons.rows) {
+                    availableWeapons.push(row.weapon_id)
+                }
+                io.to(socket.id).emit('availableWeapons', availableWeapons, availableGrenades)
+            } catch (error) {
+                console.error('Error getting available weapons and grenades:', error);
+                await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+            }
             io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
         } else {
             socket.emit('roomJoinFailed', 'Room is full or does not exist');
@@ -150,7 +319,7 @@ io.on('connection', (socket) => {
 
     socket.on('startCountdown', async (roomId) => {
         if (roomId && !rooms[roomId].countdownStarted) {
-            let countdownTime = 6
+            let countdownTime = 1
             rooms[roomId].countdownStarted = true;
             
             countdownInterval = setInterval(async () => {
@@ -166,21 +335,23 @@ io.on('connection', (socket) => {
                         // Collect weapon details for all players
                         for (const playerId in readyPlayers[roomId]) {
                             if (readyPlayers[roomId][playerId]) {
-                                const username = playerUsername[playerId];
-                                const weaponIdResult = await client.query('SELECT weapon FROM user_profile WHERE user_name = $1', [username]);
-                                const weaponId = weaponIdResult.rows[0].weapon;
-                                const weaponDetailsResult = await client.query('SELECT damage, fire_rate, ammo, reload, radius FROM weapons WHERE weapon_id = $1', [weaponId]);
+                                const weaponId = weaponIds[playerId]
+                                const grenadeId = grenadeIds[playerId]
+                                const weaponDetailsResult = await client.query('SELECT weapon_id, damage, fire_rate, ammo, reload, radius FROM weapons WHERE weapon_id = $1', [weaponId]);
+                                const grenadeDetailResult = await client.query('SELECT damage FROM grenades WHERE grenade_id = $1', [grenadeId])
                                 const weapons = weaponDetailsResult.rows[0];
+                                const grenades = grenadeDetailResult.rows[0]
                                 weaponDetails[playerId] = weapons;
+                                grenadeDetails[playerId] = grenades
                                 delete readyPlayers[roomId][playerId];
                             }
                         }
                         delete readyPlayers[roomId]
-                        //socket.emit('initFallingObjects', roomId)
                         startGame(roomId);
                         client.release();
                     } catch (error) {
                         console.error('Error in getting weapon details:', error);
+                        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
                     }
                 } else {
                    io.to(roomId).emit('updateCountdown', countdownTime);
@@ -236,16 +407,11 @@ io.on('connection', (socket) => {
                     multiplayerId,
                 }
             } 
-            if (backendPlayers[socket.id].bullets === 0) {
-                if (!weaponDetails[socket.id]) return
-                const reloadTime = weaponDetails[socket.id].reload
-                const bullets = weaponDetails[socket.id].ammo
-            }
 
         }
     })
 
-    socket.on('throw', (frontendPlayer, crosshair, direction, multiplayerId) => {
+    socket.on('throw', (frontendPlayer, crosshair, multiplayerId) => {
         //GRANATA TURI SUSTOTI KUR CROSSHAIRAS, IR TADA SPROGTI
         if (backendPlayers[socket.id] && backendPlayers[socket.id].grenades > 0) {
             grenadeId++
@@ -266,17 +432,15 @@ io.on('connection', (socket) => {
                 y: crosshair.y
             }
 
-            const distance = Math.hypot(crosshair.x - frontendPlayer.x, crosshair.y - frontendPlayer.y)
             backendGrenades[grenadeId] = {
                 x: frontendPlayer.x,
                 y: frontendPlayer.y,
                 velocity,
                 playerId: socket.id,
                 multiplayerId,
-                target
+                target,
+                grenadeId: backendPlayers[socket.id].grenadeId
             }
-
-
         } 
     })
 
@@ -306,7 +470,6 @@ io.on('connection', (socket) => {
             if (maxPlayers) {
                 mapSize = 250 * maxPlayers
             }
-            
             // Broadcast this player's movement to all other clients
             if (data === 'a') {
                 backendPlayers[socket.id].x -= movementSpeed
@@ -387,18 +550,18 @@ io.on('connection', (socket) => {
                 console.log('Deleting room:', roomId);
                 delete rooms[roomId];
             } else {
-                // Update room players for remaining clients
                 io.to(roomId).emit('updateRoomPlayers', room.players);
             }
-            socket.leave(roomId); // Leave the room
-            delete readyPlayers[socket.id]; // Remove from ready players
-            io.to(roomId).emit('updateRooms', rooms); // Update room list
-            break; // Exit the loop after handling the player's room
+            socket.leave(roomId);
+            delete readyPlayers[socket.id];
+            break;
         }
     }
         delete backendPlayers[socket.id]
         delete weaponDetails[socket.id]
-        // Inform other clients that this player has disconnected
+        delete grenadeDetails[socket.id]
+        delete weaponIds[socket.id]
+        delete grenadeIds[socket.id]
         for (const roomId in rooms) {
             io.to(roomId).emit('updatePlayers', filterPlayersByMultiplayerId(roomId))
         }
@@ -408,6 +571,13 @@ io.on('connection', (socket) => {
             delete activeSessions[username];
         }
     });
+
+    socket.on('logout', () => {
+        const username = Object.keys(activeSessions).find(key => activeSessions[key] === socket.id);
+        if (username) {
+            delete activeSessions[username];
+        }
+    })
 
     socket.on('leaveRoom', (roomId) => {
         for (const id in rooms) {
@@ -425,13 +595,11 @@ io.on('connection', (socket) => {
                         delete rooms[roomId];
                         delete readyPlayers[roomId]
                     } else {
-                        // Update room players for remaining clients
                         io.to(roomId).emit('updateRoomPlayers', room.players);
                     }
-                    socket.leave(roomId); // Leave the room
-                    delete readyPlayers[socket.id]; // Remove from ready players
-                    io.to(roomId).emit('updateRooms', rooms); // Update room list
-                    break; // Exit the loop after handling the player's room
+                    socket.leave(roomId);
+                    delete readyPlayers[socket.id];
+                    break;
                 }
             }
         }
@@ -452,30 +620,9 @@ io.on('connection', (socket) => {
         const client = await sql.connect()
         await client.query(`UPDATE user_profile SET coins = coins + 10, xp = xp + 20 WHERE user_name = $1`, [username])
         client.release()
-
         delete readyPlayers[multiplayerId];
-    
         delete rooms[multiplayerId];
     })
-
-    // socket.on('initFallingObjects', (roomId) => {
-    //     console.log('veikia INIT')
-    //     let mapSize = 250
-    //     if (rooms[multiplayerId].players.find(player => player.id === socket.id)) {
-    //         mapSize = rooms[multiplayerId].maxPlayers * 250
-    //     }
-    //     setInterval(() => {
-    //         const numObjects = Math.floor(Math.random() * (8 - 2) + 2)
-    //         fallingObjects = null
-    //         for (let i = 0; i < numObjects; i++) {
-    //             let startX = Math.floor(Math.random() * (1980 + mapSize))
-    //             let startY = -50
-    //             fallingObjects[i] = {x: startX, y: startY}
-    //         }
-    //         io.to(roomId).emit('updateFallingObjects', fallingObjects)
-
-    //     }, getRandomInt(4000, 5000))
-    // })
 
     socket.on('detect', (multiplayerId, playerId) => {
         let mapSize = 250
@@ -495,6 +642,107 @@ io.on('connection', (socket) => {
         }
     }
     })
+
+    socket.on('sendMessage', ({roomId, message}) => {
+        io.to(roomId).emit('receiveMessage', message)
+    })
+
+
+    socket.on('changeWeapon', async (weaponId) => {
+        try {
+            const client = await sql.connect()
+            const username = playerUsername[socket.id]
+            if (availableWeapons.includes(weaponId)) {
+                await client.query('UPDATE user_profile SET weapon = $1 WHERE user_name = $2;', [weaponId, username]);
+                weaponIds[socket.id] = weaponId
+            }
+            client.release()
+        } catch (error) {
+            console.error('Error updating weaponId:', error);
+            await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+        }
+    })
+
+    socket.on('changeGrenade', async (grenadeId) => {
+        try {
+            const client = await sql.connect()
+            const username = playerUsername[socket.id]
+            if (availableGrenades.includes(grenadeId)) {
+                await client.query('UPDATE user_profile SET grenade = $1 WHERE user_name = $2;', [grenadeId, username]);
+                grenadeIds[socket.id] = grenadeId
+            }
+            client.release()
+        } catch (error) {
+            console.error('Error updating grenadeId:', error);
+            await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+        }
+    })
+
+    socket.on('explode', async (data) => {
+        const playerId = data.playerId
+        const grenadeId = data.grenadeId
+        const damage = grenadeDetails[playerId].damage
+        if (backendPlayers[playerId]) {
+            backendPlayers[playerId].health -= damage
+            if (backendPlayers[playerId].health <= 0) {
+                if (backendGrenades[grenadeId].playerId !== playerId && backendPlayers[backendGrenades[grenadeId].playerId]) {
+                    const client = await sql.connect();
+                    if (!backendPlayers[backendGrenades[grenadeId].playerId].username) return
+                    await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
+                    backendPlayers[backendGrenades[grenadeId].playerId].username
+                    ]);
+                    client.release();
+                }
+                delete backendPlayers[playerId];
+            }
+        }
+    })
+
+    socket.on('gunAnimation', (data) => {
+        const {multiplayerId, playerId, animation, weapon} = data
+        io.to(multiplayerId).emit('updateGunAnimation', playerId, animation, weapon)
+    })
+
+    socket.on('buyGun', async (data) => {
+        try {
+            const { socket, weaponId, cost } = data;
+            const username = playerUsername[socket];
+            const client = await sql.connect();
+            const result = await client.query('SELECT user_id FROM user_profile WHERE user_name = $1', [username]);
+            const userId = result.rows[0].user_id;
+            console.log('id', userId, weaponId, cost, username);
+            await client.query('INSERT INTO user_weapons (user_id, user_name, weapon_id) VALUES ($1, $2, $3)', [userId, username, weaponId]);
+            await client.query('UPDATE user_profile SET coins = coins - $1 WHERE user_name = $2', [cost, username]);
+            io.to(socket).emit('purchaseConfirmed', { weaponId });
+            client.release();
+        } catch(error) {
+            const client = await sql.connect();
+            console.error('Error buying weapon:', error);
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error]);
+            client.release();
+        }
+    });
+    
+    socket.on('buyGrenade', async (data) => {
+        try {
+            const { socket, grenadeId, cost } = data;
+            const username = playerUsername[socket];
+            const client = await sql.connect();
+            const result = await client.query('SELECT user_id FROM user_profile WHERE user_name = $1', [username]);
+            const userId = result.rows[0].user_id;
+            console.log('id', userId, grenadeId, cost, username);
+            await client.query('INSERT INTO user_grenades (user_id, user_name, grenade_id) VALUES ($1, $2, $3)', [userId, username, grenadeId]);
+            await client.query('UPDATE user_profile SET coins = coins - $1 WHERE user_name = $2', [cost, username]);
+            io.to(socket).emit('purchaseConfirmed', { grenadeId });
+            client.release();
+        } catch(error) {
+            const client = await sql.connect();
+            console.error('Error buying grenade:', error);
+            await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error]);
+            client.release();
+        }
+    });
+    
 
 });
 
@@ -538,6 +786,45 @@ function filterGrenadesByMultiplayerId(multiplayerId) {
     return grenadesInSession
 }
 
+function initFallingObjects(roomId) {
+    let mapSize = rooms[roomId].maxPlayers * 250;
+    let fallingObjects = {};
+    let objectId = 0;
+
+    // Function to create new falling objects
+    function createFallingObjects() {
+        const numObjects = Math.floor(Math.random() * (8 - 2) + 2);
+        for (let i = 0; i < numObjects; i++) {
+            let startX = Math.floor(Math.random() * (1980 + mapSize));
+            let startY = Math.floor(Math.random() * (-15 + 350)) - 350;
+            fallingObjects[objectId] = { x: startX, y: startY };
+            objectId++;
+        }
+    }
+
+    // Function to update the positions of falling objects
+    function updateFallingObjects() {
+        for (let id in fallingObjects) {
+            if (fallingObjects.hasOwnProperty(id)) {
+                fallingObjects[id].y += 3;
+                if (fallingObjects[id].y >= 1080 + mapSize) {
+                    delete fallingObjects[id];
+                }
+            }
+        }
+        io.to(roomId).emit('updateFallingObjects', fallingObjects);
+    }
+
+    // Create new objects immediately
+    createFallingObjects();
+
+    // Set interval to create new objects at random intervals
+    setInterval(createFallingObjects, Math.floor(Math.random() * (5000 - 4000) + 4000));
+
+    // Set interval to update the positions of falling objects continuously
+    setInterval(updateFallingObjects, 15); // Update at 60 FPS
+}
+
 function startGame(multiplayerId) {
     if (rooms[multiplayerId] && rooms[multiplayerId].players) {
     let playersInRoom = {}
@@ -556,11 +843,12 @@ function startGame(multiplayerId) {
     playersInRoom.forEach((player, index) => {
         const id = player.id
         const username = playerUsername[id];
-        const damage = weaponDetails[id].damage
+        const weaponId = weaponIds[id];
         const bullets = weaponDetails[id].ammo
         const firerate = weaponDetails[id].fire_rate
         const reload = weaponDetails[id].reload
         const radius = weaponDetails[id].radius
+        const grenadeId = grenadeIds[id]
         const corner = corners[index]
 
         backendPlayers[id] = { 
@@ -572,13 +860,15 @@ function startGame(multiplayerId) {
             username,
             health: 100,
             bullets,
-            damage,
             firerate,
             reload,
             radius,
-            grenades: 1
+            grenades: 1,
+            grenadeId,
+            weaponId
         };
     });
+    initFallingObjects(multiplayerId)
 }
 }
 
@@ -601,8 +891,51 @@ app.get('/leaderboard', async (req, res) => {
         res.json(data)
     }
     catch (error) {
+        const client = await sql.connect()
         console.error('Error fetching leaderboard data:', error);
+        await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+        client.release()
         res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+
+app.get('/get-info', async (req, res) => {
+    try {
+        const username = req.query.username
+        const client = await sql.connect()
+        const result = await client.query(`SELECT coins, level, xp FROM user_profile WHERE user_name = $1;`, [username])
+        const data = result.rows[0]
+
+        res.json({coins: data.coins, level: data.level, xp: data.xp})
+        client.release()
+        
+    }
+    catch (error) {
+        const client = await sql.connect()
+        console.error('Error fetching coins data:', error);
+        await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
+        client.release()
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+app.get('/get-weapons', async (req, res) => {
+    try {
+        const username = req.query.username
+        const client = await sql.connect()
+        const resultWeapons = await client.query('SELECT weapon_id FROM user_weapons WHERE user_name = $1', [username])
+        const resultGrenades = await client.query('SELECT grenade_id FROM user_grenades WHERE user_name = $1', [username])
+        client.release();
+        const userWeapons = resultWeapons.rows.map(row => row.weapon_id);
+        const userGrenades = resultGrenades.rows.map(row => row.grenade_id);
+        res.json({weapons: userWeapons, grenades: userGrenades})
+    } catch (error) {
+        const client = await sql.connect()
+        console.error('Error fetching weapons:', error)
+        await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', [error])
+        res.status(500).json({ error: 'Failed to fetch weapons' });
+        client.release()
     }
 })
 
@@ -644,10 +977,10 @@ setInterval(async () => {
                 if (backendPlayers[playerId].health <= 0) {
                     if (backendPlayers[backendProjectiles[id].playerId]) {
                         const client = await sql.connect();
-                        //if (!backendPlayers[backendProjectiles[id].playerId].username) return
-                        //await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
-                        //    backendPlayers[backendProjectiles[id].playerId].username
-                        //]);
+                        if (!backendPlayers[backendProjectiles[id].playerId].username) return
+                        await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
+                           backendPlayers[backendProjectiles[id].playerId].username
+                        ]);
                         client.release();
                     }
                     delete backendPlayers[playerId];
@@ -667,9 +1000,15 @@ setInterval(async () => {
         const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
         if (distance <= radius) {
             backendGrenades[id].velocity = { x: 0, y: 0 };
-            setTimeout(() => {
-                delete backendGrenades[grenadeId];
-            }, 1000);
+            if (backendGrenades[id].grenadeId === 1) {
+                setTimeout(() => {
+                    delete backendGrenades[id];
+                }, 1000);
+            } else if (backendGrenades[id].grenadeId === 2) {
+                setTimeout(() => {
+                    delete backendGrenades[id];
+                }, 400); //2000
+            }
         }
     }
 
@@ -680,7 +1019,6 @@ setInterval(async () => {
         io.to(roomId).emit('updateProjectiles', projectiles, grenades)
         io.to(roomId).emit('updatePlayers', players)
     }
-    io.emit('updateRooms', rooms)
     for (const roomId in rooms) {
         io.emit('updateRoomPlayers', rooms[roomId].players)
     }
