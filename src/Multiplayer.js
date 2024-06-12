@@ -51,8 +51,15 @@ class Multiplayer extends Phaser.Scene {
 
     create() {
         this.setupScene();
+        this.setupMap();
         this.setupInputEvents();
         this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
+    }
+
+    setupMap() {
+        const map1 = this.make.tilemap({ key: "map2", tileWidth: 32, tileHeight: 32 });
+        const tileset1 = map1.addTilesetImage("Multiplayer_Map", "tiles_multiplayer");
+        const layer1 = map1.createLayer("Tile Layer 1", tileset1, 0, 0).setScale(1);
     }
 
     gunAnimation() {

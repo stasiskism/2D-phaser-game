@@ -90,6 +90,8 @@ class Scene1 extends Phaser.Scene {
         this.load.image("tiles5", 'assets/marketplace/TX Tileset Stone Ground.png');
         this.load.image("tiles6", 'assets/marketplace/TX Tileset Wall.png');
         this.load.tilemapTiledJSON('map1', 'assets/marketplace/maps_marketplace.json');
+        this.load.image("tiles_multiplayer", 'assets/32x32_DEMO.png');
+        this.load.tilemapTiledJSON('map2', 'assets/Multiplayer_Map.json');
     }
 
     create () {
