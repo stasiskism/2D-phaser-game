@@ -715,14 +715,16 @@ io.on('connection', (socket) => {
 
     socket.on('buyGun', async (data) => {
         try {
-            const { socket, weaponId, cost } = data;
+            const { socket, weaponId } = data;
             const username = playerUsername[socket];
             const client = await sql.connect();
             const result = await client.query('SELECT user_id FROM user_profile WHERE user_name = $1', [username]);
+            const costResult = await client.query('SELECT cost FROM marketplace WHERE item_id = $1', [weaponId])
             const userId = result.rows[0].user_id;
+            const cost = costResult.rows[0].cost;
             console.log('id', userId, weaponId, cost, username);
-            await client.query('INSERT INTO user_weapons (user_id, user_name, weapon_id) VALUES ($1, $2, $3)', [userId, username, weaponId]);
             await client.query('UPDATE user_profile SET coins = coins - $1 WHERE user_name = $2', [cost, username]);
+            await client.query('INSERT INTO user_weapons (user_id, user_name, weapon_id) VALUES ($1, $2, $3)', [userId, username, weaponId]);
             io.to(socket).emit('purchaseConfirmed', { weaponId });
             client.release();
         } catch(error) {
@@ -735,11 +737,13 @@ io.on('connection', (socket) => {
     
     socket.on('buyGrenade', async (data) => {
         try {
-            const { socket, grenadeId, cost } = data;
+            const { socket, grenadeId } = data;
             const username = playerUsername[socket];
             const client = await sql.connect();
             const result = await client.query('SELECT user_id FROM user_profile WHERE user_name = $1', [username]);
+            const costResult = await client.query('SELECT cost FROM marketplace WHERE item_id = $1', [grenadeId])
             const userId = result.rows[0].user_id;
+            const cost = costResult.rows[0].cost;
             console.log('id', userId, grenadeId, cost, username);
             await client.query('INSERT INTO user_grenades (user_id, user_name, grenade_id) VALUES ($1, $2, $3)', [userId, username, grenadeId]);
             await client.query('UPDATE user_profile SET coins = coins - $1 WHERE user_name = $2', [cost, username]);

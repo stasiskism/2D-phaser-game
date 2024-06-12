@@ -1,3 +1,4 @@
+import SettingsButtonWithPanel from './options.js'
 
 class Tutorial extends Phaser.Scene {
     constructor() {

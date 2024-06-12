@@ -16,8 +16,8 @@ class Room extends Phaser.Scene {
         4: 'Sniper'
     }
     grenades = {
-        1: 'smokeGrenade',
-        2: 'grenade'
+        5: 'smokeGrenade',
+        6: 'grenade'
     }
     availableWeapons = []
     availableGrenades = []
@@ -338,8 +338,8 @@ class Room extends Phaser.Scene {
         this.nextButtonGrenade.setInteractive({useHandCursor: true})
         this.nextButtonGrenade.on('pointerdown', () => {
             this.grenadeId++;
-            if (this.grenadeId > 2) {
-                this.grenadeId = 1
+            if (this.grenadeId > 6) {
+                this.grenadeId = 5
             }
             this.setupGrenade(this.grenadeId)
             socket.emit('changeGrenade', this.grenadeId)
@@ -350,8 +350,8 @@ class Room extends Phaser.Scene {
         this.previousButtonGrenade.setInteractive({useHandCursor: true})
         this.previousButtonGrenade.on('pointerdown', () => {
             this.grenadeId--;
-            if (this.grenadeId < 1) {
-                this.grenadeId = 2
+            if (this.grenadeId < 5) {
+                this.grenadeId = 6
             }
             this.setupGrenade(this.grenadeId)
             socket.emit('changeGrenade', this.grenadeId)

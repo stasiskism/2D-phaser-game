@@ -210,12 +210,12 @@ class Marketplace extends Phaser.Scene {
         itemName = 'Sniper';
         cost = 4000;
       } else if (object.texture.key === 'smokeGrenade') {
-        grenadeId = 1;
+        grenadeId = 5;
         requiredLevel = 1;
         itemName = 'Smoke Grenade';
         cost = 2500;
       } else if (object.texture.key === 'grenade') {
-        grenadeId = 2;
+        grenadeId = 6;
         requiredLevel = 3;
         itemName = 'Explosive Grenade';
         cost = 4000;
@@ -321,9 +321,9 @@ class Marketplace extends Phaser.Scene {
       this.coins -= cost;
       this.coinsText.setText(`Coins: ${this.coins}`);
       if (weaponId) {
-        socket.emit('buyGun', { socket: socket.id, weaponId, cost });
+        socket.emit('buyGun', { socket: socket.id, weaponId });
       } else if (grenadeId) {
-        socket.emit('buyGrenade', { socket: socket.id, grenadeId, cost });
+        socket.emit('buyGrenade', { socket: socket.id, grenadeId });
       }
       this.showSuccessMessage();
     } else {
