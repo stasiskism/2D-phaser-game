@@ -51,7 +51,7 @@ class Singleplayer extends Phaser.Scene {
 
     const map1 = this.make.tilemap({ key: "map2", tileWidth: 32, tileHeight: 32 });
     const tileset1 = map1.addTilesetImage("Mapass", "tiles_multiplayer");
-    const layer1 = map1.createLayer("Tile Layer 1", tileset1, 0, 0);
+    const layer1 = map1.createLayer("Tile Layer 1", tileset1, -1700, -1700);
 
     //this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
     this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' }).setPosition(100, 100).setScrollFactor(0);
