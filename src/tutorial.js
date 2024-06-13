@@ -110,6 +110,7 @@ class Tutorial extends Phaser.Scene {
     }
 
     shootProjectile(pointer) {
+        this.sound.play('ARSound', { volume: 0.5})
         const direction = Math.atan((this.crosshair.x - this.player.x) / (this.crosshair.y - this.player.y));
         if (!pointer.leftButtonDown()) return;
 

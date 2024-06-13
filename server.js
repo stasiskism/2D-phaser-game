@@ -59,8 +59,8 @@ const weaponDetails = {}
 const grenadeDetails = {}
 const reloadingStatus = {}
 const backendGrenades = {}
-const availableWeapons = []
-const availableGrenades = []
+const availableWeapons = {}
+const availableGrenades = {}
 const token = {}
 
 app.post('/create-payment-intent', async (req, res) => {
@@ -131,6 +131,7 @@ io.on('connection', (socket) => {
             to: email,
             subject: '2DCS Verification',
             text: `Your verification code is: ${token[socket.id]}`
+
         }
         sender.sendMail(mailOptions, async (error, info) => {
             if (error) {
@@ -146,6 +147,7 @@ io.on('connection', (socket) => {
 
     socket.on('register', async (data) => {
         const { username, email, password, code } = data;
+        const client = await sql.connect();
         if (username === '', email === '', password === '', code === '') {
             socket.emit('registerResponse', { success: false, error: 'Provided blank input' });
             await client.query('INSERT INTO error_logs (error_message) VALUES ($1, )', ['Blank input while registering.'])
@@ -158,13 +160,12 @@ io.on('connection', (socket) => {
             return;
         }
 
-        if (code !== token[socket.id]) {
+        if (code != token[socket.id]) {
             socket.emit('registerResponse', { success: false, error: 'Verification code is wrong.' });
             await client.query('INSERT INTO error_logs (error_message) VALUES ($1)', ['Verification code is wrong.'])
             return;
         }
         try {
-            const client = await sql.connect();
             const encryptedPassword = await client.query('SELECT crypt($1, gen_salt(\'bf\')) AS encrypted_password', [password]);
             const hashedPassword = encryptedPassword.rows[0].encrypted_password;
             const values = [username, hashedPassword, email];
@@ -279,6 +280,8 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', async (roomId) => {
         if (rooms[roomId]) {
             projectileId = 0
+            availableWeapons[socket.id] = []
+            availableGrenades[socket.id] = []
             const username = playerUsername[socket.id];
             const weaponId = weaponIds[socket.id]
             const grenadeId = grenadeIds[socket.id]
@@ -295,15 +298,17 @@ io.on('connection', (socket) => {
                 const resultGrenades = await client.query('SELECT grenade_id FROM user_grenades WHERE user_name = $1', [username])
                 const resultWeapons = await client.query('SELECT weapon_id FROM user_weapons WHERE user_name = $1', [username])
                 for (const row of resultGrenades.rows) {
-                    availableGrenades.push(row.grenade_id)
+                    availableGrenades[socket.id].push(row.grenade_id)
                 }
                 for (const row of resultWeapons.rows) {
-                    availableWeapons.push(row.weapon_id)
+                    availableWeapons[socket.id].push(row.weapon_id)
                 }
-                io.to(socket.id).emit('availableWeapons', availableWeapons, availableGrenades)
+                io.to(socket.id).emit('availableWeapons', availableWeapons[socket.id], availableGrenades[socket.id])
             } catch (error) {
+                const client = await sql.connect()
                 console.error('Error getting available weapons and grenades:', error);
                 await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+                client.release()
             }
             io.to(roomId).emit('updateRoomPlayers', rooms[roomId].players); // Emit only to players in the same room
         } else {
@@ -662,7 +667,7 @@ io.on('connection', (socket) => {
         try {
             const client = await sql.connect()
             const username = playerUsername[socket.id]
-            if (availableWeapons.includes(weaponId)) {
+            if (availableWeapons[socket.id].includes(weaponId)) {
                 await client.query('UPDATE user_profile SET weapon = $1 WHERE user_name = $2;', [weaponId, username]);
                 weaponIds[socket.id] = weaponId
             }
@@ -677,7 +682,7 @@ io.on('connection', (socket) => {
         try {
             const client = await sql.connect()
             const username = playerUsername[socket.id]
-            if (availableGrenades.includes(grenadeId)) {
+            if (availableGrenades[socket.id].includes(grenadeId)) {
                 await client.query('UPDATE user_profile SET grenade = $1 WHERE user_name = $2;', [grenadeId, username]);
                 grenadeIds[socket.id] = grenadeId
             }
@@ -1013,11 +1018,11 @@ setInterval(async () => {
         const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
         if (distance <= radius) {
             backendGrenades[id].velocity = { x: 0, y: 0 };
-            if (backendGrenades[id].grenadeId === 1) {
+            if (backendGrenades[id].grenadeId === 5) {
                 setTimeout(() => {
                     delete backendGrenades[id];
                 }, 1000);
-            } else if (backendGrenades[id].grenadeId === 2) {
+            } else if (backendGrenades[id].grenadeId === 6) {
                 setTimeout(() => {
                     delete backendGrenades[id];
                 }, 400); //2000

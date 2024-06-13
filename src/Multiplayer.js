@@ -22,12 +22,12 @@ class Multiplayer extends Phaser.Scene {
         4: { name: 'Sniper', startShoot: 0, endShoot: 43, startReload: 0, endReload: 27 },
     }
     grenades = {
-        1: 'smokeGrenade',
-        2: 'grenade'
+        5: 'smokeGrenade',
+        6: 'grenade'
     }
     explosions = {
-        1: 'smoke',
-        2: 'explosion'
+        5: 'smoke',
+        6: 'explosion'
     }
     playersAffected = {}
     fallingObjects = []
@@ -540,13 +540,13 @@ class Multiplayer extends Phaser.Scene {
                     orbitDistance = 50;
                     break;
                 case 'Shotgun':
-                    orbitDistance = 110;
+                    orbitDistance = 50;
                     break;
                 case 'AR':
-                    orbitDistance = 110;
+                    orbitDistance = 70;
                     break;
                 case 'Sniper':
-                    orbitDistance = 110;
+                    orbitDistance = 50;
                     break;
             }
             const weaponX = player.x + Math.cos(angleToPointer) * orbitDistance;
