@@ -170,7 +170,7 @@ class Room extends Phaser.Scene {
             }
         })
 
-        this.exitButton = this.add.sprite(150, 80, 'exit').setScale(0.4)
+        this.exitButton = this.add.sprite(950, 300, 'exit').setScale(0.4)
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
             const exitPromptContainer = document.getElementById('exit-prompt-container');
@@ -235,7 +235,7 @@ class Room extends Phaser.Scene {
             });
         }
 
-        const chatButton = this.add.image(100, 150, 'chat').setInteractive({ useHandCursor: true }).setScale(0.1)
+        const chatButton = this.add.image(1890, 150, 'chat').setInteractive({ useHandCursor: true }).setScale(0.1)
 
         chatButton.on('pointerdown', () => {
             this.chatDisplay.visible = !this.chatDisplay.visible;
@@ -243,7 +243,7 @@ class Room extends Phaser.Scene {
             chatInputElement.style.display = chatInputElement.style.display === 'none' ? 'block' : 'none';
         });
 
-        const closeButton = this.add.text(1300, 450, 'X', {
+        const closeButton = this.add.text(1840, 300, 'X', {
             fontSize: '32px',
             fill: '#ffffff',
             backgroundColor: '#333333',
@@ -256,14 +256,14 @@ class Room extends Phaser.Scene {
             chatInputElement.style.display = 'none';
         });
 
-        this.chatDisplay = this.add.text(1300, 500, '', { 
+        this.chatDisplay = this.add.text(1500, 350, '', { 
             fontSize: '20px', 
             fill: '#ffffff',
             backgroundColor: '#333333',
             padding: { x: 10, y: 10 },
             wordWrap: { width: 380, useAdvancedWrap: true }
         }).setInteractive().setDepth(1);
-        this.chatDisplay.setFixedSize(600, 500);
+        this.chatDisplay.setFixedSize(380, 380);
         
         const chatInputHTML = `
             <div style="position: fixed; bottom: 10px; left: 10px;">
@@ -271,7 +271,7 @@ class Room extends Phaser.Scene {
             </div>
         `;
 
-        this.add.dom(1300, 1000).createFromHTML(chatInputHTML);
+        this.add.dom(1500, 730).createFromHTML(chatInputHTML);
         const chatInputElement = document.getElementById('chatInput')
         chatInputElement.addEventListener('keydown', (event) => {
             if (chatInputElement.contains(document.activeElement)) {
