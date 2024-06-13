@@ -50,7 +50,7 @@ class Singleplayer extends Phaser.Scene {
     const centerY = this.cameras.main.height / 2;
 
     const map1 = this.make.tilemap({ key: "map2", tileWidth: 32, tileHeight: 32 });
-    const tileset1 = map1.addTilesetImage("Multiplayer_Map", "tiles_multiplayer");
+    const tileset1 = map1.addTilesetImage("Mapass", "tiles_multiplayer");
     const layer1 = map1.createLayer("Tile Layer 1", tileset1, 0, 0);
 
     //this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
