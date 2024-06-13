@@ -59,7 +59,7 @@ class Multiplayer extends Phaser.Scene {
     setupMap() {
         const map1 = this.make.tilemap({ key: "map2", tileWidth: 32, tileHeight: 32 });
         const tileset1 = map1.addTilesetImage("Mapass", "tiles_multiplayer");
-        const layer1 = map1.createLayer("Tile Layer 1", tileset1, 0, 0).setScale(1);
+        const layer1 = map1.createLayer("Tile Layer 1", tileset1, -2000, -2000).setScale(1);
     }
 
     gunAnimation() {
@@ -101,7 +101,7 @@ class Multiplayer extends Phaser.Scene {
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
         this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair');
-        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6)
         this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
         this.fullscreenButton.setInteractive({ useHandCursor: true })
         this.fullscreenButton.on('pointerdown', () => {

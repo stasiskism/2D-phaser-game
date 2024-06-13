@@ -57,7 +57,7 @@ class Singleplayer extends Phaser.Scene {
     this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' }).setPosition(100, 100).setScrollFactor(0);
 
     this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair');
-    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
+    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth(2).setScale(0.6)
     this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
     this.fullscreenButton.setInteractive({ useHandCursor: true })
     this.fullscreenButton.on('pointerdown', () => {
