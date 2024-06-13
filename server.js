@@ -584,15 +584,16 @@ io.on('connection', (socket) => {
         if (username) {
             delete activeSessions[username];
         }
+        if (backendPlayers[socket.id]) {
+            delete backendPlayers[socket.id]
+        }
     })
 
     socket.on('leaveRoom', (roomId) => {
-        console.log('avs', roomId)
         for (const id in rooms) {
             if (id === roomId) {
                 const room = rooms[roomId];
                 const index = room.players.findIndex(player => player.id === socket.id);
-                console.log('cia', index)
                 if (index !== -1) {
                     console.log('Player leaving room:', socket.id);
                     room.players.splice(index, 1);

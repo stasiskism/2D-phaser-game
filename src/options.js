@@ -90,9 +90,8 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
                 }
                 socket.emit('logout');
                 socket.removeAllListeners();
-
+                this.scene.scene.stop('room');
                 this.scene.scene.start('authenticate');
-                this.scene.scene.stop();
 
                 promptContainer.style.display = 'none';
                 yesButton.removeEventListener('click', handleYesClick);

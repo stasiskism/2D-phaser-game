@@ -33,6 +33,7 @@ class Room extends Phaser.Scene {
         
     }
     create() {
+        this.frontendPlayers= {}
         this.setupScene()
         this.setupInputEvents()
         this.add.text(1920 / 2, (1080 / 2) - 500, 'ROOM CODE: ' + this.roomId, {
@@ -74,10 +75,11 @@ class Room extends Phaser.Scene {
                 if (this.roomId !== roomId) return;
                 const id = playerData.id
                 if (!this.frontendPlayers[id]) {
-                    console.log('a')
+                    console.log('setup')
                     this.setupPlayer(id, playerData)
                     this.readyPlayers[id] = false
                 } else {
+                    console.log('update')
                     this.updatePlayerPosition(id, playerData)
                 }
             }
@@ -85,11 +87,9 @@ class Room extends Phaser.Scene {
             for (const playerId in this.frontendPlayers) {
                 //goes through players, get their id, and if returns undefined, then the player does not exist
                 if (!roomPlayers.find(player => player.id === playerId)) { 
-                    console.log(playerId)
                     this.frontendPlayers[playerId].anims.stop();
                     this.frontendPlayers[playerId].destroy();
                     delete this.frontendPlayers[playerId];
-                    console.log(this.frontendPlayers[playerId])
                 }
             }
 
@@ -223,20 +223,6 @@ class Room extends Phaser.Scene {
         });
 
         this.readyPlayersText = this.add.text((1920 / 2), (1080 / 2) - 400, `READY PLAYERS: 0`, {fontFamily: 'Berlin Sans FB Demi', fontSize: '32px', fill: '#ffffff' }).setOrigin(0.5).setScale(2);
-
-        if (this.frontendPlayers[socket.id]) {
-            const invisibleWalls = [
-                { x: 336, y: 959, width: 1250, height: 10 },
-                { x: 326, y: 315, width: 10, height: 650 },
-                { x: 1580, y: 315, width: 10, height: 650 },
-                { x: 326, y: 315, width: 1250, height: 10 },
-            ];
-
-            invisibleWalls.forEach(wall => {
-                const invisibleWall = this.physics.add.sprite(wall.x + wall.width / 2, wall.y + wall.height / 2, 'invisible-wall').setVisible(false).setSize(wall.width, wall.height);
-                this.physics.add.collider(this.frontendPlayers[socket.id], invisibleWall);
-            });
-        }
 
         const chatButton = this.add.image(1890, 150, 'chat').setInteractive({ useHandCursor: true }).setScale(0.1)
 
