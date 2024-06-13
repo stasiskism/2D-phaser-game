@@ -4,7 +4,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
         this.scene = scene;
         this.roomId = roomId;
 
-        this.button = scene.add.image(0, 0, 'settingsButton').setInteractive({ useHandCursor: true }).setScale(0.1);
+        this.button = scene.add.image(0, 0, 'settingsButton').setInteractive({ useHandCursor: true }).setScale(0.1).setScrollFactor(0);
         this.add(this.button);
 
         this.button.on('pointerdown', () => {
@@ -24,6 +24,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
         this.panelBackground.lineStyle(2, 0xffffff, 1);
         this.panelBackground.strokeRoundedRect(-250, 0, 200, 200, 15);
         this.panelBackground.setVisible(false);
+        this.panelBackground.setScrollFactor(0);
 
         const textStyle = {
             fontSize: '16px',
@@ -32,20 +33,20 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             align: 'center'
         };
 
-        this.nameText = this.scene.add.text(-190, 20, 'OPTIONS', textStyle);
+        this.nameText = this.scene.add.text(-190, 20, 'OPTIONS', textStyle).setScrollFactor(0);;
         this.nameText.setVisible(false);
 
-        this.volumeText = this.scene.add.text(-200, 50, 'Volume:', textStyle);
+        this.volumeText = this.scene.add.text(-200, 50, 'Volume:', textStyle).setScrollFactor(0);;
         this.volumeText.setVisible(false);
 
-        this.volumeValue = this.scene.add.text(-130, 50, '100%', textStyle);
+        this.volumeValue = this.scene.add.text(-130, 50, '100%', textStyle).setScrollFactor(0);;
         this.volumeValue.setVisible(false);
 
-        this.sliderTrack = this.scene.add.rectangle(-200, 80, 120, 10, 0x888888).setInteractive({ useHandCursor: true });
+        this.sliderTrack = this.scene.add.rectangle(-200, 80, 120, 10, 0x888888).setInteractive({ useHandCursor: true }).setScrollFactor(0);;
         this.sliderTrack.setOrigin(0, 0.5);
         this.sliderTrack.setVisible(false);
 
-        this.sliderThumb = this.scene.add.rectangle(-200, 80, 10, 20, 0xffffff).setInteractive({ useHandCursor: true });
+        this.sliderThumb = this.scene.add.rectangle(-200, 80, 10, 20, 0xffffff).setInteractive({ useHandCursor: true }).setScrollFactor(0);;
         this.sliderThumb.setOrigin(0.5);
         this.sliderThumb.setVisible(false);
 
@@ -60,10 +61,10 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             this.scene.sound.volume = volume;
         });
 
-        this.soundToggleText = this.scene.add.text(-200, 100, 'Sound Off:', textStyle);
+        this.soundToggleText = this.scene.add.text(-200, 100, 'Sound Off:', textStyle).setScrollFactor(0);;
         this.soundToggleText.setVisible(false);
 
-        this.soundToggleBox = this.scene.add.rectangle(-100, 110, 20, 20, 0xffffff).setInteractive({ useHandCursor: true });
+        this.soundToggleBox = this.scene.add.rectangle(-100, 110, 20, 20, 0xffffff).setInteractive({ useHandCursor: true }).setScrollFactor(0);;
         this.soundToggleBox.setStrokeStyle(2, 0x000000);
         this.soundToggleBox.setVisible(false);
 
@@ -73,7 +74,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             this.scene.sound.mute = !isSoundOn;
         });
 
-        this.exitGameText = this.scene.add.text(-190, 160, 'Exit Game', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive({ useHandCursor: true });
+        this.exitGameText = this.scene.add.text(-190, 160, 'Logout', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive({ useHandCursor: true }).setScrollFactor(0);;
         this.exitGameText.setVisible(false);
 
         this.exitGameText.on('pointerdown', () => {
@@ -84,10 +85,10 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             const noButton = document.getElementById('noButton');
 
             const handleYesClick = () => {
-                socket.emit('logout');
                 if (this.roomId) {
-                    socket.emit('leaveRoom')
+                    socket.emit('leaveRoom', this.roomId)
                 }
+                socket.emit('logout');
                 socket.removeAllListeners();
 
                 this.scene.scene.start('authenticate');

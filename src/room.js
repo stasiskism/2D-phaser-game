@@ -74,6 +74,7 @@ class Room extends Phaser.Scene {
                 if (this.roomId !== roomId) return;
                 const id = playerData.id
                 if (!this.frontendPlayers[id]) {
+                    console.log('a')
                     this.setupPlayer(id, playerData)
                     this.readyPlayers[id] = false
                 } else {
@@ -84,9 +85,11 @@ class Room extends Phaser.Scene {
             for (const playerId in this.frontendPlayers) {
                 //goes through players, get their id, and if returns undefined, then the player does not exist
                 if (!roomPlayers.find(player => player.id === playerId)) { 
+                    console.log(playerId)
                     this.frontendPlayers[playerId].anims.stop();
                     this.frontendPlayers[playerId].destroy();
                     delete this.frontendPlayers[playerId];
+                    console.log(this.frontendPlayers[playerId])
                 }
             }
 
@@ -360,6 +363,7 @@ class Room extends Phaser.Scene {
     }
 
     setupPlayer(id, playerData) {
+        console.log('asd')
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idle').setScale(4);
         this.playerUsername[id] = playerData.username
         if (id === socket.id) {
@@ -476,6 +480,7 @@ class Room extends Phaser.Scene {
 
         if (moving) {
             const animationName = `Walk${direction}`;
+            if (!player.anims) return
             player.anims.play(animationName, true);
             socket.emit('playerAnimationChange', { playerId: socket.id, animation: animationName });
             this.lastDirection = direction;
@@ -494,6 +499,7 @@ class Room extends Phaser.Scene {
             } else {
                 idleAnimationName = 'IdleDown';
             }
+            if (!player.anims) return
             player.anims.play(idleAnimationName, true);
             socket.emit('playerAnimationChange', { playerId: socket.id, animation: idleAnimationName });
         }

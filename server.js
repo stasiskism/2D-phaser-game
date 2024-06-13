@@ -355,8 +355,10 @@ io.on('connection', (socket) => {
                         startGame(roomId);
                         client.release();
                     } catch (error) {
+                        const client = await sql.connect()
                         console.error('Error in getting weapon details:', error);
                         await client.query('INSERT INTO error_logs (error_message, error_details) VALUES ($1, $2)', [error.detail, error])
+                        client.release()
                     }
                 } else {
                    io.to(roomId).emit('updateCountdown', countdownTime);
@@ -585,10 +587,12 @@ io.on('connection', (socket) => {
     })
 
     socket.on('leaveRoom', (roomId) => {
+        console.log('avs', roomId)
         for (const id in rooms) {
             if (id === roomId) {
                 const room = rooms[roomId];
                 const index = room.players.findIndex(player => player.id === socket.id);
+                console.log('cia', index)
                 if (index !== -1) {
                     console.log('Player leaving room:', socket.id);
                     room.players.splice(index, 1);

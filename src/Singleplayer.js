@@ -70,7 +70,7 @@ class Singleplayer extends Phaser.Scene {
     })
 
     this.graphics.lineStyle(10, 0xff0000);
-    this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+    this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height).setDepth(999);
 
   }
 
