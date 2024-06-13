@@ -235,17 +235,17 @@ class Multiplayer extends Phaser.Scene {
                 alivePlayers[id] = true;
             }
 
-            const alivePlayerCount = Object.keys(alivePlayers).length;
-            if (alivePlayerCount === 1) {
-                this.gameStop = true
-                const id = Object.keys(alivePlayers)[0]
-                this.gameWon(backendPlayers[id].username)
-                this.playerAmmo.destroy()
-                this.playerHealth[id].container.destroy()
-                this.playerUsername[id].destroy()
-                this.stopShooting()
-                socket.off('updatePlayers')
-            }
+            // const alivePlayerCount = Object.keys(alivePlayers).length;
+            // if (alivePlayerCount === 1) {
+            //     this.gameStop = true
+            //     const id = Object.keys(alivePlayers)[0]
+            //     this.gameWon(backendPlayers[id].username)
+            //     this.playerAmmo.destroy()
+            //     this.playerHealth[id].container.destroy()
+            //     this.playerUsername[id].destroy()
+            //     this.stopShooting()
+            //     socket.off('updatePlayers')
+            // }
 
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {
@@ -729,8 +729,21 @@ class Multiplayer extends Phaser.Scene {
             if (this.frontendWeapons[playerId]) {
                 this.frontendWeapons[playerId].setVisible(isVisible);
             }
-        });
 
+            if (this.isPlayerInSmoke(currentPlayer) && playerId === socket.id) {
+                if (!this.darkOverlay[playerId]) {
+                    this.darkOverlay[playerId] = this.add.rectangle(0, 0, 3000, 3000, 0x808080);
+                    this.darkOverlay[playerId].setOrigin(0);
+                    this.darkOverlay[playerId].setAlpha(1);
+                }
+            } else {
+                if (this.darkOverlay[playerId]) {
+                    console.log('destroying dark overlay for player:', playerId);
+                    this.darkOverlay[playerId].destroy();
+                    delete this.darkOverlay[playerId];
+                }
+            }
+        });
     }
 
     isInGrenade() {
