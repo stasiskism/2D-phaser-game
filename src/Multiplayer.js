@@ -113,7 +113,7 @@ class Multiplayer extends Phaser.Scene {
             }
         })
         this.graphics.lineStyle(10, 0xff0000);
-        this.graphics.strokeRect(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize);
+        this.graphics.strokeRect(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize).setDepth(999);
 
         if (!this.anims.exists('smokeExplode')) {
             const smoke = [
