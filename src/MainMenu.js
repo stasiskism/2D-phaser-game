@@ -84,10 +84,10 @@ class MainMenu extends Phaser.Scene {
     });
 
     this.objects = this.physics.add.staticGroup();
-    this.singleplayerObject = this.objects.create(720, 653, 'singleplayer');
-    this.multiplayerObject = this.objects.create(1010, 653, 'multiplayer');
-    this.marketplaceObject = this.objects.create(1290, 653, 'marketplace');
-    this.tutorialObject = this.objects.create(1290, 453, 'tutorial');
+    this.singleplayerObject = this.objects.create(530, 613, 'singleplayer');
+    this.multiplayerObject = this.objects.create(720, 613, 'multiplayer');
+    this.marketplaceObject = this.objects.create(910, 613, 'marketplace');
+    this.tutorialObject = this.objects.create(1105, 613, 'tutorial');
 
     this.objects.getChildren().forEach(object => {
       object.setScale(0.2);
