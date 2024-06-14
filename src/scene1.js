@@ -66,7 +66,7 @@ class Scene1 extends Phaser.Scene {
         this.load.image('dead', 'assets/Dead_Screen.png')
         this.load.image('wall', 'assets/wall.png')
         this.load.image('restartButton', 'assets/Restart_Button.png')
-        this.load.image('quitButton', 'assets/Exit_Button.png')
+        this.load.image('quitButton', 'assets/exit-button-icon.png')
         this.load.image('nextButton', 'assets/arrow-right.png')
         this.load.image('previousButton', 'assets/arrow-left.png')
         this.load.image('dead', 'assets/Dead_Screen.png')

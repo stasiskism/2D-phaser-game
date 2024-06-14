@@ -173,7 +173,7 @@ class Room extends Phaser.Scene {
             }
         })
 
-        this.exitButton = this.add.sprite(950, 300, 'exit').setScale(0.4)
+        this.exitButton = this.add.sprite(1890, 200, 'quitButton').setScale(0.1)
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
             const exitPromptContainer = document.getElementById('exit-prompt-container');
@@ -235,7 +235,7 @@ class Room extends Phaser.Scene {
         const closeButton = this.add.text(1840, 300, 'X', {
             fontSize: '32px',
             fill: '#ffffff',
-            backgroundColor: '#333333',
+            backgroundColor: '#000000',
             padding: { x: 10, y: 10 },
         }).setInteractive({ useHandCursor: true });
 
@@ -248,7 +248,7 @@ class Room extends Phaser.Scene {
         this.chatDisplay = this.add.text(1500, 350, '', { 
             fontSize: '20px', 
             fill: '#ffffff',
-            backgroundColor: '#333333',
+            backgroundColor: '#000000',
             padding: { x: 10, y: 10 },
             wordWrap: { width: 380, useAdvancedWrap: true }
         }).setInteractive().setDepth(1);
@@ -297,7 +297,7 @@ class Room extends Phaser.Scene {
         })
 
         this.nextButtonWeapon = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
-        this.nextButtonWeapon.setPosition(this.centerX - 250, 1000).setScrollFactor(0).setDepth(1)
+        this.nextButtonWeapon.setPosition(this.centerX - 50, 1000).setScrollFactor(0).setDepth(1)
         this.nextButtonWeapon.setInteractive({useHandCursor: true})
         this.nextButtonWeapon.on('pointerdown', () => {
             this.weaponId++;
@@ -308,10 +308,10 @@ class Room extends Phaser.Scene {
             socket.emit('changeWeapon', this.weaponId)
         });
 
-        this.add.text(this.centerX - 660, 900, 'Choose loadout:', { fontFamily: 'Arial', fontSize: 48, color: '#ffffff' });
+        this.add.text(this.centerX - 930, 980, 'Choose loadout:', { fontFamily: 'Arial', fontSize: 48, color: '#ffffff' });
 
         this.previousButtonWeapon = this.add.sprite(0, 0, 'previousButton').setScale(0.2)
-        this.previousButtonWeapon.setPosition(this.centerX - 750, 1000).setScrollFactor(0).setDepth(1)
+        this.previousButtonWeapon.setPosition(this.centerX - 510, 1000).setScrollFactor(0).setDepth(1)
         this.previousButtonWeapon.setInteractive({useHandCursor: true})
         this.previousButtonWeapon.on('pointerdown', () => {
             this.weaponId--;
@@ -323,7 +323,7 @@ class Room extends Phaser.Scene {
         });
 
         this.nextButtonGrenade = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
-        this.nextButtonGrenade.setPosition(this.centerX + 200, 1000).setScrollFactor(0).setDepth(1)
+        this.nextButtonGrenade.setPosition(this.centerX + 400, 1000).setScrollFactor(0).setDepth(1)
         this.nextButtonGrenade.setInteractive({useHandCursor: true})
         this.nextButtonGrenade.on('pointerdown', () => {
             this.grenadeId++;
@@ -335,7 +335,7 @@ class Room extends Phaser.Scene {
         });
 
         this.previousButtonGrenade = this.add.sprite(0, 0, 'previousButton').setScale(0.2)
-        this.previousButtonGrenade.setPosition(this.centerX, 1000).setScrollFactor(0).setDepth(1)
+        this.previousButtonGrenade.setPosition(this.centerX + 200, 1000).setScrollFactor(0).setDepth(1)
         this.previousButtonGrenade.setInteractive({useHandCursor: true})
         this.previousButtonGrenade.on('pointerdown', () => {
             this.grenadeId--;
@@ -381,10 +381,10 @@ class Room extends Phaser.Scene {
 
         if (weaponId === 3) {
             this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
-            this.displayWeapon.setPosition(this.centerX - 430, 1000).setScrollFactor(0).setDepth(1)
+            this.displayWeapon.setPosition(this.centerX - 200, 1000).setScrollFactor(0).setDepth(1)
         } else {
             this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
-            this.displayWeapon.setPosition(this.centerX - 500, 1000).setScrollFactor(0).setDepth(1)
+            this.displayWeapon.setPosition(this.centerX - 270, 1000).setScrollFactor(0).setDepth(1)
         }
 
         if (!this.availableWeapons.length) return
@@ -412,7 +412,7 @@ class Room extends Phaser.Scene {
         }
 
         this.displayGrenade = this.add.sprite(0, 0, '' + this.grenades[grenadeId]).setScale(3)
-        this.displayGrenade.setPosition(this.centerX + 100, 1000).setScrollFactor(0).setDepth(1)
+        this.displayGrenade.setPosition(this.centerX + 300, 1000).setScrollFactor(0).setDepth(1)
 
         if (!this.availableGrenades.length) return
         if (!this.availableGrenades.includes(grenadeId)) {
