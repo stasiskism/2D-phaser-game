@@ -33,20 +33,20 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             align: 'center'
         };
 
-        this.nameText = this.scene.add.text(-190, 20, 'OPTIONS', textStyle).setScrollFactor(0);;
+        this.nameText = this.scene.add.text(-190, 20, 'OPTIONS', textStyle).setScrollFactor(0);
         this.nameText.setVisible(false);
 
-        this.volumeText = this.scene.add.text(-200, 50, 'Volume:', textStyle).setScrollFactor(0);;
+        this.volumeText = this.scene.add.text(-200, 50, 'Volume:', textStyle).setScrollFactor(0);
         this.volumeText.setVisible(false);
 
-        this.volumeValue = this.scene.add.text(-130, 50, '100%', textStyle).setScrollFactor(0);;
+        this.volumeValue = this.scene.add.text(-130, 50, '100%', textStyle).setScrollFactor(0);
         this.volumeValue.setVisible(false);
 
-        this.sliderTrack = this.scene.add.rectangle(-200, 80, 120, 10, 0x888888).setInteractive({ useHandCursor: true }).setScrollFactor(0);;
+        this.sliderTrack = this.scene.add.rectangle(-200, 80, 120, 10, 0x888888).setInteractive({ useHandCursor: true }).setScrollFactor(0);
         this.sliderTrack.setOrigin(0, 0.5);
         this.sliderTrack.setVisible(false);
 
-        this.sliderThumb = this.scene.add.rectangle(-200, 80, 10, 20, 0xffffff).setInteractive({ useHandCursor: true }).setScrollFactor(0);;
+        this.sliderThumb = this.scene.add.rectangle(-200, 80, 10, 20, 0xffffff).setInteractive({ useHandCursor: true }).setScrollFactor(0);
         this.sliderThumb.setOrigin(0.5);
         this.sliderThumb.setVisible(false);
 
@@ -61,10 +61,10 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             this.scene.sound.volume = volume;
         });
 
-        this.soundToggleText = this.scene.add.text(-200, 100, 'Sound Off:', textStyle).setScrollFactor(0);;
+        this.soundToggleText = this.scene.add.text(-200, 100, 'Sound Off:', textStyle).setScrollFactor(0);
         this.soundToggleText.setVisible(false);
 
-        this.soundToggleBox = this.scene.add.rectangle(-100, 110, 20, 20, 0xffffff).setInteractive({ useHandCursor: true }).setScrollFactor(0);;
+        this.soundToggleBox = this.scene.add.rectangle(-100, 110, 20, 20, 0xffffff).setInteractive({ useHandCursor: true }).setScrollFactor(0);
         this.soundToggleBox.setStrokeStyle(2, 0x000000);
         this.soundToggleBox.setVisible(false);
 
@@ -74,7 +74,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             this.scene.sound.mute = !isSoundOn;
         });
 
-        this.exitGameText = this.scene.add.text(-190, 160, 'Logout', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive({ useHandCursor: true }).setScrollFactor(0);;
+        this.exitGameText = this.scene.add.text(-190, 160, 'Logout', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive({ useHandCursor: true }).setScrollFactor(0);
         this.exitGameText.setVisible(false);
 
         this.exitGameText.on('pointerdown', () => {
@@ -121,7 +121,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
 
     toggleSettingsPanel() {
         const isVisible = this.panelBackground.visible;
-        this.scene.events.emit('settingsPanelOpened');
+        this.scene.events.emit('settingsPanelOpened', !isVisible);
         this.panelBackground.setVisible(!isVisible);
         this.volumeText.setVisible(!isVisible);
         this.nameText.setVisible(!isVisible);

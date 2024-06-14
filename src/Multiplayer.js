@@ -15,6 +15,7 @@ class Multiplayer extends Phaser.Scene {
     weapon = {}
     empty = false
     gameStop = false
+    isPanelVisible = false
     animationKeys = {
         1: { name: 'Pistol', startShoot: 0, endShoot: 11, startReload: 0, endReload: 22 },
         2: { name: 'Shotgun', startShoot: 0, endShoot: 13, startReload: 0, endReload: 13 },
@@ -58,12 +59,22 @@ class Multiplayer extends Phaser.Scene {
         this.events.on('settingsPanelOpened', this.onSettingsPanelOpened, this);
     }
     
-    onSettingsPanelOpened() {
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
-        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
-      }
+    onSettingsPanelOpened(panelVisible) {
+        this.isPanelVisible = panelVisible;
+        if (panelVisible) {
+            this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+            this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+            this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+            this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+            this.input.mouse.releasePointerLock();
+        } else {
+            this.input.mouse.requestPointerLock();
+            this.input.keyboard.addCapture(Phaser.Input.Keyboard.KeyCodes.W);
+            this.input.keyboard.addCapture(Phaser.Input.Keyboard.KeyCodes.A);
+            this.input.keyboard.addCapture(Phaser.Input.Keyboard.KeyCodes.S);
+            this.input.keyboard.addCapture(Phaser.Input.Keyboard.KeyCodes.D);
+        }
+    }
 
     setupMap() {
         const map1 = this.make.tilemap({ key: "map2", tileWidth: 32, tileHeight: 32 });
@@ -108,7 +119,6 @@ class Multiplayer extends Phaser.Scene {
     setupScene() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
-        //this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
         this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setDepth(999);
         this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6)
         this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
@@ -182,10 +192,12 @@ class Multiplayer extends Phaser.Scene {
         this.input.mouse.requestPointerLock();
 
         this.input.on('pointerdown', (pointer) => {
-            this.input.mouse.requestPointerLock();
+            if (!this.isPanelVisible) {
+                this.input.mouse.requestPointerLock();
+            }
             if (!this.weaponDetails) return
             const firerate = this.weaponDetails.fire_rate
-            if (pointer.leftButtonDown() && canShoot && this.ammo != 0) {
+            if (pointer.leftButtonDown() && this.input.mouse.locked && canShoot && this.ammo != 0) {
                 this.startShooting(firerate);
                 canShoot = false;
                 setTimeout(() => {
