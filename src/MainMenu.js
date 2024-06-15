@@ -89,6 +89,25 @@ class MainMenu extends Phaser.Scene {
     this.marketplaceObject = this.objects.create(910, 613, 'marketplace');
     this.tutorialObject = this.objects.create(1105, 613, 'tutorial');
 
+    const newWidth = 150;
+    const newHeight = 100;
+
+    this.singleplayerObject.setDisplaySize(newWidth, newHeight);
+    this.multiplayerObject.setDisplaySize(newWidth, newHeight);
+    this.marketplaceObject.setDisplaySize(newWidth, newHeight);
+    this.tutorialObject.setDisplaySize(newWidth, newHeight);
+
+    this.singleplayerObject.body.setSize(newWidth, newHeight, true);
+    this.multiplayerObject.body.setSize(newWidth, newHeight, true);
+    this.marketplaceObject.body.setSize(newWidth, newHeight, true);
+    this.tutorialObject.body.setSize(newWidth, newHeight, true);
+
+    this.singleplayerObject.body.setOffset((this.singleplayerObject.width - newWidth) / 2, (this.singleplayerObject.height - newHeight) / 2);
+    this.multiplayerObject.body.setOffset((this.multiplayerObject.width - newWidth) / 2, (this.multiplayerObject.height - newHeight) / 2);
+    this.marketplaceObject.body.setOffset((this.marketplaceObject.width - newWidth) / 2, (this.marketplaceObject.height - newHeight) / 2);
+    this.tutorialObject.body.setOffset((this.tutorialObject.width - newWidth) / 2, (this.tutorialObject.height - newHeight) / 2);
+
+
     this.objects.getChildren().forEach(object => {
       object.setScale(0.2);
     });
@@ -432,7 +451,7 @@ class MainMenu extends Phaser.Scene {
         message = 'Press E to go to marketplace'
       }
 
-      this.popupText.setPosition(object.x - 100, object.y - 50);
+      this.popupText.setPosition(object.x - 100, object.y - 80);
       this.popupText.setText(message);
       this.popupText.setVisible(true);
     } else {
