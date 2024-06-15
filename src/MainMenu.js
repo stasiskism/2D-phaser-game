@@ -72,17 +72,6 @@ class MainMenu extends Phaser.Scene {
     this.player = this.physics.add.sprite(864, 624, 'idleDown').setScale(3);
     this.player.setCollideWorldBounds(true);
 
-    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6);
-    this.fullscreenButton.setInteractive({ useHandCursor: true });
-    this.fullscreenButton.on('pointerdown', () => {
-      document.getElementById('phaser-example');
-      if (this.scale.isFullscreen) {
-        this.scale.stopFullscreen();
-      } else {
-        this.scale.startFullscreen();
-      }
-    });
-
     this.objects = this.physics.add.staticGroup();
     this.singleplayerObject = this.objects.create(530, 613, 'singleplayer');
     this.multiplayerObject = this.objects.create(720, 613, 'multiplayer');
@@ -129,7 +118,7 @@ class MainMenu extends Phaser.Scene {
     this.document = this.leaderboard.node.querySelector(`#playerLabels`);
 
     this.coinsText = this.add.text(1650, 20, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
-    this.plusButton = this.add.sprite(1830, 30, 'plus').setScale(0.05).setInteractive({ useHandCursor: true });
+    this.plusButton = this.add.sprite(1890, 30, 'plus').setScale(0.05).setInteractive({ useHandCursor: true });
     this.plusButton.on('pointerdown', () => {
       this.showCoinPurchaseOptions(this.username);
     });

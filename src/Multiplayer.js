@@ -120,17 +120,6 @@ class Multiplayer extends Phaser.Scene {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
         this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setDepth(999);
-        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6)
-        this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
-        this.fullscreenButton.setInteractive({ useHandCursor: true })
-        this.fullscreenButton.on('pointerdown', () => {
-            document.getElementById('phaser-example');
-            if (this.scale.isFullscreen) {
-                this.scale.stopFullscreen();
-            } else {
-                this.scale.startFullscreen();
-            }
-        })
         this.graphics.lineStyle(10, 0xff0000);
         this.graphics.strokeRect(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize).setDepth(999);
 
@@ -263,17 +252,17 @@ class Multiplayer extends Phaser.Scene {
                 alivePlayers[id] = true;
             }
 
-            const alivePlayerCount = Object.keys(alivePlayers).length;
-            if (alivePlayerCount === 1) {
-                this.gameStop = true
-                const id = Object.keys(alivePlayers)[0]
-                this.gameWon(backendPlayers[id].username)
-                this.playerAmmo.destroy()
-                this.playerHealth[id].container.destroy()
-                this.playerUsername[id].destroy()
-                this.stopShooting()
-                socket.off('updatePlayers')
-            }
+            // const alivePlayerCount = Object.keys(alivePlayers).length;
+            // if (alivePlayerCount === 1) {
+            //     this.gameStop = true
+            //     const id = Object.keys(alivePlayers)[0]
+            //     this.gameWon(backendPlayers[id].username)
+            //     this.playerAmmo.destroy()
+            //     this.playerHealth[id].container.destroy()
+            //     this.playerUsername[id].destroy()
+            //     this.stopShooting()
+            //     socket.off('updatePlayers')
+            // }
 
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {

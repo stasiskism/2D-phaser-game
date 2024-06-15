@@ -34,7 +34,6 @@ class Scene1 extends Phaser.Scene {
         this.load.image('mapas', 'assets/mapas.png')
         this.load.image('bullet', 'assets/bullet.png')
         this.load.image('crosshair', 'assets/crosshair008.png')
-        this.load.image('fullscreen', 'assets/fullscreen.png')
         this.load.image('multiplayer', 'assets/multiplayer.png');
         this.load.image('singleplayer', 'assets/singleplayer.png');
         this.load.image('marketplace', 'assets/marketplace.png');

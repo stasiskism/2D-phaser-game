@@ -96,17 +96,6 @@ class Tutorial extends Phaser.Scene {
         this.vaizdasImage = this.add.sprite(this.centerX, this.centerY, 'mapas');
         this.crosshair = this.physics.add.sprite(this.centerX, this.centerY, 'crosshair').setCollideWorldBounds(true);
         this.player = this.physics.add.sprite(this.centerX, this.centerY, 'idleDown').setScale(4).setCollideWorldBounds(true).setDepth(1);
-        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
-        this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
-        this.fullscreenButton.setInteractive({ useHandCursor: true })
-        this.fullscreenButton.on('pointerdown', () => {
-            document.getElementById('phaser-example');
-            if (this.scale.isFullscreen) {
-                this.scale.stopFullscreen();
-            } else {
-                this.scale.startFullscreen();
-            }
-        })
     }
 
     shootProjectile(pointer) {

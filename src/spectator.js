@@ -51,18 +51,6 @@ class Spectator extends Phaser.Scene {
         const centerY = this.cameras.main.height / 2;
         this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
         this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setVisible(false);
-        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.1)
-        this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
-        this.fullscreenButton.setInteractive({ useHandCursor: true })
-        this.fullscreenButton.on('pointerdown', () => {
-            document.getElementById('phaser-example');
-            if (this.scale.isFullscreen) {
-                this.scale.stopFullscreen();
-            } else {
-                this.scale.startFullscreen();
-            }
-        })
-
         this.nextButton = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
         this.nextButton.setPosition(centerX + 320, 1000).setScrollFactor(0)
         this.nextButton.setInteractive({ useHandCursor: true })

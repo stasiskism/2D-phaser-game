@@ -75,11 +75,9 @@ class Room extends Phaser.Scene {
                 if (this.roomId !== roomId) return;
                 const id = playerData.id
                 if (!this.frontendPlayers[id]) {
-                    console.log('setup')
                     this.setupPlayer(id, playerData)
                     this.readyPlayers[id] = false
                 } else {
-                    console.log('update')
                     this.updatePlayerPosition(id, playerData)
                 }
             }
@@ -162,16 +160,6 @@ class Room extends Phaser.Scene {
         this.add.text(350, 540, 'Smoke grenade').setScale(1.5)
         this.add.image(420, 680, 'left-click').setScale(0.2)
         this.add.text(385, 610, 'Shoot').setScale(1.5)
-        this.fullscreenButton = this.add.sprite(1890, 200, 'fullscreen').setDepth().setScale(0.6)
-        this.fullscreenButton.setInteractive({ useHandCursor: true })
-        this.fullscreenButton.on('pointerdown', () => {
-            document.getElementById('phaser-example');
-            if (this.scale.isFullscreen) {
-                this.scale.stopFullscreen();
-            } else {
-                this.scale.startFullscreen();
-            }
-        })
 
         this.exitButton = this.add.sprite(1890, 30, 'quitButton').setScale(0.1)
         this.exitButton.setInteractive({ useHandCursor: true })
@@ -349,7 +337,6 @@ class Room extends Phaser.Scene {
     }
 
     setupPlayer(id, playerData) {
-        console.log('asd')
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idle').setScale(4);
         this.playerUsername[id] = playerData.username
         if (id === socket.id) {
@@ -381,7 +368,7 @@ class Room extends Phaser.Scene {
 
         if (weaponId === 3) {
             this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
-            this.displayWeapon.setPosition(this.centerX - 200, 1000).setScrollFactor(0).setDepth(1)
+            this.displayWeapon.setPosition(this.centerX - 200, 1020).setScrollFactor(0).setDepth(1)
         } else {
             this.displayWeapon = this.add.sprite(0, 0, '' + this.weapons[weaponId]).setScale(3)
             this.displayWeapon.setPosition(this.centerX - 270, 1000).setScrollFactor(0).setDepth(1)
@@ -389,7 +376,7 @@ class Room extends Phaser.Scene {
 
         if (!this.availableWeapons.length) return
         if (!this.availableWeapons.includes(weaponId)) {
-            this.lockedWeaponText = this.add.text(this.centerX - 550, 1000, 'LOCKED', {
+            this.lockedWeaponText = this.add.text(this.centerX - 350, 1000, 'LOCKED', {
                 fontFamily: 'Arial',
                 fontSize: 28,
                 color: '#FFFFFF',

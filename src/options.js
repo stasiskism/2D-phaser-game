@@ -11,6 +11,8 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             this.toggleSettingsPanel();
         });
 
+        this.scene.input.keyboard.on('keydown-P', this.toggleSettingsPanel, this);
+
         this.createSettingsPanel();
 
         scene.add.existing(this);
@@ -74,6 +76,23 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             this.scene.sound.mute = !isSoundOn;
         });
 
+        this.fullscreenToggleText = this.scene.add.text(-200, 130, 'Fullscreen:', textStyle).setScrollFactor(0);
+        this.fullscreenToggleText.setVisible(false);
+
+        this.fullscreenToggle = this.scene.add.rectangle(-100, 140, 20, 20, 0xffffff).setInteractive({ useHandCursor: true }).setScrollFactor(0);
+        this.fullscreenToggle.setStrokeStyle(2, 0x000000);
+        this.fullscreenToggle.setVisible(false);
+
+        this.fullscreenToggle.on('pointerdown', () => {
+            if (this.scene.scale.isFullscreen) {
+                this.scene.scale.stopFullscreen();
+                this.fullscreenToggle.setFillStyle(0xffffff)
+            } else {
+                this.scene.scale.startFullscreen();
+                this.fullscreenToggle.setFillStyle(0xffff00)
+            }
+        });
+
         this.exitGameText = this.scene.add.text(-190, 160, 'Logout', { ...textStyle, fontSize: '18px', fontStyle: 'bold' }).setInteractive({ useHandCursor: true }).setScrollFactor(0);
         this.exitGameText.setVisible(false);
 
@@ -116,6 +135,8 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
         this.add(this.volumeValue);
         this.add(this.soundToggleText);
         this.add(this.soundToggleBox);
+        this.add(this.fullscreenToggleText);
+        this.add(this.fullscreenToggle);
         this.add(this.exitGameText);
     }
 
@@ -130,6 +151,8 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
         this.volumeValue.setVisible(!isVisible);
         this.soundToggleText.setVisible(!isVisible);
         this.soundToggleBox.setVisible(!isVisible);
+        this.fullscreenToggleText.setVisible(!isVisible);
+        this.fullscreenToggle.setVisible(!isVisible)
         this.exitGameText.setVisible(!isVisible);
     }
 }

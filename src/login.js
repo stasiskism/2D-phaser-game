@@ -185,7 +185,6 @@ class Login extends Phaser.Scene {
         socket.emit('login', data)
         socket.once('loginResponse', (response) => {
             if (response.success) {
-                console.log(response.success)
                 if (response.firstLogin) {
                     alert('Login successful');
                     this.scene.start('tutorial', {username})

@@ -10,6 +10,7 @@ class Singleplayer extends Phaser.Scene {
       this.scoreText
       this.weapon
   }
+  isPanelVisible = false
 
   init (data) {
     this.cameras.main.setBackgroundColor('#000000');
@@ -31,9 +32,26 @@ class Singleplayer extends Phaser.Scene {
     this.intervalID
     this.enemies = []
     this.bullets = []
-    this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
-
+    this.settingsButton = new SettingsButtonWithPanel(this, 1890, 30);
+    this.events.on('settingsPanelOpened', this.onSettingsPanelOpened, this);
   }
+
+  onSettingsPanelOpened(panelVisible) {
+    this.isPanelVisible = panelVisible;
+    if (panelVisible) {
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.W);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.A);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.S);
+        this.input.keyboard.removeCapture(Phaser.Input.Keyboard.KeyCodes.D);
+        this.input.mouse.releasePointerLock();
+    } else {
+        this.input.mouse.requestPointerLock();
+        this.input.keyboard.addCapture(Phaser.Input.Keyboard.KeyCodes.W);
+        this.input.keyboard.addCapture(Phaser.Input.Keyboard.KeyCodes.A);
+        this.input.keyboard.addCapture(Phaser.Input.Keyboard.KeyCodes.S);
+        this.input.keyboard.addCapture(Phaser.Input.Keyboard.KeyCodes.D);
+    }
+}
 
   gunAnimation(){
     if (this.anims.exists('singleShot')) return
@@ -57,17 +75,6 @@ class Singleplayer extends Phaser.Scene {
     this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' }).setPosition(100, 100).setScrollFactor(0);
 
     this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair');
-    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth(2).setScale(0.6)
-    this.fullscreenButton.setPosition(this.cameras.main.width - 200, 200).setScrollFactor(0)
-    this.fullscreenButton.setInteractive({ useHandCursor: true })
-    this.fullscreenButton.on('pointerdown', () => {
-        document.getElementById('phaser-example');
-        if (this.scale.isFullscreen) {
-            this.scale.stopFullscreen();
-        } else {
-            this.scale.startFullscreen();
-        }
-    })
 
     this.graphics.lineStyle(10, 0xff0000);
     this.graphics.strokeRect(0, 0, this.cameras.main.width, this.cameras.main.height).setDepth(999);
@@ -77,7 +84,9 @@ class Singleplayer extends Phaser.Scene {
   setupInputEvents() {
     
   this.input.on('pointerdown', () => {
-    this.input.mouse.requestPointerLock();
+    if (!this.isPanelVisible) {
+      this.input.mouse.requestPointerLock();
+    }
   });
 
   this.input.on('pointermove', pointer => {
@@ -88,7 +97,7 @@ class Singleplayer extends Phaser.Scene {
   });
 
   this.input.on('pointerdown', pointer => {
-      if (pointer.leftButtonDown()) {
+      if (pointer.leftButtonDown() && this.input.mouse.locked) {
         this.sound.play('ARSound', { volume: 0.5})
         this.fireBullet(pointer)
       }

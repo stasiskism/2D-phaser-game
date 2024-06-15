@@ -44,17 +44,6 @@ class Marketplace extends Phaser.Scene {
     const tileset2 = map1.addTilesetImage("TX Props", "tiles2");
     const layer1 = map1.createLayer("Tile Layer 1", [tileset1, tileset2, tileset3, tileset4, tileset5, tileset6], 0, 0);
 
-    this.fullscreenButton = this.add.sprite(1890, 150, 'fullscreen').setDepth().setScale(0.6)
-        this.fullscreenButton.setInteractive({ useHandCursor: true })
-        this.fullscreenButton.on('pointerdown', () => {
-            document.getElementById('phaser-example');
-            if (this.scale.isFullscreen) {
-                this.scale.stopFullscreen();
-            } else {
-                this.scale.startFullscreen();
-            }
-        })
-
     this.player = this.physics.add.sprite(247, 517, 'idleDown').setScale(3);
     this.player.setCollideWorldBounds(true);
 
