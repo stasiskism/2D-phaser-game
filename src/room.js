@@ -4,6 +4,7 @@ class Room extends Phaser.Scene {
     frontendPlayers = {};
     readyPlayers = {}
     playerUsername = {}
+    playerUsernameText = {}
     chatHistory = []
     readyPlayersCount = 0
     countdownTime = 0
@@ -87,7 +88,9 @@ class Room extends Phaser.Scene {
                 if (!roomPlayers.find(player => player.id === playerId)) { 
                     this.frontendPlayers[playerId].anims.stop();
                     this.frontendPlayers[playerId].destroy();
+                    this.playerUsernameText[playerId].destroy();
                     delete this.frontendPlayers[playerId];
+                    delete this.playerUsernameText[playerId];  // Remove the text object from the storage
                 }
             }
 
@@ -100,7 +103,9 @@ class Room extends Phaser.Scene {
             for (const id in this.frontendPlayers) {
                 this.frontendPlayers[id].anims.stop()
                 this.frontendPlayers[id].destroy();
+                this.playerUsernameText[id].destroy();
                 delete this.frontendPlayers[id];
+                delete this.playerUsernameText[id];
             }
             this.chatHistory = []
             socket.off('updateRoomPlayers')
@@ -176,7 +181,9 @@ class Room extends Phaser.Scene {
                 if (this.frontendPlayers[socket.id]) {
                     this.frontendPlayers[socket.id].anims.stop()
                     this.frontendPlayers[socket.id].destroy();
+                    this.playerUsernameText[socket.id].destroy();
                     delete this.frontendPlayers[socket.id];
+                    delete this.playerUsernameText[socket.id];
                 }
                 cleanupEventListeners();
                 hideExitPrompt();
@@ -338,23 +345,14 @@ class Room extends Phaser.Scene {
 
     setupPlayer(id, playerData) {
         this.frontendPlayers[id] = this.physics.add.sprite(playerData.x, playerData.y, 'idle').setScale(4);
-        this.playerUsername[id] = playerData.username
+        this.playerUsername[id] = playerData.username;
+        this.playerUsernameText[id] = this.add.text(playerData.x, playerData.y - 50, playerData.username, { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' }).setOrigin(0.5).setScale(2);
+        
         if (id === socket.id) {
             this.weaponId = playerData.weaponId
             this.grenadeId = playerData.grenadeId
             this.setupWeapon(this.weaponId)
             this.setupGrenade(this.grenadeId)
-        }
-    
-        // Setup other players
-        for (const playerId in this.frontendPlayers) {
-            if (playerId !== id) {
-                const otherPlayerData = this.frontendPlayers[playerId];
-                if (otherPlayerData) {
-                    otherPlayerData.destroy()
-                    this.frontendPlayers[playerId] = this.physics.add.sprite(otherPlayerData.x, otherPlayerData.y, 'idle').setScale(4);
-                }
-            }
         }
     }
 
@@ -476,11 +474,17 @@ class Room extends Phaser.Scene {
             player.anims.play(idleAnimationName, true);
             socket.emit('playerAnimationChange', { playerId: socket.id, animation: idleAnimationName });
         }
+
     }
 
     updatePlayerPosition(id, roomPlayer) {
         this.frontendPlayers[id].x = roomPlayer.x;
         this.frontendPlayers[id].y = roomPlayer.y;
+        
+        if (this.playerUsernameText[id]) {
+            this.playerUsernameText[id].setPosition(roomPlayer.x, roomPlayer.y - 50);
+            this.playerUsernameText[id].setText(roomPlayer.username);
+        }
     }
 
     checkAllPlayersReady() {
