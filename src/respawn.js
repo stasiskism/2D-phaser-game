@@ -26,7 +26,7 @@ class Respawn extends Phaser.Scene {
       this.spectateButton.on('pointerdown', () => this.clickspectateButton())
         this.spectateButton.on('pointerover', () => this.spectateButton.setTint(0xf1c40f)) // Change color on mouse over
         this.spectateButton.on('pointerout', () => this.spectateButton.clearTint()) // Reset color when mouse leaves
-      this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'quitButton')
+      this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'exit')
       this.quitButton.setInteractive({useHandCursor: true})
       this.quitButton.on('pointerdown', () => this.clickQuitButton())
         this.quitButton.on('pointerover', () => this.quitButton.setTint(0xf1c40f)); // Change color on mouse over

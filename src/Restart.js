@@ -32,7 +32,7 @@ class Restart extends Phaser.Scene {
       this.restartButton.on('pointerdown', () => this.clickRestartButton())
         this.restartButton.on('pointerover', () => this.restartButton.setTint(0xf1c40f)); // Change color on mouse over
         this.restartButton.on('pointerout', () => this.restartButton.clearTint()); // Reset color when mouse leaves
-      this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'quitButton')
+      this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) + 400, 'exit')
       this.quitButton.setInteractive({useHandCursor: true})
       this.quitButton.on('pointerdown', () => this.clickQuitButton())
         this.quitButton.on('pointerover', () => this.quitButton.setTint(0xf1c40f)); // Change color on mouse over
