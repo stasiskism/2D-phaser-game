@@ -11,7 +11,7 @@ class SettingsButtonWithPanel extends Phaser.GameObjects.Container {
             this.toggleSettingsPanel();
         });
 
-        this.scene.input.keyboard.on('keydown-P', this.toggleSettingsPanel, this);
+        this.scene.input.keyboard.on('keydown-O', this.toggleSettingsPanel, this);
 
         this.createSettingsPanel();
 
