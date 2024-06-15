@@ -966,7 +966,7 @@ setInterval(async () => {
         backendProjectiles[id].y += backendProjectiles[id].velocity.y;
 
         let mapSize = 250;
-        let lastHit = ''
+        let lastHit = '';
 
         for (const roomId in rooms) {
             const maxPlayers = rooms[roomId].maxPlayers;
@@ -986,27 +986,43 @@ setInterval(async () => {
             continue;
         }
 
+        const shooterId = backendProjectiles[id].playerId;
+
+        if (!backendPlayers[shooterId]) {
+            delete backendProjectiles[id];
+            continue;
+        }
+
         for (const playerId in backendPlayers) {
-            if (!playerId) return
+            if (!playerId) return;
             const backendPlayer = backendPlayers[playerId];
             const distance = Math.hypot(
                 backendProjectiles[id].x - backendPlayer.x,
                 backendProjectiles[id].y - backendPlayer.y
             );
-            if (distance < 30 && backendProjectiles[id].playerId !== playerId) {
-                const damage = weaponDetails[backendProjectiles[id].playerId].damage;
-                lastHit = backendPlayers[backendProjectiles[id].playerId].username
+
+            if (distance < 30 && shooterId !== playerId) {
+                const damage = weaponDetails[shooterId]?.damage;
+                if (!damage) {
+                    // If the damage detail is not found, skip processing
+                    delete backendProjectiles[id];
+                    continue;
+                }
+
+                lastHit = backendPlayers[shooterId]?.username;
                 backendPlayers[playerId].health -= damage;
+
                 if (backendPlayers[playerId].health <= 0) {
-                    if (backendPlayers[backendProjectiles[id].playerId]) {
+                    if (backendPlayers[shooterId]) {
                         const client = await sql.connect();
                         await client.query(`UPDATE user_profile SET coins = coins + 1, xp = xp + 5 WHERE user_name = $1`, [
-                           lastHit
+                            lastHit
                         ]);
                         client.release();
                     }
                     delete backendPlayers[playerId];
                 }
+
                 delete backendProjectiles[id];
                 break;
             }
@@ -1014,12 +1030,13 @@ setInterval(async () => {
     }
 
     for (const id in backendGrenades) {
-        backendGrenades[id].x += backendGrenades[id].velocity.x
-        backendGrenades[id].y += backendGrenades[id].velocity.y
-        const radius = 10 // iki granatos kad sustotu
+        backendGrenades[id].x += backendGrenades[id].velocity.x;
+        backendGrenades[id].y += backendGrenades[id].velocity.y;
+        const radius = 10; // distance for grenade to stop
         const distanceX = backendGrenades[id].target.x - backendGrenades[id].x;
         const distanceY = backendGrenades[id].target.y - backendGrenades[id].y;
         const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
         if (distance <= radius) {
             backendGrenades[id].velocity = { x: 0, y: 0 };
             if (backendGrenades[id].grenadeId === 5) {
@@ -1035,16 +1052,16 @@ setInterval(async () => {
     }
 
     for (const roomId in rooms) {
-        const players = filterPlayersByMultiplayerId(roomId)
-        const projectiles = filterProjectilesByMultiplayerId(roomId)
-        const grenades = filterGrenadesByMultiplayerId(roomId)
-        io.to(roomId).emit('updateProjectiles', projectiles, grenades)
-        io.to(roomId).emit('updatePlayers', players)
+        const players = filterPlayersByMultiplayerId(roomId);
+        const projectiles = filterProjectilesByMultiplayerId(roomId);
+        const grenades = filterGrenadesByMultiplayerId(roomId);
+        io.to(roomId).emit('updateProjectiles', projectiles, grenades);
+        io.to(roomId).emit('updatePlayers', players);
     }
     for (const roomId in rooms) {
-        io.emit('updateRoomPlayers', rooms[roomId].players)
+        io.emit('updateRoomPlayers', rooms[roomId].players);
     }
-}, 15)
+}, 15);
 
 const PORT = 443;
 server.listen(PORT, () => {

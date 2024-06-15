@@ -49,7 +49,9 @@ class Spectator extends Phaser.Scene {
     setupScene() {
         const centerX = this.cameras.main.width / 2;
         const centerY = this.cameras.main.height / 2;
-        this.vaizdasImage = this.add.sprite(centerX, centerY, 'mapas');
+        const map1 = this.make.tilemap({ key: "map2", tileWidth: 32, tileHeight: 32 });
+        const tileset1 = map1.addTilesetImage("Mapass", "tiles_multiplayer");
+        const layer1 = map1.createLayer("Tile Layer 1", tileset1, -2000, -1000).setScale(1);
         this.crosshair = this.physics.add.sprite(centerX, centerY, 'crosshair').setVisible(false);
         this.nextButton = this.add.sprite(0, 0, 'nextButton').setScale(0.2)
         this.nextButton.setPosition(centerX + 320, 1000).setScrollFactor(0)
@@ -66,7 +68,7 @@ class Spectator extends Phaser.Scene {
         });
 
         this.graphics.lineStyle(10, 0xff0000);
-        this.graphics.strokeRect(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize);
+        this.graphics.strokeRect(0, 0, this.cameras.main.width + this.mapSize, this.cameras.main.height + this.mapSize).setDepth(999);
 
         this.quitButton = this.add.sprite(1920 / 2, (1080 / 2) - 400, 'quitButton')
         this.quitButton.setInteractive({ useHandCursor: true }).setScale(0.75).setPosition(centerX, 1000).setScrollFactor(0)
@@ -149,13 +151,13 @@ class Spectator extends Phaser.Scene {
                 alivePlayers[id] = true;
             }
 
-            const alivePlayerCount = Object.keys(alivePlayers).length;
-            if (alivePlayerCount === 1) {
-                this.gameStop = true
-                const id = Object.keys(alivePlayers)[0]
-                this.gameWon(backendPlayers[id].username)
-                socket.off('updatePlayers')
-            }
+            // const alivePlayerCount = Object.keys(alivePlayers).length;
+            // if (alivePlayerCount === 1) {
+            //     this.gameStop = true
+            //     const id = Object.keys(alivePlayers)[0]
+            //     this.gameWon(backendPlayers[id].username)
+            //     socket.off('updatePlayers')
+            // }
 
             for (const id in this.frontendPlayers) {
                 if (!alivePlayers[id]) {
@@ -222,6 +224,15 @@ class Spectator extends Phaser.Scene {
                 }
             }
         })
+
+        socket.on('updateGunAnimation', (playerId, animation, weapon) => {
+            if (this.frontendWeapons[playerId]) {
+                this.frontendWeapons[playerId].anims.play(`${animation}_${weapon}`, true);
+                if (animation == 'singleShot') {
+                    this.sound.play(weapon + 'Sound', { volume: 0.5 });
+                }
+            }
+        }) 
     }
 
     setupPlayer(id, playerData) {
