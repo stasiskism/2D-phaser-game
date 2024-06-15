@@ -1,3 +1,5 @@
+import SettingsButtonWithPanel from './options.js'
+
 class Spectator extends Phaser.Scene {
     frontendPlayers = {};
     frontendWeapons = {};
