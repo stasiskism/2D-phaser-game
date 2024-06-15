@@ -1,3 +1,5 @@
+import SettingsButtonWithPanel from './options.js'
+
 class Marketplace extends Phaser.Scene {
   constructor() {
     super({ key: 'marketplace' });
@@ -26,6 +28,7 @@ class Marketplace extends Phaser.Scene {
     this.setupScene();
     this.setupInputEvents();
     this.setupProgressBar();
+    this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
   }
 
   setupScene() {
@@ -41,7 +44,7 @@ class Marketplace extends Phaser.Scene {
     const tileset2 = map1.addTilesetImage("TX Props", "tiles2");
     const layer1 = map1.createLayer("Tile Layer 1", [tileset1, tileset2, tileset3, tileset4, tileset5, tileset6], 0, 0);
 
-    this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6)
+    this.fullscreenButton = this.add.sprite(1890, 150, 'fullscreen').setDepth().setScale(0.6)
         this.fullscreenButton.setInteractive({ useHandCursor: true })
         this.fullscreenButton.on('pointerdown', () => {
             document.getElementById('phaser-example');
@@ -86,7 +89,7 @@ class Marketplace extends Phaser.Scene {
 
     this.coinsText = this.add.text(1500, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
 
-    this.exitButton = this.add.sprite(150, 80, 'quitButton').setScale(0.4)
+    this.exitButton = this.add.sprite(1890, 30, 'quitButton').setScale(0.1)
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
             const exitPromptContainer = document.getElementById('exit-prompt-container');

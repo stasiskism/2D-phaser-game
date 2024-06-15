@@ -162,7 +162,7 @@ class Room extends Phaser.Scene {
         this.add.text(350, 540, 'Smoke grenade').setScale(1.5)
         this.add.image(420, 680, 'left-click').setScale(0.2)
         this.add.text(385, 610, 'Shoot').setScale(1.5)
-        this.fullscreenButton = this.add.sprite(1890, 30, 'fullscreen').setDepth().setScale(0.6)
+        this.fullscreenButton = this.add.sprite(1890, 200, 'fullscreen').setDepth().setScale(0.6)
         this.fullscreenButton.setInteractive({ useHandCursor: true })
         this.fullscreenButton.on('pointerdown', () => {
             document.getElementById('phaser-example');
@@ -173,7 +173,7 @@ class Room extends Phaser.Scene {
             }
         })
 
-        this.exitButton = this.add.sprite(1890, 200, 'quitButton').setScale(0.1)
+        this.exitButton = this.add.sprite(1890, 30, 'quitButton').setScale(0.1)
         this.exitButton.setInteractive({ useHandCursor: true })
         this.exitButton.on('pointerdown', () => {
             const exitPromptContainer = document.getElementById('exit-prompt-container');
