@@ -455,9 +455,11 @@ class MainMenu extends Phaser.Scene {
 
     if (this.eKey.isDown && distance < 50) {
       if (object === this.singleplayerObject) {
+        this.shutdown()
         this.scene.start('Singleplayer', { login: this.login });
         this.scene.stop();
       } else if (object === this.multiplayerObject) {
+        this.shutdown()
         this.scene.start('lobby');
         this.scene.stop();
       } else if (object === this.marketplaceObject) {
@@ -465,6 +467,7 @@ class MainMenu extends Phaser.Scene {
         this.scene.start('marketplace', {username: this.username})
         this.scene.stop()
       } else if (object === this.tutorialObject) {
+        this.shutdown()
         this.scene.start('tutorial', {username: this.username});
         this.scene.stop();
       }
