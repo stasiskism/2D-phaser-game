@@ -76,7 +76,11 @@ class Marketplace extends Phaser.Scene {
 
     this.physics.add.overlap(this.player, this.grenadeObjects, this.interactWithObject, null, this);
 
-    this.coinsText = this.add.text(1500, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.coinsText = this.add.text(960, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.plusButton = this.add.sprite(1120, 40, 'plus').setScale(0.05).setInteractive({ useHandCursor: true });
+    this.plusButton.on('pointerdown', () => {
+      this.showCoinPurchaseOptions(this.username);
+    });
 
     this.exitButton = this.add.sprite(1890, 30, 'quitButton').setScale(0.1)
         this.exitButton.setInteractive({ useHandCursor: true })
@@ -109,6 +113,158 @@ class Marketplace extends Phaser.Scene {
             exitYesButton.addEventListener('click', handleExitYes);
             exitNoButton.addEventListener('click', handleExitNo);
         })
+  }
+
+  showCoinPurchaseOptions(username) {
+    const options = [
+      { label: '100 Coins - €1', amount: 100, cost: 1 },
+      { label: '500 Coins - €4', amount: 500, cost: 4 },
+      { label: '1000 Coins - €7', amount: 1000, cost: 7 },
+    ];
+
+    const coinPurchaseContainer = document.getElementById('coin-purchase-container');
+    const coinOptions = document.getElementById('coin-options');
+    coinOptions.innerHTML = '';
+
+    options.forEach(option => {
+      const optionButton = document.createElement('div');
+      optionButton.className = 'prompt-button';
+      optionButton.textContent = option.label;
+      optionButton.addEventListener('click', async () => {
+        try {
+          const response = await fetch('/create-payment-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: option.amount, username })
+          });
+          const { clientSecret } = await response.json();
+          const coins = option.amount;
+          const cost = option.cost;
+          this.showPaymentForm(clientSecret, coins, cost);
+          coinPurchaseContainer.style.display = 'none'; // Hide the prompt after selection
+        } catch (err) {
+          console.error('Error creating payment intent:', err);
+        }
+      });
+      coinOptions.appendChild(optionButton);
+    });
+
+    const coinCancelButton = document.getElementById('coinCancelButton');
+    coinCancelButton.addEventListener('click', () => {
+      coinPurchaseContainer.style.display = 'none';
+    });
+
+    coinPurchaseContainer.style.display = 'block';
+  }
+
+  showPaymentForm(clientSecret, coins, cost) {
+    // Clear any previous instances of the payment form
+    const existingForm = document.getElementById('payment-form');
+    if (existingForm) {
+      existingForm.remove();
+    }
+
+    const formHtml = `
+      <div id="payment-form">
+        <form id="payment-element-form">
+          <div id="coin-details" style="margin-bottom: 10px; font-size: 24px;">
+            <div>Coins: ${coins}</div>
+            <div>Cost: €${cost.toFixed(2)}</div>
+          </div>
+          <div id="payment-element"></div>
+          <button id="submit-button" class="prompt-button">Pay</button>
+          <button id="cancel-button" class="prompt-button" type="button">Cancel</button>
+          <div id="error-message"></div>
+        </form>
+      </div>
+    `;
+    const paymentForm = this.add.dom(400, 300).createFromHTML(formHtml);
+
+    this.time.delayedCall(100, () => {
+      this.setupStripeElements(clientSecret, coins);
+    });
+
+    const cancelButton = document.getElementById('cancel-button');
+    cancelButton.addEventListener('click', () => {
+      this.clearPaymentForm();
+    });
+  }
+
+  setupStripeElements(clientSecret, amount) {
+    const stripe = Stripe('pk_test_51PJtjWP7nzuSu7T7Q211oUu5LICFrh0QjI6hx4KiOAjZSXXhe0HgNlImYdEdPDAa5OGKG4y8hyR1B0SuiiP3okTP00OOp963M1');
+    const options = {
+      layout: {
+        type: 'accordion',
+        defaultCollapsed: false,
+        radios: false,
+        spacedAccordionItems: true
+      },
+      wallets: {
+        applePay: 'never',
+        googlePay: 'never'
+      }
+    };
+    const appearance = {
+      theme: 'stripe',
+    };
+    const elements = stripe.elements({ clientSecret, appearance });
+    const paymentElement = elements.create('payment', options);
+
+    // Clear any child nodes in the payment element container
+    const paymentElementContainer = document.getElementById('payment-element');
+    while (paymentElementContainer.firstChild) {
+      paymentElementContainer.removeChild(paymentElementContainer.firstChild);
+    }
+
+    paymentElement.mount('#payment-element');
+
+    const form = document.getElementById('payment-element-form');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {},
+        redirect: 'if_required'
+      });
+
+      if (error) {
+        document.getElementById('error-message').textContent = error.message;
+      } else {
+        const event = new CustomEvent('payment-success', { detail: { username: this.username, amount } });
+        window.dispatchEvent(event);
+      }
+    });
+  }
+
+  async handlePaymentSuccess(username, amount) {
+    console.log(`Payment successful for user: ${username}`);
+    try {
+      const response = await fetch('/update-coins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, amount })
+      });
+      const data = await response.json();
+      if (data.success) {
+        this.coinsText.setText(`Coins: ${data.coins}`);
+      } else {
+        console.error('Failed to update coins.');
+      }
+    } catch (error) {
+      console.error('Error updating coins:', error);
+    }
+  }
+
+  clearPaymentForm() {
+    const paymentForm = document.getElementById('payment-form');
+    if (paymentForm) {
+      paymentForm.style.display = 'none';
+      const paymentElementForm = document.getElementById('payment-element-form');
+      if (paymentElementForm) {
+        paymentElementForm.reset();
+      }
+    }
   }
 
   setupInputEvents() {
@@ -344,7 +500,7 @@ class Marketplace extends Phaser.Scene {
   setupProgressBar() {
     this.barWidth = 200;
     this.barHeight = 20;
-    this.barX = 1500;
+    this.barX = 960;
     this.barY = 70;
 
     this.progressBarBackground = this.add.graphics();
