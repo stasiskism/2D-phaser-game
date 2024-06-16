@@ -492,7 +492,7 @@ class Room extends Phaser.Scene {
         for (const playerId in this.readyPlayers) {
            count++
         }
-        if (count === this.readyPlayersCount && count >= 1) {
+        if (count === this.readyPlayersCount && count > 1) {
             this.readyButton.destroy()
             console.log('VISI PLAYERIAI READY')
             this.countdownText = this.add.text(800, 200, '', { fontSize: '64px', fill: '#fff' });
