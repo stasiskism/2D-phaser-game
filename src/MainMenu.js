@@ -117,8 +117,8 @@ class MainMenu extends Phaser.Scene {
     this.leaderboard.setPosition(50, 50).setScrollFactor(0);
     this.document = this.leaderboard.node.querySelector(`#playerLabels`);
 
-    this.coinsText = this.add.text(1730, 20, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
-    this.plusButton = this.add.sprite(1890, 30, 'plus').setScale(0.05).setInteractive({ useHandCursor: true });
+    this.coinsText = this.add.text(960, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
+    this.plusButton = this.add.sprite(1120, 40, 'plus').setScale(0.05).setInteractive({ useHandCursor: true });
     this.plusButton.on('pointerdown', () => {
       this.showCoinPurchaseOptions(this.username);
     });
@@ -127,8 +127,8 @@ class MainMenu extends Phaser.Scene {
   setupProgressBar() {
     this.barWidth = 200;
     this.barHeight = 20;
-    this.barX = 1400;
-    this.barY = 25;
+    this.barX = 960;
+    this.barY = 70;
 
     this.progressBarBackground = this.add.graphics();
     this.progressBarBackground.fillStyle(0x000000, 1);
