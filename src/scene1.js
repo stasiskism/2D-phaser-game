@@ -61,6 +61,8 @@ class Scene1 extends Phaser.Scene {
         this.load.image('tutorial', 'assets/tutorials.png')
         this.load.image('R', 'assets/R-Key.png')
         this.load.image('G', 'assets/G-Key.png')
+        this.load.image('O', 'assets/O-Key.png')
+        this.load.image('E', 'assets/E-Key.png')
         this.load.image('left-click', 'assets/left-click.png')
         this.load.image('dead', 'assets/Dead_Screen.png')
         this.load.image('wall', 'assets/wall.png')

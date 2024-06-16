@@ -101,6 +101,12 @@ class MainMenu extends Phaser.Scene {
       object.setScale(0.2);
     });
 
+    this.add.image(615, 430, 'O').setScale(1.5)
+    this.add.text(565, 350, 'Options', textStyle)
+
+    this.add.image(760, 430, 'E').setScale(1.5)
+    this.add.text(735, 350, 'Use', textStyle)
+
     this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.popupText = this.add.text(100, 100, '', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
     this.popupText.setVisible(false);
