@@ -199,11 +199,17 @@ class MainMenu extends Phaser.Scene {
   }
 
   setupPaymentListener() {
-    window.addEventListener('payment-success', (event) => {
+    this.paymentSuccessHandler = (event) => {
       const { username, amount } = event.detail;
       this.handlePaymentSuccess(username, amount);
       this.clearPaymentForm();
-    });
+    };
+    window.addEventListener('payment-success', this.paymentSuccessHandler);
+  }
+
+  shutdown() {
+    console.log('isjungia')
+    window.removeEventListener('payment-success', this.paymentSuccessHandler);
   }
 
   showCoinPurchaseOptions(username) {
@@ -455,7 +461,9 @@ class MainMenu extends Phaser.Scene {
         this.scene.start('lobby');
         this.scene.stop();
       } else if (object === this.marketplaceObject) {
+        this.shutdown()
         this.scene.start('marketplace', {username: this.username})
+        this.scene.stop()
       } else if (object === this.tutorialObject) {
         this.scene.start('tutorial', {username: this.username});
         this.scene.stop();

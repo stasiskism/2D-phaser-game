@@ -1,4 +1,4 @@
-import SettingsButtonWithPanel from './options.js'
+import SettingsButtonWithPanel from './options.js';
 
 class Marketplace extends Phaser.Scene {
   constructor() {
@@ -20,6 +20,7 @@ class Marketplace extends Phaser.Scene {
   }
 
   preload() {
+    // Add your preload logic here if needed
   }
 
   create() {
@@ -28,6 +29,7 @@ class Marketplace extends Phaser.Scene {
     this.setupScene();
     this.setupInputEvents();
     this.setupProgressBar();
+    this.setupPaymentListener();
     this.settingsButton = new SettingsButtonWithPanel(this, 1890, 90);
   }
 
@@ -57,9 +59,9 @@ class Marketplace extends Phaser.Scene {
       object.setScale(1.5);
     });
 
-    this.grenadeObjects = this.physics.add.staticGroup()
-    this.grenade1Object = this.grenadeObjects.create(785, 650, 'smokeGrenade')
-    this.grenade2Object = this.grenadeObjects.create(1110, 650, 'grenade')
+    this.grenadeObjects = this.physics.add.staticGroup();
+    this.grenade1Object = this.grenadeObjects.create(785, 650, 'smokeGrenade');
+    this.grenade2Object = this.grenadeObjects.create(1110, 650, 'grenade');
 
     this.grenadeObjects.getChildren().forEach(object => {
       object.setScale(3);
@@ -73,7 +75,6 @@ class Marketplace extends Phaser.Scene {
     this.purchaseText.setVisible(false);
 
     this.physics.add.overlap(this.player, this.gunObjects, this.interactWithObject, null, this);
-
     this.physics.add.overlap(this.player, this.grenadeObjects, this.interactWithObject, null, this);
 
     this.coinsText = this.add.text(960, 30, 'Coins: ', { fontFamily: 'Arial', fontSize: 24, color: '#ffffff' });
@@ -90,6 +91,7 @@ class Marketplace extends Phaser.Scene {
             const exitNoButton = document.getElementById('exitNoButton');
 
             const handleExitYes = () => {
+                this.shutdown()
                 this.scene.start('mainMenu');
                 this.scene.stop();
                 cleanupEventListeners();
@@ -112,7 +114,7 @@ class Marketplace extends Phaser.Scene {
             exitPromptContainer.style.display = 'block';
             exitYesButton.addEventListener('click', handleExitYes);
             exitNoButton.addEventListener('click', handleExitNo);
-        })
+        });
   }
 
   showCoinPurchaseOptions(username) {
@@ -405,7 +407,6 @@ class Marketplace extends Phaser.Scene {
     }
   }
 
-
   showPurchasePrompt() {
     const promptContainer = document.getElementById('weapon-purchase-container');
     promptContainer.style.display = 'block';
@@ -496,7 +497,6 @@ class Marketplace extends Phaser.Scene {
     this.isInteracting = false;
   }
 
-
   setupProgressBar() {
     this.barWidth = 200;
     this.barHeight = 20;
@@ -540,12 +540,26 @@ class Marketplace extends Phaser.Scene {
     this.percentageText.setText(`${Math.round(percentage * 100)}%`);
   }
 
+  setupPaymentListener() {
+    this.paymentSuccessHandler = (event) => {
+      const { username, amount } = event.detail;
+      this.handlePaymentSuccess(username, amount);
+      this.clearPaymentForm();
+    };
+    window.addEventListener('payment-success', this.paymentSuccessHandler);
+  }
+
+  shutdown() {
+    window.removeEventListener('payment-success', this.paymentSuccessHandler);
+  }
+
   fetchInfo() {
     fetch(`/get-info?username=${encodeURIComponent(this.username)}`)
       .then(response => response.json())
       .then(data => {
         this.coins = data.coins
         this.level = data.level
+        console.log(this.coins)
         this.coinsText.setText(`Coins: ${this.coins}`);
         
         const experiencePercentage = data.xp / (data.level * 100);

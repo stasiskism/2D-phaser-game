@@ -106,7 +106,6 @@ app.post('/update-coins', async (req, res) => {
         
         const result = await client.query('SELECT coins FROM user_profile WHERE user_name = $1', [username]);
         const data = result.rows[0];
-        console.log('cia', data)
 
         res.json({ success: true, coins: data.coins });
         client.release();
